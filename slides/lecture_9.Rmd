@@ -1,0 +1,339 @@
+---
+title: Hypothesis testing for logistic regression
+output:
+  xaringan::moon_reader:
+    css: "lab-slides.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, include=F}
+library(tidyverse)
+grad_app <- read.csv("https://stats.idre.ucla.edu/stat/data/binary.csv")
+
+library(knitr)
+hook_output <- knit_hooks$get("output")
+knit_hooks$set(output = function(x, options) {
+   lines <- options$output.lines
+   if (is.null(lines)) {
+     return(hook_output(x, options))  # pass to default hook
+   }
+   x <- unlist(strsplit(x, "\n"))
+   more <- "..."
+   if (length(lines)==1) {        # first n lines
+     if (length(x) > lines) {
+       # truncate the output, but add ....
+       x <- c(head(x, lines), more)
+     }
+   } else {
+     x <- c(more, x[lines], more)
+   }
+   # paste these lines together
+   x <- paste(c(x, ""), collapse = "\n")
+   hook_output(x, options)
+ })
+```
+
+### Modeling grad admissions
+
+.large[
+**Data:** Grad application data
+  * `admit`: accepted to grad school? (0 = no, 1 = yes)
+  * `gre`: GRE score
+  * `gpa`: undergrad GPA
+  * `rank`: prestige of undergrad institution
+  
+**New question:** Does the relationship between GPA and the probability of acceptance depend on the prestige of a student's undergrad institution, after accounting for GRE score?
+  
+.question[
+How could we use hypothesis testing to investigate this research question? Discuss with your neighbor, then we will discuss as a group.
+]
+]
+
+---
+
+### Model
+
+.large[
+$$Admit_i \sim Bernoulli(\pi_i)$$
+
+$$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 GRE_i + \beta_2 GPA_i + \beta_3 Rank2_i \\ \hspace{1cm} + \beta_4 Rank3_i + \beta_5 Rank4_i + \beta_6 GPA_i \cdot Rank2_i$$
+$$\hspace{3cm} + \beta_7 GPA_i \cdot Rank3_i + \beta_8 GPA_i \cdot Rank4_i$$
+
+.question[
+How would I interpret coefficients when I have an interaction?
+]
+]
+
+---
+
+### Hypotheses
+
+.large[
+$$Admit_i \sim Bernoulli(\pi_i)$$
+
+$$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 GRE_i + \beta_2 GPA_i + \beta_3 Rank2_i \\ \hspace{1cm} + \beta_4 Rank3_i + \beta_5 Rank4_i + \beta_6 GPA_i \cdot Rank2_i$$
+$$\hspace{3cm} + \beta_7 GPA_i \cdot Rank3_i + \beta_8 GPA_i \cdot Rank4_i$$
+
+**Question:** Does the relationship between GPA and the probability of acceptance depend on the prestige of a student's undergrad institution, after accounting for GRE score?
+
+.question[
+What are my null and alternative hypotheses?
+]
+]
+
+---
+
+### Class activity, Part I
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_9.html](https://sta214-s23.github.io/class_activities/ca_lecture_9.html)
+]
+
+---
+
+### Class activity
+
+.large[
+**Models:**
+
+```{r}
+m1 <- glm(admit ~ gre + gpa*as.factor(rank),
+          data = grad_app, family = binomial)
+
+m2 <- glm(admit ~ gre + gpa + as.factor(rank),
+          data = grad_app, family = binomial)
+
+m2$deviance - m1$deviance
+```
+]
+
+---
+
+### Class activity
+
+.large[
+$H_0: \beta_6 = \beta_7 = \beta_8 = 0$
+
+**Test statistic:** $G = 0.41$
+
+**Calculating a p-value:**
+
+```{r, eval=F}
+pchisq(..., ..., lower.tail=F)
+```
+]
+
+---
+
+### Class activity
+
+.large[
+$H_0: \beta_6 = \beta_7 = \beta_8 = 0$
+
+**Test statistic:** $G = 0.41$
+
+**Calculating a p-value:**
+
+```{r}
+pchisq(0.41, 3, lower.tail=F)
+```
+]
+
+---
+
+### Likelihood ratio test for nested models
+
+.large[
+**Goal:** Compare full and reduced models
+
+**Steps:**
+
+* Calculate deviance for full and reduced models
+* $G$ = deviance for reduced - deviance for full
+* p-value: $G \sim \chi^2_{q}$
+]
+
+---
+
+### Alternative: Wald tests for single parameters
+
+.large[
+$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 GRE_i + \beta_2 GPA_i + \beta_3 Rank2_i \\ \hspace{1cm} + \beta_4 Rank3_i + \beta_5 Rank4_i + \beta_6 GPA_i \cdot Rank2_i$
+$\hspace{3cm} + \beta_7 GPA_i \cdot Rank3_i + \beta_8 GPA_i \cdot Rank4_i$
+
+**Hypotheses:**
+
+<br/>
+
+**Test statistic:**
+
+$z =$
+]
+
+---
+
+### Example
+
+.large[
+$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 GRE_i + \beta_2 GPA_i + \beta_3 Rank2_i \\ \hspace{1cm} + \beta_4 Rank3_i + \beta_5 Rank4_i + \beta_6 GPA_i \cdot Rank2_i$
+$\hspace{3cm} + \beta_7 GPA_i \cdot Rank3_i + \beta_8 GPA_i \cdot Rank4_i$
+
+$H_0: \beta_1 = 0 \hspace{1cm} H_A: \beta_1 \neq 0$
+]
+
+```{r, echo=F, output.lines=10:14, highlight.output=c(5)}
+grad_glm <- glm(admit ~ gre + gpa*as.factor(rank), data = grad_app, family = binomial)
+summary(grad_glm)
+```
+
+.large[
+$z =$
+]
+
+---
+
+### Example
+
+.large[
+$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 GRE_i + \beta_2 GPA_i + \beta_3 Rank2_i \\ \hspace{1cm} + \beta_4 Rank3_i + \beta_5 Rank4_i + \beta_6 GPA_i \cdot Rank2_i$
+$\hspace{3cm} + \beta_7 GPA_i \cdot Rank3_i + \beta_8 GPA_i \cdot Rank4_i$
+
+$H_0: \beta_1 = 0 \hspace{1cm} H_A: \beta_1 > 0$
+]
+
+```{r, echo=F, output.lines=10:14, highlight.output=c(5)}
+grad_glm <- glm(admit ~ gre + gpa*as.factor(rank), data = grad_app, family = binomial)
+summary(grad_glm)
+```
+
+.large[
+$z =$
+
+.question[
+How do I calculate a p-value?
+]
+]
+
+---
+
+### Example
+
+.large[
+$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 GRE_i + \beta_2 GPA_i + \beta_3 Rank2_i \\ \hspace{1cm} + \beta_4 Rank3_i + \beta_5 Rank4_i + \beta_6 GPA_i \cdot Rank2_i$
+$\hspace{3cm} + \beta_7 GPA_i \cdot Rank3_i + \beta_8 GPA_i \cdot Rank4_i$
+
+$H_0: \beta_1 = 0 \hspace{1cm} H_A: \beta_1 > 0$
+]
+
+```{r, echo=F, output.lines=10:14, highlight.output=c(5)}
+grad_glm <- glm(admit ~ gre + gpa*as.factor(rank), data = grad_app, family = binomial)
+summary(grad_glm)
+```
+
+.large[
+
+```{r}
+pnorm(2.075, lower.tail=F)
+```
+]
+
+---
+
+### Wald tests vs. likelihood ratio tests
+
+.large[
+.pull-left[
+**Wald test**
+
+* like t-tests
+* test a single parameter
+* some example hypotheses:
+    * $H_0: \beta_1 = 0$ vs. $H_A: \beta_1 \neq 0$
+    * $H_0: \beta_1 = 1$ vs. $H_A: \beta_1 > 1$
+]
+
+.pull-right[
+**Likelihood ratio test**
+
+* like nested F-tests
+* test one or more parameters 
+* some example hypotheses:
+    * $H_0: \beta_1 = 0$ vs. $H_A: \beta_1 \neq 0$
+]
+
+p-values are different, because test statistics and distributions are different
+]
+
+---
+
+### Confidence intervals
+
+.large[
+$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 GRE_i + \beta_2 GPA_i + \beta_3 Rank2_i \\ \hspace{1cm} + \beta_4 Rank3_i + \beta_5 Rank4_i + \beta_6 GPA_i \cdot Rank2_i$
+$\hspace{3cm} + \beta_7 GPA_i \cdot Rank3_i + \beta_8 GPA_i \cdot Rank4_i$
+
+Now we want a "reasonable range" of values for $\beta_1$.
+
+**Confidence interval:**
+]
+
+---
+
+### Computing $z^*$
+
+.large[
+Example: for a 95% confidence interval, $z^* = 1.96$
+
+```{r}
+qnorm(0.025, lower.tail=F)
+```
+
+Example: for a 99% confidence interval, $z^* = 2.58$:
+
+```{r}
+qnorm(0.005, lower.tail=F)
+```
+]
+
+---
+
+### Confidence interval
+
+```{r, echo=F, output.lines=10:14, highlight.output=c(5)}
+grad_glm <- glm(admit ~ gre + gpa*as.factor(rank), data = grad_app, family = binomial)
+summary(grad_glm)
+```
+
+.large[
+95% confidence interval for $\beta_1$:
+]
+
+---
+
+### Class activity, Part II
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_9.html](https://sta214-s23.github.io/class_activities/ca_lecture_9.html)
+]
+
+---
+
+### Class activity
+
+.large[
+```{r, include=F}
+dengue <- read.csv("https://sta279-s22.github.io/labs/dengue.csv")
+
+m1 <- glm(Dengue ~ WBC, data = dengue, family = binomial)
+```
+
+```{r, echo=F, output.lines=10:14}
+summary(m1)
+```
+]

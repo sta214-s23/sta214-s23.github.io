@@ -1,0 +1,250 @@
+---
+title: "HW 2 Solutions"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+
+titanic <- read.csv("https://sta214-s23.github.io/homework/Titanic.csv")
+```
+
+## Question 1
+
+### (a) (3 pts)
+
+Passenger ID, name, and ticket number should not be used as explanatory variables. They are each unique to the passenger, and have no meaning other than as unique identifiers. Also, they are categorical variables with a different level for each row of the data, so we can't actually fit a model with these variables.
+
+It is ok if they say Cabin instead of one of the other three variables.
+
+**Grading:** 1 pt for each of the three variables. Lose 1 pt if no explanation is provided. They might suggest that Cabin is not a valid choice for an explanatory variable. In principle Cabin could be used to tell us something about location on the ship, though a bigger issue with Cabin is that so many entries are missing.
+
+
+### (b) (2 pt)
+
+```{r}
+dim(titanic)
+
+titanic <- titanic %>%
+  drop_na()
+
+dim(titanic)
+```
+
+There were 177 rows with missing values, which we have removed from the data. We are now left with 714 rows.
+
+**Grading:** 1 pt for code, 1 pt for stating the number of rows remaining.
+
+### (c) (2 pts)
+
+```{r}
+titanic %>%
+  count(Survived)
+```
+
+
+**Grading:** Lose 1 pt if no code showing. It is ok if they use a different method of making tables (e.g., the `table` function). 
+
+## Question 2
+
+### (a) (5 pts)
+
+$$Survived_i \sim Bernoulli(\pi_i)$$
+$$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 Class2_i + \beta_2 Class3_i + \beta_3 Male_i + \beta_4 Age_i$$
+
+**Grading:** Lose 2 points if missing the random component. Lose 2 points if missing the systematic component. Lose 1 pt for issues in notation (e.g., missing subscripts $i$, adding hats to $\pi_i$, etc.). Lose 1 pt if they confuse the explanatory and response variable. Lose 1 pt if they don't use the log odds in the systematic component. Lose 1 pt if they don't use two indicator variables for passenger class. It is ok if the names of their variables are slightly different (e.g. Sex instead of Male).
+
+### (b) (4 pts)
+
+```{r}
+m1 <- glm(Survived ~ as.factor(Pclass) + Sex + Age, 
+          family = binomial, data = titanic)
+summary(m1)
+```
+
+$$Survived_i \sim Bernoulli(\pi_i)$$
+$$\log \left( \dfrac{\widehat{\pi}_i}{1 - \widehat{\pi}_i} \right) = 3.78 - 1.31 \ Class2_i - 2.58 \ Class3_i - 2.52 \ Male_i - 0.037 \ Age_i$$
+
+**Grading:** 2 pts for code, 2 pts for equation of fitted model. It is ok if they don't include the random component in the fitted model. Lose 1 pt if passenger class is not coded as a categorical variable in the model. Lose 1 pt for incorrect notation (missing subscripts, missing hats, etc.)
+
+### (c) (5 pts)
+
+The estimated log odds of survival for a female, first class passenger aged 0 years is 3.78.
+
+Being in second class vs. first class is associated with a decrease in the log odds of survival by 1.31, holding sex and age fixed.
+
+Being in third class vs. first class is associated with a decrease in the log odds of survival by 2.58, holding sex and age fixed.
+
+Being a male passengers, rather than a female passenger, is associated with a decrease in the log odds of survival by 2.52, holding class and age fixed.
+
+A one-year increase in age is associated with a decrease in the log odds of survival by 0.037, holding sex and class fixed.
+
+**Grading:** 1 pt for each coefficient. Lose 2 pts if they don't hold other variables fixed when interpreting coefficients. Lose 1 pt if they don't make it clear what the reference category is when interpreting coefficients for passenger class. Lose 1 pt if they talk about a "one-unit increase" in a categorical variable.
+
+### (d) (5 pts)
+
+The estimated odds of survival for a female, first class passenger aged 0 years is $\exp(3.78) = 43.82$.
+
+Being in second class vs. first class is associated with a decrease in the odds of survival by a factor of $\exp(-1.31) = 0.27$, holding sex and age fixed.
+
+Being in third class vs. first class is associated with a decrease in the odds of survival by a factor of $\exp(-2.58) = 0.076$, holding sex and age fixed.
+
+Being a male passengers, rather than a female passenger, is associated with a decrease in the odds of survival by a factor of $\exp(-2.52) = 0.08$, holding class and age fixed.
+
+A one-year increase in age is associated with a decrease in the odds of survival by a factor of $\exp(-0.037) = 0.96$, holding sex and class fixed.
+
+**Grading:** 1 pt for each coefficient. Lose 2 pts if they don't hold other variables fixed when interpreting coefficients. Lose 1 pt if they don't make it clear what the reference category is when interpreting coefficients for passenger class. Lose 1 pt if they talk about a "one-unit increase" in a categorical variable. Lose 2 pts if they don't make it clear that the change in odds is multiplicative.
+
+## Question 3
+
+### (a) (3 pts)
+
+First class is associated with the highest chance of survival. The coefficients for second and third class passengers are negative, so being in either second or third class is associated with lower probability than being in first class.
+
+**Grading:** 1 pt for correct answer, 2 pts for explanation. Lose 1 pt if they answer by calculating probabilities.
+
+### (b) (3 pts)
+
+A female first class passenger would have the highest predicted chance of survival. As in part (a), being in first class is associated with higher predicted probabilities of survival. The coefficient on Sex is negative, so being a female passenger is also associated with a higher predicted probability of survival. 
+
+**Grading:** 1 pt for correct answer, 2 pts for explanation. Lose 1 pt if they answer by calculating probabilities.
+
+### (c) (4 pts)
+
+The coefficient on Age is negative, so we need to make age as small as possible. So, we need to figure out the smallest value of Age for female first class passengers. There are many different ways to do this in R, here is one example:
+
+```{r}
+titanic %>%
+  filter(Sex == "female", Pclass == 1) %>%
+  summarize(min_age = min(Age))
+```
+
+The youngest female first class passenger is 2 years old. Their predicted probability of survival is
+
+$$\dfrac{\exp(3.78 - 0.037(2))}{1 + \exp(3.78 - 0.037(2))} = 0.976$$
+
+**Grading:** 1 pt for code, 1 pt for correctly finding the smallest age, 2 pts for calculating a probability using the age they found. It is ok if they use different code than me. Lose 1 pt if they calculate the odds or log odds instead of the probability.
+
+## Question 4
+
+### (a) (3 pts)
+
+It is actually easier to start by writing down the likelihood function in general (but they don't need to for part (a)):
+
+$$L(\pi_0) = \pi_0^7 (1 - \pi_0)^{14}$$
+
+Then $L(0.6) = 7.5 \times 10^{-8}$ and $L(0.7) = 3.9 \times 10^{-9}$. Since the likelihood for 0.6 is higher, 0.6 is a better guess.
+
+**Grading:** 1 pt for calculating $L(0.6)$, 1 pt for calculating $L(0.7)$, 1 pt for choosing the value with the higher likelihood.
+
+### (b) (3 pts)
+
+$$L(\pi_0) = \pi_0^7 (1 - \pi_0)^{14}$$
+
+**Grading:** One potential mistake is summing the probabilities, rather than multiplying them, to calculate the likelihood.
+
+### (c) (3 pts)
+
+```{r}
+pi0 <- seq(0, 1, 0.01)
+likelihood <- rep(0, length(pi0))
+for(i in 1:length(pi0)){
+likelihood[i] <- pi0[i]^7 * (1 - pi0[i])^14
+}
+plot(pi0, likelihood, type="l")
+```
+
+The largest likelihood appears to occur around $\pi_0 = 0.3$ to $0.35$.
+
+
+**Grading:** 2 pts for correct code (they need to use the correct likelihood function here, *not* the one from class). 1 pt for discussing approximately which values of $\pi_0$ have the highest likelihood. 
+
+### (d) (7 pts)
+
+First, let's calculate the log likelihood:
+
+$$\log L(\pi_0) = 7 \log(\pi_0) + 14 \log(1 - \pi_0)$$
+
+Next, we differentiate:
+
+$$\frac{d}{d \pi_0} \log L(\pi_0) = \frac{7}{\pi_0} - \frac{14}{1 - \pi_0} \overset{set}{=} 0$$
+
+Finally, we solve for $\pi_0$:
+
+$$\pi_0 = \frac{7}{21} = \frac{1}{3}$$
+
+So the maximum likelihood estimate is $\widehat{\pi}_0 = \frac{1}{3}$.
+
+**Grading:** 2 pts for calculating the log likelihood, 3 pts for differentiating, 2 pts for solving. If they use the wrong likelihood or log likelihood, they can still get the rest of the points if they correctly differentiate and solve. A common mistake is for students to forget about chain rule.
+
+## Question 5
+
+### (a) (4 pts)
+
+The probability for each observation $Y_i$ is
+
+$$P(Y = Y_i) = \pi_0 (1 - \pi_0)^{Y_i - 1}$$
+Therefore,
+
+$$\ell(\pi_0) = \sum \limits_{i=1}^n \log \left( \pi_0 (1 - \pi_0)^{Y_i - 1} \right)$$
+
+Next,
+
+$$\log \left( \pi_0 (1 - \pi_0)^{Y_i - 1} \right) = \log(\pi_0) + (Y_i - 1) \log(1 - \pi_0)$$
+so
+
+$$\ell(\pi_0) = \sum \limits_{i=1}^n \left( \log(\pi_0) + (Y_i - 1) \log(1 - \pi_0) \right) = n \log(\pi_0) + \log(1 - \pi_0) \sum \limits_{i=1}^n (Y_i - 1)$$
+
+**Grading:** They get full credit if they show enough work to get to the correct solution. Lose 1 pt if they incorrectly calculate $\log \left( \pi_0 (1 - \pi_0)^{Y_i - 1} \right)$. Lose 1 pt if they drop the sum, or if the whole sum is in terms of $y$ insted of the $Y_i$. This is a hard problem, it is ok to be a bit generous with partial credit as long as we point out any mistakes.
+
+### (b) (4 pts)
+
+$\frac{d \ell}{d \pi_0} = \dfrac{n}{\pi_0} - \dfrac{\sum \limits_{i=1}^n (Y_i - 1)}{1 - \pi_0}$
+
+**Grading:** Lose 1 pt for missing chain rule. Lose 1 pt if the $n$ or the $\sum_i (Y_i - 1)$ go away. Lose 1 pt for other errors with derivatives.
+
+### (c) (4 pts)
+
+$\dfrac{n}{\pi_0} - \dfrac{\sum \limits_{i=1}^n (Y_i - 1)}{1 - \pi_0} = 0$
+
+so
+
+$\dfrac{n}{\pi_0} = \dfrac{\sum \limits_{i=1}^n (Y_i - 1)}{1 - \pi_0}$
+
+Cross-multiplying,
+
+$\dfrac{1 - \pi_0}{\pi_0} = \dfrac{\sum \limits_{i=1}^n (Y_i - 1)}{n}$
+
+Simplifying,
+
+$\dfrac{1}{\pi_0} = \dfrac{\sum \limits_{i=1}^n (Y_i - 1)}{n} + 1 = \dfrac{\sum \limits_{i=1}^n Y_i}{n}$
+
+So $\widehat{\pi_0} = \dfrac{n}{\sum \limits_{i=1}^n Y_i}$
+
+**Grading:** They can get full credit as long as they should enough work that you can follow how they got their answer. Take off 1 or 2 points for minor errors, but we can be pretty generous with partial credit as long as we point out any mistakes.
+
+### (d) (2 pts)
+
+In question 4(d), $n = 7$ and the sum of the $Y_i$ is 1 + 1 + 3 + 7 + 2 + 4 + 3 = 21. So our answer agrees!
+
+
+## Question 6 (Extra credit)
+
+**Grading:** Add 1 pt to their overall score on this homework for each of the three questions they answer correctly. It is ok if students receive over 100% on the assignment
+
+### (a) (1 pt)
+
+`Error in titanic %>% ggplot(aes(x = Survived)): could not find function %>%`
+
+**Grading:** Some variation on this error is acceptable, as long as it contains `could not find function`
+
+### (b) (1 pt)
+
+We used a function (the pipe `%>%`) without loading the required package (e.g., `library(tidyverse)`).
+
+### (c) (1 pt)
+
+Add `library(tidyverse)` (or `library(dplyr)`, or `library(magrittr)`) to the setup chunk.

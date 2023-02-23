@@ -1,0 +1,81 @@
+---
+title: "Class Activity, February 20"
+output: 
+  tufte::tufte_html:
+    css: "lab.css"
+    tufte_variant: "envisioned"
+    highlight: pygments
+link-citations: yes
+---
+
+# Overview: Putting it all together
+
+The purpose of this class activity is to review and synthesize some of the material you have learned in the logistic regression portion of the course. This activity may help you review for the exam, but this is *not* a practice exam! It is not comprehensive, and you will not use R during the exam.
+
+## Data
+
+Our data today come from the 2015 Gorkha earthquake in Nepal. After the earthquake, a large scale survey was conducted to determine the amount of damage the earthquake caused for homes, businesses and other structures. This is one of the largest post-disaster surveys in the world, and today we will be using it to determine what characteristics were associated building damage.
+
+The data can be imported into R with
+
+```{r, eval=F}
+earthquake <- read.csv("https://sta214-s23.github.io/class_activities/earthquake_small.csv")
+```
+
+The data contains information on 10000 buildings, with the following variables:
+
+* `age`: the age of the building (in years)
+* `area_percentage`: normalized area of the building footprint
+* `height_percentage`: normalized height of the building footprint
+* `land_surface_condition`: a categorical variable recording the surface condition of the land around the building. There are three different levels: n, o, and t. (The researchers who collected the data anonymized the level names to protect inhabitants’ privacy).
+* `foundation_type`: type of foundation used while building. Possible values: h, i, r, u, w. (The researchers who collected the data anonymized the level names to protect inhabitants’ privacy)
+* `roof_type`: type of roof used while building. Possible values: n, q, x. (The researchers who collected the data anonymized the level names to protect inhabitants’ privacy)
+* `count_families`: number of families that live in the building
+* `has_secondary_use`: whether the building was used for any secondary purpose (0 = no, 1 = yes)
+* `Damage`: whether the building sustained any damage (1) or not (0)
+
+# Part I
+
+A collaborator working with the earthquake data proposes the following model:
+
+$$Damage_i \sim Bernoulli(\pi_i)$$
+$$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 Age_i + \beta_2 SurfaceO_i + \beta_3 SurfaceT_i + \beta_4 Age_i \cdot SurfaceO_i + \beta_5 Age_i \cdot SurfaceT_i$$
+
+In the first part of this class activity, you will use your collaborator's model to make predictions and test hypotheses about factors related to building damage.
+
+## Questions
+
+1. Fit your collaborator's model in R, and report the equation of the fitted model.
+
+2. Interpret the estimated slope $\widehat{\beta}_1$ in terms of the *odds* of damage.
+
+3. Calculate the estimated probability of damage for a 50 year old building with surface condition = t.
+
+4. Your collaborator wants to know whether the relationship between Age and the probability of damage is the same for buildings in all three surface conditions. Write down null and alternative hypotheses for this research question, in terms of one or more parameters in the model. 
+
+5. Explain whether you should use a likelihood ratio test  or a Wald test for your hypotheses in question 4 (or whether either test could work).
+
+6. Carry out your hypothesis test from question 5. Calculate a test statistics and a p-value, and report your conclusion in context of the research question.
+
+7. Calculate and interpret a 95% confidence interval for the difference in the *odds* of damage between surface n and surface o, for a new building (age = 0).
+
+8. Hypothesis tests and confidence intervals require our model assumptions to be approximately satisfied. So let's check the shape assumption: create a quantile residual plot for Age in your fitted model. Does the shape assumption appear reasonable? If not, how would you change the model?
+
+9. Explain the similarities and differences between a quantile residual plot and an empirical logit plot.
+
+10. Finally, let's assess the predictive ability of our fitted model. Create a confusion matrix for your fitted model, using a threshold of 0.85. Calculate accuracy, sensitivity, specificity, and positive predictive value. How well does the model seem to be predicting?
+
+# Part II
+
+In the second part of this class activity, let's consider other variables as we focus on building a model to best predict Damage.
+
+## Questions
+
+11. Use forward stepwise selection with AIC to select a model to predict Damage. Which variables are included in your model?
+
+12. Your collaborator asks you to perform a hypothesis test comparing your model from question 11 with their model from question 1. Explain to your collaborator why this is a bad suggestion.
+
+13. Compare the predictive performance of your model from question 11 with the model from question 1. Which model does a better job at predicting damage?
+
+
+

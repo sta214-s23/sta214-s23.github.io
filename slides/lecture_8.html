@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Hypothesis testing for logistic regression</title>
+    <meta charset="utf-8" />
+    <script src="libs/header-attrs-2.16/header-attrs.js"></script>
+    <link rel="stylesheet" href="lab-slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# Hypothesis testing for logistic regression
+]
+
+---
+
+
+
+
+### Modeling grad admissions
+
+.large[
+**Data:** Grad application data
+  * `admit`: accepted to grad school? (0 = no, 1 = yes)
+  * `gre`: GRE score
+  * `gpa`: undergrad GPA
+  * `rank`: prestige of undergrad institution
+  
+.question[
+We want to know whether there is a relationship between the prestige of a student's undergrad institution and the probability they are admitted to graduate school, *after accounting for their GRE score and GPA*.
+
+How could we use hypothesis testing to investigate this research question?
+]
+]
+
+---
+
+### Modeling grad admissions
+
+.large[
+`$$Admit_i \sim Bernoulli(\pi_i)$$`
+`$$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 GRE_i + \beta_2 GPA_i + \beta_3 Rank2_i \\ \hspace{1cm} + \beta_4 Rank3_i + \beta_5 Rank4_i$$`
+
+.question[
+How would I interpret the coefficients in this model?
+]
+]
+
+---
+
+### Hypotheses
+
+.large[
+`$$Admit_i \sim Bernoulli(\pi_i)$$`
+`$$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 GRE_i + \beta_2 GPA_i + \beta_3 Rank2_i \\ \hspace{1cm} + \beta_4 Rank3_i + \beta_5 Rank4_i$$`
+
+**Research question:** Is there a relationship between the prestige of a student's undergrad institution and the probability they are admitted to graduate school, after accounting for their GRE score and GPA?
+
+.question[
+What are my null and alternative hypotheses?
+]
+]
+
+---
+
+### Testing hypotheses
+
+.large[
+`$$Admit_i \sim Bernoulli(\pi_i)$$`
+`$$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 GRE_i + \beta_2 GPA_i + \beta_3 Rank2_i \\ \hspace{1cm} + \beta_4 Rank3_i + \beta_5 Rank4_i$$`
+
+**Hypotheses:**
+
+`$$H_0: \beta_3 = \beta_4 = \beta_5 = 0$$`
+`$$H_A: \text{at least one of } \beta_3, \beta_4, \beta_5 \neq 0$$`
+
+.question[
+How should we test these hypotheses and calculate a p-value?
+]
+]
+
+---
+
+### Class activity
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_8.html](https://sta214-s23.github.io/class_activities/ca_lecture_8.html)
+]
+
+---
+
+### Class activity
+
+.large[
+**Full model:**
+
+
+```r
+m1 &lt;- glm(admit ~ gre + gpa + as.factor(rank),
+          data = grad_app, family = binomial)
+summary(m1)
+```
+
+```
+...
+## 
+##     Null deviance: 499.98  on 399  degrees of freedom
+## Residual deviance: 458.52  on 394  degrees of freedom
+...
+```
+]
+
+---
+
+### Class activity
+
+.large[
+**Reduced model:**
+
+
+```r
+m2 &lt;- glm(admit ~ gre + gpa,
+          data = grad_app, family = binomial)
+summary(m2)
+```
+
+```
+...
+##              Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept) -4.949378   1.075093  -4.604 4.15e-06 ***
+## gre          0.002691   0.001057   2.544   0.0109 *  
+## gpa          0.754687   0.319586   2.361   0.0182 *  
+## ---
+## 
+##     Null deviance: 499.98  on 399  degrees of freedom
+## Residual deviance: 480.34  on 397  degrees of freedom
+...
+```
+]
+
+---
+
+### Class activity
+
+.large[
+
+```r
+nsim &lt;- 500
+null_statistics &lt;- rep(0, nsim)
+for(i in 1:nsim){
+  x &lt;- grad_app$gre
+  p &lt;- exp(-0.77 + 0*x)/(1 + exp(-0.77 + 0*x))
+  y &lt;- rbinom(length(x), 1, p)
+  m1 &lt;- glm(y ~ x, family = binomial)
+  null_statistics[i] &lt;- m1$null.deviance - 
+    m1$deviance
+}
+hist(null_statistics)
+```
+
+.question[
+How do I modify this code to simulate from our reduced model?
+]
+]
+
+---
+
+### Class activity
+
+.large[
+
+```r
+nsim &lt;- 500
+null_statistics &lt;- rep(0, nsim)
+for(i in 1:nsim){
+  x1 &lt;- grad_app$gre
+  x2 &lt;- grad_app$gpa
+  x3 &lt;- grad_app$rank
+  p &lt;- exp(-4.95 + 0.003*x1 + 0.755*x2)/(
+    1 + exp(-4.95 + 0.003*x1 + 0.755*x2))
+  y &lt;- rbinom(length(x1), 1, p)
+  
+  m1 &lt;- glm(y ~ x1 + x2 + as.factor(x3), 
+            family = binomial)
+  m2 &lt;- glm(y ~ x1 + x2, 
+            family = binomial)
+  
+  null_statistics[i] &lt;- m2$deviance - m1$deviance
+}
+```
+]
+
+---
+
+### Class activity
+
+.large[
+
+```r
+hist(null_statistics)
+```
+
+&lt;img src="lecture_8_files/figure-html/unnamed-chunk-6-1.png" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+### Calculating a p-value
+
+.large[
+&lt;img src="lecture_8_files/figure-html/unnamed-chunk-7-1.png" style="display: block; margin: auto;" /&gt;
+
+
+```r
+mean(null_statistics &gt;= 21.82)
+```
+
+```
+## [1] 0
+```
+]
+
+---
+
+### Parametric bootstrapping
+
+.large[
+**Goal:** Test hypotheses comparing full and reduced models
+
+**Step 1:** Fit the models and calculate a test statistic
+
+**Step 2:** Repeat the following many times:
+
+* Simulate from the reduced model
+* Fit full and reduced models on simulated data
+* Calculate a test statistic with the simulated data
+
+**Step 3:** Compare observed test statistic (step 1) with simulated test statistics (step 3) to calculate p-value
+
+.question[
+Are there any disadvantages to this method?
+]
+]
+
+---
+
+### Examining the null distributions
+
+.large[
+&lt;img src="lecture_8_files/figure-html/unnamed-chunk-9-1.png" style="display: block; margin: auto;" /&gt;
+
+.question[
+What do you notice about these distributions?
+]
+]
+
+---
+
+### Examining the null distributions
+
+.large[
+&lt;img src="lecture_8_files/figure-html/unnamed-chunk-10-1.png" style="display: block; margin: auto;" /&gt;
+
+.question[
+Why do we always have `\(G \geq 0\)`?
+]
+]
+
+---
+
+### `\(\chi^2\)` distribution
+
+.large[
+Under `\(H_0\)`, `\(G \sim \chi^2_{df_{\text{reduced}} - df_{\text{full}}}\)`
+
+`\(\chi^2_k\)` distribution: parameterized by degrees of freedom `\(k\)`
+]
+
+.center[
+&lt;img src="Chi-square_pdf.png" width="600"&gt;
+]
+
+---
+
+### Computing a p-value
+
+.large[
+`\(\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 \text{GRE}_i\)` 
+
+`\(H_0: \beta_1 = 0 \hspace{1cm} H_A: \beta_1 \neq 0\)`
+
+`\(G =\)` deviance for reduced model - deviance for full model = 13.92 `\(\sim \chi^2_1\)`
+
+
+```r
+pchisq(13.92, df = 1, lower.tail=FALSE)
+```
+
+```
+## [1] 0.0001907579
+```
+]
+
+---
+
+### Computing a p-value
+
+.large[
+`$$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 GRE_i + \beta_2 GPA_i + \beta_3 Rank2_i \\ \hspace{1cm} + \beta_4 Rank3_i + \beta_5 Rank4_i$$`
+
+`$$H_0: \beta_3 = \beta_4 = \beta_5 = 0$$`
+`$$H_A: \text{at least one of } \beta_3, \beta_4, \beta_5 \neq 0$$`
+
+`\(G =\)` deviance for reduced model - deviance for full model = 21.82
+
+
+```r
+pchisq(..., df = ..., lower.tail=FALSE)
+```
+]
+
+---
+
+### Computing a p-value
+
+.large[
+`$$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 GRE_i + \beta_2 GPA_i + \beta_3 Rank2_i \\ \hspace{1cm} + \beta_4 Rank3_i + \beta_5 Rank4_i$$`
+
+`$$H_0: \beta_3 = \beta_4 = \beta_5 = 0$$`
+`$$H_A: \text{at least one of } \beta_3, \beta_4, \beta_5 \neq 0$$`
+
+`\(G =\)` deviance for reduced model - deviance for full model = 21.82
+
+
+```r
+pchisq(21.82, df = 3, lower.tail=FALSE)
+```
+
+```
+## [1] 7.110521e-05
+```
+]
+
+---
+
+### Likelihood ratio test for nested models
+
+.large[
+**Goal:** Compare full and reduced models
+
+**Steps:**
+
+* Calculate deviance for full and reduced models
+* `\(G\)` = deviance for reduced - deviance for full
+* p-value: `\(G \sim \chi^2_{q}\)`
+]
+
+---
+
+### Alternative: Wald tests for single parameters
+
+.large[
+`\(\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 \text{GRE}_i\)` 
+
+**Hypotheses:**
+
+&lt;br/&gt;
+
+**Test statistic:**
+
+`\(z =\)`
+]
+
+---
+
+### Example
+
+.large[
+`\(\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 \text{GRE}_i\)` 
+
+`\(H_0: \beta_1 = 0 \hspace{1cm} H_A: \beta_1 \neq 0\)`
+
+
+```
+...
+##              Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept) -2.901344   0.606038  -4.787 1.69e-06 ***
+*## gre          0.003582   0.000986   3.633  0.00028 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+...
+```
+
+`\(z =\)`
+]
+
+---
+
+### Wald tests vs. likelihood ratio tests
+
+.large[
+.pull-left[
+**Wald test**
+
+* like t-tests
+* test a single parameter
+* some example hypotheses:
+    * `\(H_0: \beta_1 = 0\)` vs. `\(H_A: \beta_1 \neq 0\)`
+    * `\(H_0: \beta_1 = 1\)` vs. `\(H_A: \beta_1 &gt; 1\)`
+]
+
+.pull-right[
+**Likelihood ratio test**
+
+* like nested F-tests
+* test one or more parameters 
+* some example hypotheses:
+    * `\(H_0: \beta_1 = 0\)` vs. `\(H_A: \beta_1 \neq 0\)`
+]
+
+p-values are different, because test statistics and distributions are different
+]
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

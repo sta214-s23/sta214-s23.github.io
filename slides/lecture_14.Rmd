@@ -1,0 +1,206 @@
+---
+title: Prediction
+output:
+  xaringan::moon_reader:
+    css: "lab-slides.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+editor_options: 
+  chunk_output_type: console
+---
+
+### Types of research questions
+
+.large[
+So far, we have learned how to answer the following questions:
+
+* What is the relationship between the explanatory variables and the response?
+* What is a "reasonable range" for a parameter in this relationship?
+* Do we have strong evidence for a relationship between these variables?
+* How do we select a model when there are many possible explanatory variables?
+
+Today we will ask: how *well* does our model predict the response?
+]
+
+---
+
+### Class Activity, Part I 
+
+.large[
+Predictions with Titanic data:
+
+[https://sta214-s23.github.io/class_activities/ca_lecture_14.html](https://sta214-s23.github.io/class_activities/ca_lecture_14.html)
+]
+
+---
+
+### Class activity
+
+.large[
+Fitted model:
+]
+
+$\log \left( \dfrac{\widehat{\pi}_i}{1 - \widehat{\pi}_i} \right) = 3.78 - 0.037 Age_i - 2.52 Male_i - 1.31 Class2_i - 2.58 Class3_i$
+
+.large[
+.question[
+What is the predicted probability of survival for a male, first-class passenger aged 20? What about for a male, second-class passenger aged 30?
+]
+]
+
+---
+
+### Making predictions with the Titanic data
+
+.large[
+* For each passenger, we calculate $\widehat{\pi}_i$ (estimated probability of survival)
+* But, we want to predict *which* passengers actually survive
+
+.question[
+How do we turn $\widehat{\pi}_i$ into a binary prediction of survival / no survival?
+]
+]
+
+---
+
+### Confusion matrix
+
+```{r, include=F}
+library(tidyverse)
+titanic <- read.csv("https://sta214-s23.github.io/homework/Titanic.csv")
+
+titanic <- titanic %>%
+  drop_na()
+```
+
+.large[
+```{r}
+m1 <- glm(Survived ~ Age + Sex + as.factor(Pclass), 
+          data = titanic, family = binomial)
+
+table(Prediction = m1$fitted.values > 0.5, 
+      Truth = titanic$Survived)
+```
+
+.question[
+Did we do a good job predicting survival?
+]
+]
+
+---
+
+### Confusion matrix
+
+.large[
+```{r, echo=F}
+table(Prediction = m1$fitted.values > 0.5, 
+      Truth = titanic$Survived)
+```
+]
+
+---
+
+### Class activity, Part II
+
+.large[
+Predictions with the SBA data:
+
+[https://sta214-s23.github.io/class_activities/ca_lecture_14.html](https://sta214-s23.github.io/class_activities/ca_lecture_14.html)
+]
+
+
+---
+
+### Class activity
+
+```{r, include=F}
+sba <- read.csv("https://sta214-s23.github.io/class_activities/sba_small.csv")
+```
+
+.large[
+```{r}
+m1 <- glm(Default ~ log(DisbursementGross) + Term + 
+            as.factor(UrbanRural), 
+          family = binomial, data = sba)
+
+table(Prediction = m1$fitted.values > 0.5, 
+      Truth = sba$Default)
+```
+
+* Accuracy = 
+* Sensitivity = 
+* Specificity = 
+* PPV = 
+]
+
+---
+
+### Class activity
+
+.large[
+```{r, echo=F}
+table(Prediction = m1$fitted.values > 0.5, 
+      Truth = sba$Default)
+```
+
+.question[
+Is an accuracy of around 80% good?
+]
+]
+
+---
+
+### Class activity
+
+.large[
+Changing thresholds:
+
+```{r}
+table(Prediction = m1$fitted.values > 0.3, 
+      Truth = sba$Default)
+```
+
+```{r}
+table(Prediction = m1$fitted.values > 0.7, 
+      Truth = sba$Default)
+```
+
+]
+
+---
+
+### Changing thresholds
+
+.large[
+.question[
+How can I assess prediction performance across many different thresholds?
+]
+]
+
+---
+
+### ROC curve
+
+.large[
+```{r, echo=F, message=F, warning=F, fig.align='center', fig.width=7, fig.height=6}
+library(ROCR)
+pred <- prediction(m1$fitted.values, sba$Default)
+perf <- performance(pred,"tpr","fpr")
+
+# performance(pred, "auc")@y.values # 0.858
+
+data.frame(fpr = perf@x.values[[1]],
+           tpr = perf@y.values[[1]]) %>%
+  ggplot(aes(x = fpr, y = tpr)) +
+  geom_line(lwd=1.5) +
+  geom_abline(slope = 1, intercept = 0, lty = 2,
+              lwd = 1.5) +
+  labs(x = "False positive rate (1 - Specificity)",
+       y = "True positive rate (Sensitivity)") +
+  theme_classic() +
+  theme(text = element_text(size = 20))
+```
+]

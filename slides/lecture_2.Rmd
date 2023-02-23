@@ -1,0 +1,394 @@
+---
+title: Parametric models and logistic regression
+output:
+  xaringan::moon_reader:
+    css: "lab-slides.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+editor_options: 
+  chunk_output_type: console
+---
+
+### This week
+
+.large[
+* Office hour schedule posted
+* HW 1 released on course website
+* Download R and RStudio
+    - Instructions on course website
+    - Please come to office hours or contact me if you have problems!
+]
+
+---
+
+### Last time: dengue data
+
+.large[
+**Data:** Data on 5720 Vietnamese children, admitted to the hospital with possible dengue fever. Variables include:
+
+* *Sex*: patient's sex (female or male)
+* *Age*: patient's age (in years)
+* *WBC*: white blood cell count
+* *PLT*: platelet count
+* other diagnostic variables...
+* *Dengue*: whether the patient has dengue (0 = no, 1 = yes)
+
+**Goal:** Build a model to predict dengue status
+]
+
+---
+
+### Parametric modeling
+
+.large[
+
+A regression model is an example of a more general process called **parametric modeling**
+
+* **Step 1:** Choose a reasonable distribution for $Y_i$
+* **Step 2:** Build a model for the parameters of interest
+* **Step 3:** Fit the model
+
+]
+
+---
+
+### Step 1: Bernoulli distribution
+
+.large[
+**Definition:** Let $Y_i$ be a binary random variable, and $\pi_i = P(Y_i = 1)$. Then $Y_i \sim Bernoulli(\pi_i)$.
+]
+
+.large[
+A **random variable** is an event that has a set of possible outcomes, but we don't know which one will occur
+
+* Here $Y_i = 0$ or $1$
+* Our goal is to use the observed data to estimate $\pi_i = P(Y_i = 1)$
+]
+
+---
+
+### Second attempt at a model
+
+.large[
+$$Y_i \sim Bernoulli(\pi_i) \hspace{1cm} \pi_i = P(Y_i = 1 | Age_i)$$
+
+$$\pi_i = \beta_0 + \beta_1 Age_i$$
+]
+
+.large[
+.question[
+Are there still any potential issues with this approach?
+]
+]
+
+---
+
+### Don't fit linear regression with a binary response
+
+```{r setup, echo=F, fig.width=10, fig.height=5, fig.align='center', message=F, warning=F}
+library(tidyverse)
+library(patchwork)
+
+dengue <- read.csv("https://sta279-s22.github.io/labs/dengue.csv")
+
+p1 <- dengue %>%
+  ggplot(aes(x = Age, y = Dengue)) +
+  geom_point(size = 2) +
+  geom_smooth(method="lm", se=F, lwd=1.5) +
+  theme_bw() +
+  theme(text = element_text(size = 20))
+
+p2 <- dengue %>%
+  ggplot(aes(x = WBC, y = Dengue)) +
+  geom_point(size = 2) +
+  geom_smooth(method="lm", se=F, lwd=1.5) +
+  theme_bw() +
+  theme(text = element_text(size = 20))
+
+p1 + p2
+```
+
+
+---
+
+### Fixing the issues
+
+---
+
+### Logistic regression model
+
+.large[
+
+$Y_i =$ dengue status (0 = negative, 1 = positive) 
+
+$Age_i =$ age (in years)
+
+**Random component:** $\hspace{1cm} Y_i \sim Bernoulli(\pi_i)$
+
+**Systematic component:** $\hspace{1cm} \log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 \ Age_i$
+
+]
+
+---
+
+### Logistic regression model
+
+.large[
+
+$Y_i =$ dengue status (0 = negative, 1 = positive) 
+
+$Age_i =$ age (in years)
+
+**Random component:** $\hspace{1cm} Y_i \sim Bernoulli(\pi_i)$
+
+**Systematic component:** $\hspace{1cm} \log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 \ Age_i$
+
+.question[
+Why is there no noise term $\varepsilon_i$ in the logistic regression model? Discuss for 1--2 minutes with your neighbor, then we will discuss as a class.
+]
+
+]
+
+---
+
+### Fitting the logistic regression model
+
+.large[
+$$\hspace{1cm} Y_i \sim Bernoulli(\pi_i)$$
+$$\hspace{1cm} \log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 \ Age_i$$
+
+```{r, include=F}
+library(knitr)
+hook_output <- knit_hooks$get("output")
+knit_hooks$set(output = function(x, options) {
+   lines <- options$output.lines
+   if (is.null(lines)) {
+     return(hook_output(x, options))  # pass to default hook
+   }
+   x <- unlist(strsplit(x, "\n"))
+   more <- "..."
+   if (length(lines)==1) {        # first n lines
+     if (length(x) > lines) {
+       # truncate the output, but add ....
+       x <- c(head(x, lines), more)
+     }
+   } else {
+     x <- c(more, x[lines], more)
+   }
+   # paste these lines together
+   x <- paste(c(x, ""), collapse = "\n")
+   hook_output(x, options)
+ })
+```
+
+```{r, eval=F}
+m1 <- glm(Dengue ~ Age, data = dengue, 
+          family = binomial)
+summary(m1)
+```
+]
+
+---
+
+### Fitting the logistic regression model
+
+.large[
+$$\hspace{1cm} Y_i \sim Bernoulli(\pi_i)$$
+$$\hspace{1cm} \log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 \ Age_i$$
+
+```{r, output.lines = 9:13}
+m1 <- glm(Dengue ~ Age, data = dengue, 
+          family = binomial)
+summary(m1)
+```
+]
+
+---
+
+### Class activity
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_2.html](https://sta214-s23.github.io/class_activities/ca_lecture_2.html)
+
+* Spend 5--7 minutes working in pairs on the questions
+* We will then discuss as a class
+]
+
+---
+
+### Class activity
+
+.large[
+$$\hspace{1cm} \log \left( \dfrac{\widehat{\pi}_i}{1 - \widehat{\pi}_i} \right) = -2.45 + 0.22 \ Age_i$$
+
+.question[
+What is the predicted odds of dengue for a 5 year old patient?
+]
+]
+
+---
+
+### Class activity
+
+.large[
+$$\hspace{1cm} \log \left( \dfrac{\widehat{\pi}_i}{1 - \widehat{\pi}_i} \right) = -2.45 + 0.22 \ Age_i$$
+
+.question[
+For a 5 year old patient, is the predicted probability of dengue $> 0.5$, $< 0.5$, or $= 0.5$?
+]
+]
+
+---
+
+### Class activity
+
+.large[
+$$\hspace{1cm} \log \left( \dfrac{\widehat{\pi}_i}{1 - \widehat{\pi}_i} \right) = -2.45 + 0.22 \ Age_i$$
+
+.question[
+What is the predicted *probability* of dengue for a 5 year old patient?
+]
+]
+
+---
+
+### Shape of the regression curve
+
+.large[
+.pull-left[
+$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 \ X_i \hspace{0.5cm}$
+
+```{r echo=F, message=F, warning=F, fig.align='center', fig.width=6, fig.height=4}
+
+data.frame(x = seq(-5, 6, length.out=100),
+           y1 = -1 + seq(-5, 6, length.out=100)) %>%
+  ggplot(aes(x = x, y = y1)) +
+  geom_line(lwd = 2.5) +
+  theme_bw() +
+  labs(x = "x", y = "Log odds") +
+  theme(text = element_text(size = 30))
+```
+]
+
+.pull-right[
+$\pi_i = \dfrac{e^{\beta_0 + \beta_1 \ X_i}}{1 + e^{\beta_0 + \beta_1 \ X_i}}$
+
+```{r echo=F, message=F, warning=F, fig.align='center', fig.width=6, fig.height=4}
+
+expit <- function(p){
+  return(exp(p)/(1 + exp(p)))
+}
+
+data.frame(x = seq(-5, 6, length.out=100),
+           y1 = expit(-1 + seq(-5, 6, length.out=100))) %>%
+  ggplot(aes(x = x, y = y1)) +
+  geom_line(lwd = 2.5) +
+  theme_bw() +
+  labs(x = "x", y = "P(y = 1)") +
+  theme(text = element_text(size = 30))
+```
+]
+]
+
+---
+
+### Shape of the regression curve
+
+.large[
+How does the shape of the fitted logistic regression depend on $\beta_0$ and $\beta_1$?
+
+.pull-left[
+$\pi_i = \dfrac{\exp\{\beta_0 +  x_i \}}{1 + \exp\{\beta_0 + x_i \}} \hspace{0.5cm}$ for $\beta_0 = -3, -1, 1$
+
+```{r echo=F, message=F, warning=F, fig.align='center', fig.width=6, fig.height=4}
+
+expit <- function(p){
+  return(exp(p)/(1 + exp(p)))
+}
+
+data.frame(x = seq(-5, 6, length.out=100),
+           y1 = expit(-1 + seq(-5, 6, length.out=100)),
+           y2 = expit(-3 + seq(-5, 6, length.out=100)),
+           y3 = expit(1 + seq(-5, 6, length.out=100))) %>%
+  ggplot(aes(x = x, y = y1)) +
+  geom_line(lwd = 2.5) +
+  geom_line(aes(y = y2), lwd=2.5, lty = 2, color="blue") +
+  geom_line(aes(y = y3), lwd=2.5, lty = 3, color="red") +
+  theme_bw() +
+  labs(x = "x", y = "P(y = 1)") +
+  annotate("text", x = -2, y = 0.4, label="1", size=8) +
+  annotate("text", x = 0, y = 0.4, label="-1", size=9) +
+  annotate("text", x = 3.5, y = 0.4, label="-3", size=8) +
+  theme(text = element_text(size = 30))
+```
+]
+
+.pull-right[
+$\pi_i = \dfrac{\exp\{-1 +  \beta_1 \ x_i \}}{1 + \exp\{-1 +  \beta_1 \ x_i \}} \hspace{0.5cm}$ for $\beta_1 = 0.5, 1, 2$
+
+```{r echo=F, message=F, warning=F, fig.align='center', fig.width=6, fig.height=4}
+
+data.frame(x = seq(-5, 6, length.out=100),
+           y1 = expit(-1 + 0.5*seq(-5, 6, length.out=100)),
+           y2 = expit(-1 + seq(-5, 6, length.out=100)),
+           y3 = expit(-1 + 2*seq(-5, 6, length.out=100))) %>%
+  ggplot(aes(x = x, y = y1)) +
+  geom_line(lwd = 2.5) +
+  geom_line(aes(y = y2), lwd=2.5, lty = 2, color="blue") +
+  geom_line(aes(y = y3), lwd=2.5, lty = 3, color="red") +
+  theme_bw() +
+  labs(x = "x", y = "P(y = 1)") +
+  annotate("text", x = 3, y = 0.75, label="0.5", size=8) +
+  annotate("text", x = 1.5, y = 0.75, label="1", size=9) +
+  annotate("text", x = 0.5, y = 0.75, label="2", size=8) +
+  theme(text = element_text(size = 30))
+```
+]
+]
+
+---
+
+### Interpretation
+
+.large[
+$$\hspace{1cm} \log \left( \dfrac{\widehat{\pi}_i}{1 - \widehat{\pi}_i} \right) = -2.45 + 0.22 \ Age_i$$
+
+.question[
+How would I interpret the slope and intercept of this fitted model in terms of the *log odds* that a patient has dengue?
+]
+]
+
+---
+
+### Interpretation
+
+.large[
+$$\hspace{1cm} \log \left( \dfrac{\widehat{\pi}_i}{1 - \widehat{\pi}_i} \right) = -2.45 + 0.22 \ Age_i$$
+
+.question[
+How do you think I would interpret the slope and intercept of this fitted model in terms of the *odds* that a patient has dengue?
+]
+]
+
+---
+
+### Adding more variables
+
+.large[
+Now let's add WBC as a variable to the model:
+
+```{r, eval=F}
+m2 <- glm(Dengue ~ Age + WBC, data = dengue,
+          family = binomial)
+summary(m2)
+```
+
+$$\hspace{1cm} \log \left( \dfrac{\widehat{\pi}_i}{1 - \widehat{\pi}_i} \right) = 0.34 + 0.15 \ Age_i - 0.31 WBC_i$$
+
+.question[
+How should I interpret each coefficient in the fitted model?
+]
+]

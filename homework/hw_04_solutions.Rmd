@@ -1,0 +1,348 @@
+---
+title: "HW 4 Solutions"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(gridExtra)
+library(statmod)
+sfn <- read.csv("https://sta214-s23.github.io/homework/sfn.csv")
+
+logodds_plot <- function(data, num_bins, bin_method,
+                         x_name, y_name, grouping = NULL, reg_formula = y ~ x){
+  
+  if(is.null(grouping)){
+    dat <- data.frame(x = data %>% pull(x_name), 
+                      y = data %>% pull(y_name),
+                      group = 1)
+  } else {
+    dat <- data.frame(x = data %>% pull(x_name), 
+                      y = data %>% pull(y_name),
+                      group = as.factor(data %>% pull(grouping)))
+  }
+  
+  if(bin_method == "equal_size"){
+    logodds_table <- dat %>%
+      drop_na() %>%
+      arrange(group, x) %>%
+      group_by(group) %>%
+      mutate(obs = y,
+             bin = rep(1:num_bins,
+                       each=ceiling(n()/num_bins))[1:n()]) %>%
+      group_by(bin, group) %>%
+      summarize(mean_x = mean(x),
+                prop = mean(c(obs, 0.5)),
+                num_obs = n()) %>%
+      ungroup() %>%
+      mutate(logodds = log(prop/(1 - prop)))
+  } else {
+    logodds_table <- dat %>%
+      drop_na() %>%
+      group_by(group) %>%
+      mutate(obs = y,
+             bin = cut(x, 
+                       breaks = num_bins,
+                       labels = F)) %>%
+      group_by(bin, group) %>%
+      summarize(mean_x = mean(x),
+                prop = mean(c(obs, 0.5)),
+                num_obs = n()) %>%
+      ungroup() %>%
+      mutate(logodds = log(prop/(1 - prop)))
+  }
+  
+  if(is.null(grouping)){
+    logodds_table %>%
+      ggplot(aes(x = mean_x,
+                 y = logodds)) +
+      geom_point(size=2) +
+      geom_smooth(se=F, method="lm", formula = reg_formula) +
+      theme_bw() +
+      labs(x = x_name,
+           y = "Empirical log odds") +
+      theme(text = element_text(size=15))
+  } else {
+    logodds_table %>%
+      ggplot(aes(x = mean_x,
+                 y = logodds,
+                 color = group,
+                 shape = group)) +
+      geom_point(size=2) +
+      geom_smooth(se=F, method="lm", formula = reg_formula) +
+      theme_bw() +
+      labs(x = x_name,
+           y = "Empirical log odds",
+           color = grouping,
+           shape = grouping) +
+      theme(text = element_text(size=15))
+  }
+}
+```
+
+
+## Question 1
+
+### (a) (3 pts)
+
+Substituting in the observed data,
+
+$L(\lambda) = \left( \dfrac{\lambda^2 e^{-\lambda}}{2!} \right) \cdot \left( \dfrac{\lambda^4 e^{-\lambda}}{4!} \right) \cdot \left( \dfrac{\lambda^6 e^{-\lambda}}{6!} \right) \cdot \left( \dfrac{\lambda^6 e^{-\lambda}}{6!} \right) \cdot \left( \dfrac{\lambda^3 e^{-\lambda}}{3!} \right) \cdot \left( \dfrac{\lambda^1 e^{-\lambda}}{1!} \right)$
+
+this simplifies to 
+
+$L(\lambda) = \dfrac{\lambda^{22} e^{-6 \lambda}}{2! \cdot 4! \cdot 6! \cdot 6! \cdot 3! \cdot 1!}$
+
+**Grading:** 1 pt for using the correct probability function (the Poisson probability function), 1 pt for applying the probability function to each observation, 1 pt for multiplying all the probabilities together.
+
+### (b) (2 pts)
+
+The log likelihood is 
+
+$\log L(\lambda) = \log \left( \dfrac{\lambda^{22} e^{-6 \lambda}}{2! \cdot 4! \cdot 6! \cdot 6! \cdot 3! \cdot 1!} \right) = 22 \log(\lambda) - 6 \lambda - \log(2! \cdot 4! \cdot 6! \cdot 6! \cdot 3! \cdot 1!)$
+
+**Grading:** Lose 1 pt for errors applying rules of logarithms
+
+### (c) (3 pts)
+
+Differentiating,
+
+$\frac{d}{d \lambda} \log L(\lambda) = \dfrac{22}{\lambda} - 6$
+
+We then set the derivative equal to 0, and solve for $\lambda$:
+
+$\widehat{\lambda} = \dfrac{22}{6} = 3.67$.
+
+**Grading:** 1 pt for the derivative, 1 pt for setting to 0, 1 pt for correctly solving for $\lambda$
+
+## Question 2
+
+### (a) (3 pts)
+
+We know that
+
+$\ell(\lambda) = \sum \limits_{i=1}^n \log(P(Y = Y_i))$
+
+Applying the distribution for this problem,
+
+$\ell(\lambda) = \sum \limits_{i=1}^n \log \left( \dfrac{\lambda^{Y_i} e^{-\lambda}}{Y_i!} \right)$
+
+This can be simplified by splitting up the log and the sum:
+
+\begin{align*}
+\ell(\lambda) &= \sum \limits_{i=1}^n (Y_i \log(\lambda) - \lambda - \log(Y_i!)) \\
+&= \log(\lambda) \sum \limits_{i=1}^n Y_i - n \lambda - \sum \limits_{i=1}^n \log(Y_i!)
+\end{align*}
+
+**Grading:** 1 pt for using the correct probability function (the Poisson probability function), 1 pt for applying the probability function to each observation $Y_i$, 1 pt for simplifying the log likelihood.
+
+### (b) (4 pts)
+
+Differentiating,
+
+$\frac{d}{d \lambda} \log L(\lambda) = \frac{\sum \limits_{i=1}^n Y_i}{\lambda} - n \ \ \overset{set}{=} \ \ 0$
+
+We then solve for $\lambda$:
+
+$\widehat{\lambda} = \frac{\sum \limits_{i=1}^n Y_i}{n}$
+
+**Grading:** 2 pts for correctly taking the derivative, 1 pt for setting to 0, 1 pt for correctly solving for $\lambda$
+
+
+## Question 3
+
+### (a) (3 pts)
+
+The explanatory variables of interest are Posts, Views, Authors, and Forum; we want all of these variables in the model. The variable of interest is whether there is at least one deleted post in the thread. This is a *new* variable we will need to create using the DeletedPosts variable:
+
+```{r}
+sfn <- sfn %>%
+  mutate(hasDeleted = DeletedPosts > 0)
+```
+
+**Grading:** 1 pt for explanatory variable, 1 pt for response variable, 1 pt for creating the new variable for the response (if they create it below in a different question, they can still get the points here).
+
+### (b) (6 pts)
+
+Here are empirical logit plots for Posts, Views, and Authors:
+
+```{r, message=F, warning=F}
+p1 <- logodds_plot(sfn, 30, "equal_size", "Posts", "hasDeleted", reg_formula = y ~ x)
+p2 <- logodds_plot(sfn, 30, "equal_size", "Views", "hasDeleted", reg_formula = y ~ x)
+p3 <- logodds_plot(sfn, 30, "equal_size", "Authors", "hasDeleted", reg_formula = y ~ x)
+
+grid.arrange(p1, p2, p3, ncol=2)
+```
+
+All three variables show potentially non-linear relationships, so transformations may be needed. Here are some log transformations:
+
+```{r, message=F, warning=F}
+p1 <- logodds_plot(sfn, 30, "equal_size", "Posts", "hasDeleted", reg_formula = y ~ log(x))
+p2 <- logodds_plot(sfn, 30, "equal_size", "Views", "hasDeleted", reg_formula = y ~ log(x))
+p3 <- logodds_plot(sfn, 30, "equal_size", "Authors", "hasDeleted", reg_formula = y ~ log(x))
+
+grid.arrange(p1, p2, p3, ncol=2)
+```
+
+Something like a log or square root should probably be applied to each of these variables.
+
+**Grading:** 3 pts for the original empirical logit plots (1 for each quantitative variable), 2 pts for exploring transformations, 1 pt for concluding some transformation (log, square root, etc.) needs to be applied. Lose 1 pt for missing code.
+
+### (c) (6 pts)
+
+Here is one possible model (other models, with slightly different transformations, would also be ok):
+
+\begin{align*}
+Y_i &\sim Bernoulli(\pi_i) \\
+\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) &= \beta_0 + \beta_1 \log(Posts_i) + \beta_2 \log(Authors_i) + \beta_3 \sqrt{Views_i} + \beta_4 Homework_i + \beta_5 Math_i + \\
+& \hspace{1cm} + \beta_6 Medicine_i + \beta_7 Misc_i + \beta_8 Science_i + \beta_9 Speculation_i
+\end{align*}
+
+We are particularly interested in the coefficient $\beta_1$ on Posts; we can use hypothesis testing to test whether $\beta_1 = 0$, and construct a confidence interval for $\beta_1$.
+
+**Grading:** Lose 1 pt if transformations aren't used. Lose 1 pt if they use $\log(Views_i)$ without accounting for the fact that Views can be 0. Lose 1 pt for incorrect notation or missing subscripts. Lose 1 pt if indicator variables are not used for the different forums. Lose 1 pt if the equation doesn't fit on the page and you can't read the full equation. Lose 3 pts if missing some of the explanatory variables.
+
+2 pts for briefly explaining how they will use the model to address the research question. Descriptions may vary, they can receive the points provided their answer is reasonable.
+
+### (d) (4 pts)
+
+```{r}
+m1 <- glm(hasDeleted ~ log(Posts) + sqrt(Views) + log(Authors) + Forum,
+          family = binomial, data = sfn)
+summary(m1)
+```
+
+Fitted model:
+
+\begin{align*}
+Y_i &\sim Bernoulli(\pi_i) \\
+\log \left( \dfrac{\widehat{\pi}_i}{1 - \widehat{\pi}_i} \right) &= -5.21 -0.99 \log(Posts_i) + 2.45 \log(Authors_i) + 0.01 \sqrt{Views_i} + 0.86 Homework_i + 0.55 Math_i + \\
+& \hspace{1cm} + 0.59 Medicine_i + 1.05 Misc_i + 0.34 Science_i + 0.32 Speculation_i
+\end{align*}
+
+$\widehat{\beta}_1 = -0.99$, so a one-unit increase in the log of Posts is associated with a decrease in the odds of having at least one deleted post by a factor of $\exp\{-0.99\} = 0.37$, holding Views, Authors, and Forum constant.
+
+**Grading:** Lose 1 pt if their model doesn't match the model they specified in (c). Lose 1 pt for incorrect notation (missing hats, missing subscripts, etc.). It is ok if their model is slightly different from mine. Lose 1 pt for missing code. 2 pts for interpretation; note that they only need to interpret the coefficient on posts, not the other coefficients
+
+### (e) (5 pts)
+
+```{r}
+p1 <- sfn %>%
+  mutate(residuals = qresid(m1)) %>%
+  ggplot(aes(x = log(Posts), y = residuals)) +
+  geom_point() +
+  geom_smooth() +
+  theme_bw()
+
+p2 <- sfn %>%
+  mutate(residuals = qresid(m1)) %>%
+  ggplot(aes(x = log(Authors), y = residuals)) +
+  geom_point() +
+  geom_smooth() +
+  theme_bw()
+
+p3 <- sfn %>%
+  mutate(residuals = qresid(m1)) %>%
+  ggplot(aes(x = sqrt(Views), y = residuals)) +
+  geom_point() +
+  geom_smooth() +
+  theme_bw()
+
+grid.arrange(p1, p2, p3, ncol=2)
+```
+
+The quantile residual plots look pretty good; I don't think we need additional transformations on the explanatory variables.
+
+**Grading:** 3 pts for plots (1 pt for each plot), 2 pts for discussing plots. Lose 1 pt if no code shown.
+
+### (f) (1 pt)
+
+I don't think any further tranformations are needed here.
+
+### (g) (5 pts)
+
+Our null hypothesis is $H_0: \beta_1 = 0$, and our alternative hypothesis is $H_A: \beta_1 \neq 0$. We can conduct a likelihood ratio test by comparing the deviances of the reduced and full models:
+
+```{r}
+m2 <- glm(hasDeleted ~ sqrt(Views) + log(Authors) + Forum,
+          family = binomial, data = sfn)
+m2$deviance - m1$deviance
+
+pchisq(m2$deviance - m1$deviance, df=1, lower.tail=F)
+```
+
+Our drop-in-deviance statistic is $G = 140.56$ and our p-value is approximately 0, so the observed data would be highly unusual if in fact there is no relationship between posts and deleted posts, after accounting for the other variables.
+
+**Grading:** 1 pt for hypotheses, 1 pt for code, 1 pt for test statistic, 1 pt for p-value, 1 pt for conclusion. Lose 1 pt if p-value is interpreted incorrectly (e.g., as the probability that $H_0$ is true)
+
+### (h) (5 pts)
+
+Our null hypothesis is $H_0: \beta_1 = 0$, and our alternative hypothesis is $H_A: \beta_1 \neq 0$. We can conduct a Wald test by calculating a z-statistic:
+
+```{r}
+summary(m1)
+```
+
+Our z-statistic is $z = -11.2$ and our p-value is approximately 0, so the observed data would be highly unusual if in fact there is no relationship between posts and deleted posts, after accounting for the other variables.
+
+**Grading:** 1 pt for hypotheses, 1 pt for code, 1 pt for test statistic, 1 pt for p-value, 1 pt for conclusion. Lose 1 pt if p-value is interpreted incorrectly (e.g., as the probability that $H_0$ is true)
+
+### (i) (4 pts)
+
+I will construct a 95% interval (though students may choose whichever confidence level they like):
+
+```{r}
+-0.99 + qnorm(0.025, lower.tail=F)*0.088
+-0.99 - qnorm(0.025, lower.tail=F)*0.088
+```
+
+Our 95% CI is $(-1.16, -0.82)$. So we are 95% confident that a one-unit increase in log(Posts), holding Views, Authors, and Forum fixed, is associated with a change in the odds that a thread will have a deleted post by a factor of between $e^{-1.16} = 0.31$ and $e^{-0.82} = 0.44$.
+
+**Grading:** 2 pts for interval, 1 pt for interpretation, 1 pt for exponentiating endpoints to interpret in terms of odds.
+
+## Question 4
+
+### (a) (2 pts)
+
+p-values and hypothesis testing are often misunderstood by practitioners, who believe a small p-value provides stronger or more meaningful evidence that it really does. It is also easy to mis-use p-values, for example by continuing to test hypotheses until you get a "small" p-value (e.g., less than 0.05). Finally, p-values don't provide any other context about the data -- whether the effect size is actually meaningful, whether assumptions are satisfied, whether the data are representative of the population, etc.
+
+**Grading:** Answers may vary; students can receive full credit if their answer is somewhat related to some of the ideas described here.
+
+### (b) (2 pts)
+
+One example of mis-interpretation is believing a p-value is the probability that $H_0$ is true. One example of mis-use is p-hacking (continuing to test hypotheses until you get a small p-value). 
+
+**Grading:** Answers may vary; students can receive full credit if their answer is reasonable.
+
+### (c) (2 pts)
+
+A p-value is *not* the probability that $H_0$ is true. It also doesn't provide information about the effect size or about practical significance. And p-values don't provide other context about whether the model is appropriate for the data. 
+
+**Grading:** Answers may vary; students can receive full credit if their answer is reasonable.
+
+### (d) (2 pts)
+
+Report p-values in the context of other findings (effect sizes, confidence intervals, model diagnostics). Don't rely on a threshold to determine whether a hypothesis is "true" or "false".
+
+**Grading:** Answers may vary; students can receive full credit if their answer is reasonable.
+
+
+## Question 5 (Extra Credit)
+
+Students can receive 1 pt of extra credit for each correct answer below, for a maximum of 3 pts of extra credit total.
+
+### (a) (1 pt)
+
+`NA/NaN/Inf in 'x'`
+
+### (b) (1 pt)
+
+Fare can be 0, so when we take log(Fare) we get log(0), which is $-\infty$ in R.
+
+### (c) (1 pt)
+
+Either add a small number to Fare before taking the log (e.g., log(Fare + 1)), or use a different transformation (e.g., square root)
+
+
+

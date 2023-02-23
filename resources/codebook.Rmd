@@ -1,0 +1,952 @@
+---
+title: "STA 214 Codebook"
+output: 
+  rmdformats::robobook:
+    css: "homework.css"
+    highlight: pygments
+link-citations: yes
+---
+
+**Use:** The purpose of this codebook is to summarize key code that we use in R to visualize and explore data, fit models, assess assumptions, and test hypotheses. I will update the codebook periodically throughout the semester as we learn new topics.
+
+Many tasks in R, such as visualizing data, can be done in multiple different ways. Throughout this codebook I will tend to use the `tidyverse` for visualizing and cleaning data, but be aware that other options exist.
+
+# Installing packages
+
+Many functions and datasets we want to use in R are provided in *packages*. An important package for STA 214 will be the `tidyverse` package, which is really a collection of R packages with a common philosophy on how to work with data.
+
+To install `tidyverse`, run the following code in your R console (*not* in an R Markdown document!):
+
+```r
+install.packages("tidyverse")
+```
+
+To install other packages, simply replace the name `tidyverse` with the name of the package you want to install. Note that packages only ever need to be installed *once*. After a package is successfully installed, you won't need to install it again unless you update R on your computer.
+
+## Loading packages 
+
+Installing a package downloads it to your computer, but doesn't make it immediately available to your R session. If you want to use the `tidyverse` package, you will need to *load* it by running the following code:
+
+```r
+library(tidyverse)
+```
+
+(The code is similar for other packages, just replace the name `tidyverse`). You will need to include `library(...)` calls in the setup chunk of your R Markdown documents.
+
+# Exploratory data analysis (EDA)
+
+In STA 112, you learned tools for *exploratory data analysis* (EDA), in which we explore features of the data such as the available variables and their relationships. Exploratory data analysis is an important step before we do any model fitting or hypothesis testing, because it gets us familiar with the data and any unusual features. It is hard to fit a sensible model when we don't know what the data look like!
+
+This section of the codebook includes examples of summarizing the data, identifying missing values, and univariate and multivariate EDA. The data used for this section is the `penguins` dataset, from the `palmerpenguins` package. To load the `penguins` data, run the following in R (you may need to install the `palmerpenguins` package):
+
+```r
+library(palmerpenguins)
+```
+
+We can then look at the description of the `penguins` data provided by the package:
+
+```r
+?penguins
+```
+
+(this only works for datasets included in packages).
+
+```{r, include=F}
+library(palmerpenguins)
+library(tidyverse)
+```
+
+## Data size and variables
+
+To peak at the data, we can use the `glimpse` function to see the variables and the size:
+
+```{r}
+glimpse(penguins)
+```
+
+From this summary, we can see there are 344 rows (each row is one penguin), 8 columns, and we see the first few values in each column. Another way to explore the raw data in RStudio is to run
+
+```r
+View(penguins)
+```
+
+in your console (*not* in R Markdown!).
+
+Other functions can also be used to calculate the number of rows, the number of columns, and both the number of rows and number of columns:
+
+```{r}
+nrow(penguins) # number of rows
+ncol(penguins) # number of columns
+dim(penguins) # dimensions of the data
+```
+
+## Missing data
+
+Sometimes, our data contains missing values. These are often recorded as `NA` in R (for "not available"). You can see when we glimpsed the `penguins` data above that there were several missing values (`NA`s), and there are probably more in the rest of the data that wasn't displayed.
+
+To remove missing rows which contain missing values, we can use the `drop_na` function. The following code creates a *new* dataset (called `penguins_new`) without those missing values:
+
+```{r}
+penguins_new <- penguins %>%
+  drop_na()
+```
+
+How many rows did we remove (i.e., how many rows had missing values)? We can compare the dimensions of `penguins_new` to `penguins`:
+
+```{r}
+dim(penguins_new)
+```
+
+Since `penguins_new` has 333 rows, we have removed 11 rows due to missing values.
+
+### Removing missing values from specific columns
+
+What if we only want to remove rows with `NA`s in the `flipper_length_mm` column? We can specify that column in the `drop_na` function:
+
+```{r}
+penguins_new <- penguins %>%
+  drop_na(flipper_length_mm)
+
+dim(penguins_new)
+```
+
+So, there were 2 rows with missing flipper length values.
+
+## A note on pipes (`%>%` and `|>`)
+
+Throughout this codebook (and throughout my own code too!), I use the pipe operator `%>%`. The pipe just means "take THIS, then do THAT". So,
+
+```r
+penguins %>%
+  drop_na(flipper_length_mm)
+```
+
+means "take `penguins`, then `drop_na` (remove missing values)". Pipes can be chained together into a longer sequence of steps, too:
+
+```{r}
+penguins %>%
+  drop_na(flipper_length_mm) %>%
+  dim()
+```
+
+I like pipes because I think they often make code cleaner and more readable, but you don't have to use them. You can collapse the pipe into a nested series of functions (evaluated from the inside out):
+
+```{r}
+dim(drop_na(penguins, flipper_length_mm))
+```
+
+Or you can save the intermediate steps:
+
+```{r}
+penguins_new <- drop_na(penguins, flipper_length_mm)
+dim(penguins_new)
+```
+
+The pipe operator `%>%` comes from the `magrittr` package (the name is a nod to artist Rene Magritte and his painting *The Treachery of Images*). Newer versions of R also include a built-in pipe operator `|>` which functions similarly:
+
+```{r}
+penguins |>
+  drop_na(flipper_length_mm) |>
+  dim()
+```
+
+For simplicity, and because `|>` is more recent, in this course I will default to the older pipe `%>%`.
+
+## Types of variables
+
+Here we will deal mainly with *categorical* and *quantitative* variables. 
+
+* **Categorical** variables are variables which take on one of several fixed values. These values generally do not have a numeric interpretation.
+    * Examples: gender, favorite food, brand of laptop
+    * *Binary* categorical variables have exactly 2 possible values
+* **Quantitative** variables are variables which take on a numeric value, and which have a numeric interpretation.
+    * Examples: number of pets, height, weight, age
+    * *Discrete* quantitative variables only take on discrete values (e.g., number of pets)
+    * *Continuous* quantitative variables can take on an entire range of values (e.g., height is continuous if we allow heights like 60.323 inches)
+
+## An overview of `ggplot` for making plots
+
+The `ggplot2` package, which is part of `tidyverse`, is a very valuable tool for visualizing data. The `ggplot2` packages provides the `ggplot` function, which is my default for making plots. For example, here is code to create a scatterplot:
+
+```{r}
+penguins %>%
+  ggplot(aes(x = bill_depth_mm, 
+             y = bill_length_mm, 
+             color = species)) +
+  geom_point() +
+  labs(x = 'Bill depth (mm)', 
+       y = 'Bill length (mm)',
+       color = 'Species',
+       title = "Penguin bill length vs. bill depth") +
+  theme_bw()
+```
+
+Notice that `ggplot` is warning us that we had some missing values in the data. If we remove those missing values, the warning will go away.
+
+### `ggplot` layers
+
+The idea behind `ggplot` is to build the figure in layers. We start off by specifying the data that we want to use (`penguins`), and the variables that we want to plot (`bill_depth_mm`, `bill_length_mm`, and `species`). These variables are mapped to the *aesthetics* of the plot: features like the x-axis (`x = bill_depth_mm`), the y-axis (`y = bill_length_mm`), and the color of the points (`color = species`). We specify the aesthetics in the `aes`. Other aesthetics include `shape`, `fill`, `alpha`, etc. 
+
+Running the first few lines sets up the plot for us to fill in:
+
+```{r}
+penguins %>%
+  ggplot(aes(x = bill_depth_mm, 
+             y = bill_length_mm, 
+             color = species))
+```
+
+Next, we need to decide how to represent the observations in our plot. Here we have two quantitative variables, so a scatterplot is reasonable. We therefore add another layer to our plot, representing each observation as a point (notice that we add layers together with the `+` sign):
+
+```{r}
+penguins %>%
+  ggplot(aes(x = bill_depth_mm, 
+             y = bill_length_mm, 
+             color = species)) +
+  geom_point()
+```
+
+The way we represent our data (in this case, points) is with geometric objects, or *geoms*. If we want points, we use `geom_point`. Other geoms include `geom_histogram` (histograms), `geom_bar` (bar charts), `geom_boxplot` (boxplots), among many others. The sections below give an overview of some of the most important plots.
+
+Finally, we want to make our plot look nice. This involves changing the axis labels and the legend, adding a title, and changing the theme. We include axis labels in the `labs` layer, and we change the theme in the `theme` layer. Possible themes include `theme_bw`, `theme_minimal`, `theme_classic`, `theme_light`, and many others. I typically use `theme_bw`, but you may choose whichver theme you prefer.
+
+```{r}
+penguins %>%
+  ggplot(aes(x = bill_depth_mm, 
+             y = bill_length_mm, 
+             color = species)) +
+  geom_point() +
+  labs(x = 'Bill depth (mm)', 
+       y = 'Bill length (mm)',
+       color = 'Species',
+       title = "Penguin bill length vs. bill depth") +
+  theme_bw()
+```
+
+## Univariate exploratory data analysis
+
+Here we discuss how to summarize, visualize, and describe the distributions of categorical and quantitative variables.
+
+### Categorical variables
+
+#### Summarize
+
+The number of observations in each group can be summarized in a **frequency table**:
+
+```{r}
+penguins %>%
+  count(species)
+```
+
+#### Visualize
+
+The same information can be visualized with **bar charts**, which display the number of observations in each group as the height of the bar:
+
+
+```{r}
+penguins %>%
+  ggplot(aes(x = species)) +
+  geom_bar() +
+  labs(x = "Species") +
+  theme_bw()
+```
+
+Other visualization options include pie charts.
+
+#### Describe
+
+* Which category has the most number of observations? The least?
+* Are observations spread relatively evenly across categories, or do one or two categories have the majority of the observations?
+
+### Quantitative variables
+
+#### Summarize
+
+Many summary statistics can be calculated for quantitative variables. We often calculate the mean or median to summarize the center of the distribution, and the standard deviation or IQR to summarize the spread of the distribution. If the data are highly skewed, the median and IQR are often more appropriate measures of center and spread.
+
+Note that if NAs (missing values) are present in the data, then we need to remove them before calculating summary statistics. This can be done by removing all rows with NAs (`drop_na()`), or by ignoring NAs when we calculate the summary statistics (`na.rm=TRUE`).
+
+```{r}
+penguins %>%
+  summarize(mean_mass = mean(body_mass_g, na.rm=TRUE),
+            median_mass = median(body_mass_g, na.rm=TRUE),
+            sd_mass = sd(body_mass_g, na.rm=TRUE),
+            iqr_mass = IQR(body_mass_g, na.rm=TRUE))
+```
+
+#### Visualize
+
+A good choice for visualize the distribution of a quantitative variable is with a **histogram**. A histogram divides the range of the data into evenly spaced bins, and then displays the number of observations which fall into each bin. Since the number of bins affects how the histogram looks, it is good practice to experiment with several different numbers of bins. This can be specified with the `bins` argument in `geom_histogram`.
+
+```{r, message=F, warning=F}
+penguins %>%
+  ggplot(aes(x = body_mass_g)) +
+  geom_histogram(bins = 20) +
+  labs(x = "Body mass (g)") +
+  theme_bw()
+```
+
+Another common option for visualization is the **boxplot**. A boxplot doesn't show the whole distribution, but rather a summary of it. In particular, it displays the median, first and third quartiles, the smallest and largest non-outlier values, and any outliers.
+
+```{r, message=F, warning=F}
+penguins %>%
+  ggplot(aes(y = body_mass_g)) +
+  geom_boxplot() +
+  labs(y = "Body mass (g)") +
+  theme_bw()
+```
+
+Other tools include density plots (`geom_density`) and violin plots (`geom_violin`).
+
+#### Describe
+
+* Shape (symmetric vs. skewed, number of modes, location of modes)
+* Center (usually mean or median)
+* Spread (usually standard deviation or IQR)
+* Any unusual features?
+* Any potential outliers?
+
+## Bivariate exploratory data analysis
+
+What if we want to look at the relationship between two variables? 
+
+### Two categorical variables
+
+#### Summarize
+
+We can count the number of observations in each group:
+
+```{r}
+penguins %>%
+  count(species, island)
+```
+
+Sometimes, it is nice to display the result as a two-way table, where categories for one variable are in the rows, and categories for the second variable are in the columns:
+
+```{r}
+penguins %>%
+  count(species, island) %>%
+  spread(island, n)
+```
+
+(Note that here, NA means that this combination of values did not appear in the dataset. So, e.g., there were no Chinstrap penguins from Biscoe island).
+
+#### Visualize
+
+A common way to visualize the relationship between two categorical variables is with a **stacked bar graph**:
+
+```{r}
+penguins %>%
+  ggplot(aes(x = species, fill = island)) +
+  geom_bar() +
+  labs(x = "Species",
+       fill = "Island") +
+  theme_bw()
+```
+
+Other options include mosaic plots.
+
+#### Describe
+
+* Which combination of categories has the most observations? The least?
+* Are there any combinations which do not appear in the data?
+* Is the distribution for the second variable the same for each level of the first variable? (E.g., in the `penguins` example above, there appears to be a relationship between species and island, because the distribution of penguins in each island is different for the three species. Adelie penguins are found on all three islands, whereas Chinstrap and Gentoo penguins are only on one).
+
+### Two quantitative variables
+
+#### Visualize
+
+To visualize the relationship between two quantitative variables, we can use a **scatterplot**:
+
+```{r, message=F, warning=F}
+penguins %>%
+  ggplot(aes(x = flipper_length_mm, 
+             y = body_mass_g)) +
+  geom_point() +
+  labs(x = "Flipper length (mm)",
+       y = "Body mass (g)") +
+  theme_bw()
+```
+
+#### Summarize
+
+If the relationship looks *linear*, we can calculate the sample correlation coefficient, $r$, to summarize the strength of the linear relationship.  Recall that $r$ takes values between -1 and 1, with $r = -1$ a very strong negative relationship, $r = 0$ no relationship, and $r = 1$ a very strong positive relationship.
+
+When calculating the correlation, we have to handle NAs, if missing values are present in the data. This can be done either by removing all rows with NAs before hand (`drop_na()`), or by ignoring NAs when computing correlation (`use = "complete.obs"`).
+
+```{r}
+penguins %>%
+  summarize(r = cor(flipper_length_mm, 
+                    body_mass_g, 
+                    use="complete.obs"))
+```
+
+#### Describe
+
+* does there appear to be a relationship?
+* if so, does the relationship appear to be positive or negative?
+* what is the general shape of the relationship? Does it look linear?
+* if the relationship looks linear, report the sample correlation coefficient
+
+### One categorical, one quantitative
+
+#### Visualize
+
+There are several options for visualizing the relationship between a categorical and a quantitative variable. A common choice is to make a **boxplot** for each level of the categorical variable:
+
+```{r, warning=F}
+penguins %>%
+  ggplot(aes(x = species, y = body_mass_g)) +
+  geom_boxplot() +
+  labs(x = "Species", y = "Body mass (g)") +
+  theme_bw()
+```
+
+While boxplots are just summaries of a distribution, they are very handy for comparing across groups.
+
+Another option, if the number of categories isn't too large, is to create a **histogram** faceted by the categorical variable:
+
+```{r, warning=F}
+penguins %>%
+  ggplot(aes(x = body_mass_g)) +
+  geom_histogram(bins = 20) +
+  facet_wrap(~species) +
+  labs(x = "Body mass (g)") +
+  theme_bw()
+```
+
+#### Summarize
+
+To summarize the relationship, we can calculate summary statistics for the quantitative variable at each level of the categorical variable. The `group_by` function is very helpful here.
+
+```{r}
+penguins %>%
+  group_by(species) %>%
+  summarize(mean_mass = mean(body_mass_g, na.rm=TRUE),
+            median_mass = median(body_mass_g, na.rm=TRUE))
+```
+
+#### Describe
+
+Is the distribution of the quantitative variable different across levels of the categorical variable? If so, how? (e.g., differences in shape, center, spread)
+
+## More than two variables
+
+With more than two variables, you can get a lot of combinations. Here are just a couple examples. Using additional aesthetics and faceting is helpful for visualization. Using grouping is helpful for summary statistics.
+
+### Quantitative, quantitative, categorical
+
+```{r, message=F, warning=F}
+penguins %>%
+  ggplot(aes(x = bill_depth_mm, 
+             y = body_mass_g, 
+             color = species)) +
+  geom_point() +
+  labs(x = "Bill depth (mm)",
+       y = "Body mass (g)",
+       color = "Species") +
+  theme_bw()
+
+penguins %>%
+  group_by(species) %>%
+  summarize(r = cor(bill_depth_mm, 
+                    body_mass_g, 
+                    use="complete.obs"))
+```
+
+### Quantitative, categorical, categorical
+
+```{r, message=F, warning=F}
+penguins %>%
+  ggplot(aes(x = island, 
+             y = body_mass_g)) +
+  geom_boxplot() +
+  facet_wrap(~species) +
+  labs(x = "Island", 
+       y = "Body mass (g)") +
+  theme_bw()
+
+penguins %>%
+  ggplot(aes(x = body_mass_g)) +
+  geom_histogram(bins=15) +
+  facet_grid(island~species) +
+  labs(x = "Body mass (g)") +
+  theme_bw()
+
+penguins %>%
+  group_by(species, island) %>%
+  summarize(mean_mass = mean(body_mass_g, na.rm=TRUE),
+            median_mass = median(body_mass_g, na.rm=TRUE))
+```
+
+# Logistic regression
+
+In this section, we will continue to use the `penguins` data from the `palmerpenguins` package (see the EDA section above for instructions on loading the data).
+
+## Two components of a parametric model
+
+In the `penguins` data, `sex` is a categorical variable which is recorded as either male or female. Suppose we want to predict penguin sex based on physical characteristics like flipper length and body mass. Let $Y_i = 0$ if sex = female, and $Y_i = 1$ if sex = 1 (I am coding male as 1 here because by default, R will order the levels of `sex` alphabetically, so female and then male). Then we might propose the following **population** logistic regression model:
+
+$$Y_i \sim Bernoulli(\pi_i)$$
+$$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 FlipperLength_i + \beta_2 BodyMass_i$$
+Here $\pi_i$ denotes the probability that $Y_i = 1$, and the log odds are a linear function of flipper length and body mass. 
+
+The first line of this model is called the **random** component: it specifies the distribution of the random variable $Y_i$. The second line is called the **systematic** component: it specifies how $\pi_i$ is related to the explanatory variables.
+
+## Fitting logistic regression models
+
+To fit the above logistic regression model in R, we use the `glm` function:
+
+```{r}
+m1 <- glm(sex ~ flipper_length_mm + body_mass_g, 
+          data = penguins, family = binomial)
+
+summary(m1)
+```
+
+The `glm` function stands for *generalized linear model*. We specify the response variable on the left hand side of the `~`, and the explanatory variables on the right hand side. To fit logistic regression, we specify `family = binomial`.
+
+The `summary` function summarizes our fitted model. We can see that $\widehat{\beta}_0 = 7.087$, $\widehat{\beta}_1 = -0.093$, and $\widehat{\beta}_2 = 0.003$. Our **fitted** logistic regression model is therefore
+
+$$Y_i \sim Bernoulli(\pi_i)$$
+$$\log \left( \dfrac{\widehat{\pi}_i}{1 - \widehat{\pi}_i} \right) = 7.087 -0.093 FlipperLength_i + 0.003 BodyMass_i$$
+
+Note that the equation of the *fitted* model includes hats on the $\pi_i$.
+
+## Interpreting regression coefficients
+
+The fitted coefficients above can be interpreted on the *log odds* scale, or on the *odds* scale.
+
+**Log odds:**
+
+* The estimated log odds that a penguin is male when flipper length and body mass are both 0 is 7.087. (Since all penguins have flippers and no penguins weigh 0g, this interpretation doesn't mean much)
+* A one mm increase in flipper length is associated with an estimated decrease in the log odds that a penguin is male by 0.093, holding body mass constant
+* A one g increase in body mass is associated with an estimated increase in the log odds that a penguin is male by 0.003, holding flipper length constant
+
+**Odds:**
+
+* The estimated log odds that a penguin is male when flipper length and body mass are both 0 is $\exp\{7.087\} = 1196$. (Since all penguins have flippers and no penguins weigh 0g, this interpretation doesn't mean much)
+* A one mm increase in flipper length is associated with an estimated decrease in the log odds that a penguin is male by a factor of $\exp\{-0.093\} = 0.911$, holding body mass constant
+* A one g increase in body mass is associated with an estimated increase in the log odds that a penguin is male by a factor of $\exp\{0.003\} = 1.003$, holding flipper length constant
+
+## Empirical logit plots
+
+The following R function can be used to create empirical logit plots:
+
+```{r, eval=F}
+logodds_plot <- function(data, num_bins, bin_method,
+                         x_name, y_name, grouping = NULL, 
+                         reg_formula = y ~ x){
+  
+  if(is.null(grouping)){
+    dat <- data.frame(x = data %>% pull(x_name), 
+                      y = data %>% pull(y_name),
+                      group = 1)
+  } else {
+    dat <- data.frame(x = data %>% pull(x_name), 
+                      y = data %>% pull(y_name),
+                      group = as.factor(data %>% pull(grouping)))
+  }
+  
+  if(bin_method == "equal_size"){
+    logodds_table <- dat %>%
+      drop_na() %>%
+      arrange(group, x) %>%
+      group_by(group) %>%
+      mutate(obs = y,
+             bin = rep(1:num_bins,
+                       each=ceiling(n()/num_bins))[1:n()]) %>%
+      group_by(bin, group) %>%
+      summarize(mean_x = mean(x),
+                prop = mean(c(obs, 0.5)),
+                num_obs = n()) %>%
+      ungroup() %>%
+      mutate(logodds = log(prop/(1 - prop)))
+  } else {
+    logodds_table <- dat %>%
+      drop_na() %>%
+      group_by(group) %>%
+      mutate(obs = y,
+             bin = cut(x, 
+                       breaks = num_bins,
+                       labels = F)) %>%
+      group_by(bin, group) %>%
+      summarize(mean_x = mean(x),
+                prop = mean(c(obs, 0.5)),
+                num_obs = n()) %>%
+      ungroup() %>%
+      mutate(logodds = log(prop/(1 - prop)))
+  }
+  
+  if(is.null(grouping)){
+    logodds_table %>%
+      ggplot(aes(x = mean_x,
+                 y = logodds)) +
+      geom_point(size=2) +
+      geom_smooth(se=F, method="lm", formula = reg_formula) +
+      theme_bw() +
+      labs(x = x_name,
+           y = "Empirical log odds") +
+      theme(text = element_text(size=15))
+  } else {
+    logodds_table %>%
+      ggplot(aes(x = mean_x,
+                 y = logodds,
+                 color = group,
+                 shape = group)) +
+      geom_point(size=2) +
+      geom_smooth(se=F, method="lm", formula = reg_formula) +
+      theme_bw() +
+      labs(x = x_name,
+           y = "Empirical log odds",
+           color = grouping,
+           shape = grouping) +
+      theme(text = element_text(size=15))
+  }
+  
+}
+```
+
+**Arguments:**
+
+* `data`: the dataset of interest (e.g., `titanic`)
+* `num_bins`: the number of bins to use
+  * The number of bins should be chosen based on the size of the data. For example, with `bin_method = "equal_size"`, we probably want at least 15 observations per bin, so `num_bins` < (number of observations)/15
+* `bin_method`: whether to choose bins with the same number of observations (`"equal_size"`) or the same width (`"equal_width"`)
+* `x_name`: the name of the column containing the explanatory variable (e.g., `"Fare"`). The quotation marks are needed
+* `y_name`: the name of the column containing the response (e.g., `"Survived"`). The quotation marks are needed
+* `grouping`: the name of a categorical variable in the data; fit a separate line for each level of the categorical variable
+* `reg_formula`: This is the shape of the relationship you want to plot. If you want a line, this is y ~ x (the default). Some other examples:
+  * `y ~ log(x)` : a log transformation of x
+  * `y ~ sqrt(x)` : a square root transformation of x
+  * `y ~ poly(x, 2)` : a second-order polynomial
+  * `y ~ poly(x, 3)` : a third-order polynomial
+  
+### Examples
+
+The `titanic` dataset contains a number of variables recorded for passengers on the *Titanic* when it sunk on its first voyage. The response variable we care about with the `titanic` data is `Survived`: whether a passenger survived the disaster or not. Let's first look at `Fare` as an explanatory variable. We will make an empirical logit plot with 30 equally sized bins:
+
+```{r, include = F}
+library(tidyverse)
+titanic <- read.csv("https://sta214-f22.github.io/labs/Titanic.csv")
+logodds_plot <- function(data, num_bins, bin_method,
+                         x_name, y_name, grouping = NULL, reg_formula = y ~ x){
+  
+  if(is.null(grouping)){
+    dat <- data.frame(x = data %>% pull(x_name), 
+                      y = data %>% pull(y_name),
+                      group = 1)
+  } else {
+    dat <- data.frame(x = data %>% pull(x_name), 
+                      y = data %>% pull(y_name),
+                      group = as.factor(data %>% pull(grouping)))
+  }
+  
+  if(bin_method == "equal_size"){
+    logodds_table <- dat %>%
+      drop_na() %>%
+      arrange(group, x) %>%
+      group_by(group) %>%
+      mutate(obs = y,
+             bin = rep(1:num_bins,
+                       each=ceiling(n()/num_bins))[1:n()]) %>%
+      group_by(bin, group) %>%
+      summarize(mean_x = mean(x),
+                prop = mean(c(obs, 0.5)),
+                num_obs = n()) %>%
+      ungroup() %>%
+      mutate(logodds = log(prop/(1 - prop)))
+  } else {
+    logodds_table <- dat %>%
+      drop_na() %>%
+      group_by(group) %>%
+      mutate(obs = y,
+             bin = cut(x, 
+                       breaks = num_bins,
+                       labels = F)) %>%
+      group_by(bin, group) %>%
+      summarize(mean_x = mean(x),
+                prop = mean(c(obs, 0.5)),
+                num_obs = n()) %>%
+      ungroup() %>%
+      mutate(logodds = log(prop/(1 - prop)))
+  }
+  
+  if(is.null(grouping)){
+    logodds_table %>%
+      ggplot(aes(x = mean_x,
+                 y = logodds)) +
+      geom_point(size=2) +
+      geom_smooth(se=F, method="lm", formula = reg_formula) +
+      theme_bw() +
+      labs(x = x_name,
+           y = "Empirical log odds") +
+      theme(text = element_text(size=15))
+  } else {
+    logodds_table %>%
+      ggplot(aes(x = mean_x,
+                 y = logodds,
+                 color = group,
+                 shape = group)) +
+      geom_point(size=2) +
+      geom_smooth(se=F, method="lm", formula = reg_formula) +
+      theme_bw() +
+      labs(x = x_name,
+           y = "Empirical log odds",
+           color = grouping,
+           shape = grouping) +
+      theme(text = element_text(size=15))
+  }
+  
+}
+```
+
+```{r, message=F}
+library(tidyverse)
+logodds_plot(titanic, 30, "equal_size", "Fare", "Survived",
+             reg_formula = y ~ x)
+```
+
+That linear fit doesn't look very good! Maybe we should try a different shape. Let's try a quadratic fit instead:
+
+```{r, message=F}
+logodds_plot(titanic, 30, "equal_size", "Fare", "Survived",
+             reg_formula = y ~ poly(x, 2))
+```
+
+And maybe a log transformation too: 
+
+```{r, message=F}
+logodds_plot(titanic, 30, "equal_size", "Fare", "Survived",
+             reg_formula = y ~ log(x))
+```
+
+## Quantile residual plots
+
+Quantile residual plots can be created using the `qresid()` function of the `statmod` package. For example, suppose we fit a logistic regression on the `titanic` data with Survival as the response and Fare as the explanatory variable:
+
+```{r}
+m1 <- glm(Survived ~ Fare, data = titanic, family = binomial)
+```
+
+Let's assess whether the shape assumption is reasonable for Fare with a quantile residual plot:
+
+```{r}
+library(statmod)
+titanic %>%
+  mutate(residuals = qresid(m1)) %>%
+  ggplot(aes(x = Fare, y = residuals)) +
+  geom_point() +
+  geom_smooth() +
+  theme_bw()
+```
+
+The results aren't amazing...what if we try transforming Fare? Let's try a square root:
+
+```{r}
+m2 <- glm(Survived ~ sqrt(Fare), data = titanic, family = binomial)
+titanic %>%
+  mutate(residuals = qresid(m2)) %>%
+  ggplot(aes(x = sqrt(Fare), y = residuals)) +
+  geom_point() +
+  geom_smooth() +
+  theme_bw()
+```
+
+Looks a bit better!
+
+
+# R structures, loops, and simulation
+
+## vectors
+
+A *vector* is a simple way of storing multiple items. For example, here is a vector containing the numbers 2, 1, 4:
+
+```{r}
+v <- c(2, 1, 4)
+v
+```
+
+The `c()` in R means "combine" or "concatenate" the elements of the vector together. The items inside the parentheses are the elements of the vector.
+
+### Length
+
+Every vector has a *length*, which tells us how many elements it contains:
+
+```{r}
+length(v)
+```
+
+### Indexing
+
+We can access each item in the vector by its *index*. That is, we specify the position of the vector, and get back the element at that position:
+
+```{r}
+v[1]
+
+v[2]
+
+v[3]
+```
+
+We specify the index inside the square brackets `[...]`. For example, `v[2]` is the second element of the vector `v`.
+
+Vectors can store elements other than numbers. For example, here is a vector containing the letters 'a', 'b', 'c', and 'd':
+
+```{r}
+w <- c('a', 'b', 'c', 'd')
+w
+```
+
+We can combine two vectors together with the `c()` function:
+
+```{r}
+c(v, w)
+```
+
+### Sequences (`seq`)
+
+Suppose we want to create a vector containing the numbers 0, 0.1, 0.2,...,0.9, 1. In other words, a sequence of numbers between 0 and 1, incremented by steps of 0.1. We can use the `seq` function:
+
+```{r}
+seq(from=0, to=1, by=0.1)
+```
+
+Here's a sequence from 1 to 10, incremented by steps of 1:
+
+```{r}
+seq(from=1, to=10, by=1)
+```
+
+When we want to increment by steps of 1, R has a handy shorthand:
+
+```{r}
+1:10
+```
+
+### Repetitions (`rep`)
+
+Other times, we want to create a vector containing one value repeated many times. We can use the `rep` function. For example, suppose we want to create a vector of eleven 0s:
+
+```{r}
+rep(0, 11)
+```
+
+## `for` loops
+
+Suppose we want to repeat a process many times (e.g., simulate many sets of data). A `for` loop allows us to do this efficiently. Here is a simple `for` loop which prints out the number 214 five times:
+
+```{r}
+for(i in 1:5){
+  print(214)
+}
+```
+
+`for(...)` indicates that we are making a `for` loop. The code inside the curly braces `{ ... }` is the code which will get repeated. The index `i` here tells us how many times we run this code. Remember that `1:5` is R shorthand for 1,2,3,4,5. So `i in 1:5` means "run the code inside the loop for `i=1`, `i=2`, `i=3`, `i=4`, and `i=5`".
+
+The really neat thing about a `for` loop is that what we do inside the loop can depend on the index `i`! For example, suppose we want to print out the numbers 1 to 5, instead of 214:
+
+```{r}
+for(i in 1:5){
+  print(i)
+}
+```
+
+### Example: calculating a likelihood
+
+Suppose we have a coin with an unknown probability of heads $\pi$. Let $Y_i$ denote the outcome of a flip, with $Y_i = 0$ for tails and $Y_i = 1$ for heads. Then $Y_i \sim Bernoulli(\pi)$.
+
+Now suppose we observe five flips of the coin: T, T, T, T, H (i.e., 0, 0, 0, 0, 1). Given this observed data, the likelihood of a value for $\pi$ is
+
+$$L(\pi) = \pi(1 - \pi)^4$$
+
+We want to evaluate $L(\pi)$ for different values of $\pi$ between 0 and 1; say, $\pi = 0, 0.1, 0.2, ..., 0.9, 1$. We can do this calculation efficiently with a `for` loop:
+
+```{r}
+pis <- seq(from=0, to=1, by=0.1) # values of pi to consider
+likelihoods <- c() # empty vector to store the likelihoods we calculate
+for(i in 1:length(pis)){
+  # likelihood = pi*(1 - pi)^4, for each value of pi
+  likelihoods[i] <- pis[i]*(1 - pis[i])^4
+}
+
+likelihoods
+```
+
+**Note:** R does a good job at *vectorizing* functions (when you apply a function to a vector, it gets applied to every entry in that vector). So we could write this code without the `for` loop:
+
+```{r}
+pis <- seq(from=0, to=1, by=0.1)
+likelihoods <- pis*(1 - pis)^4
+
+likelihoods
+```
+
+# Some useful notation and math
+
+## Sum and product notation
+
+At its core, statistics relies on math, and math often uses notation to make equations and expressions simpler. Some notation that we will often encounter in STA 214 is **sum** ($\sum$) and **product** ($\prod$) notation.
+
+Suppose we have $n$ observations, $Y_1,...,Y_n$. We want to take the sum of these observations:
+$$Y_1 + Y_2 + Y_3 + \cdots + Y_n$$
+Great! But this requires us to write out each of the terms, or use $\cdots$ to express that there are terms we haven't written out. Regardless, it is a little clunky. We can make this neater by using $\sum$ as a shorthand for "sum" ($\Sigma$ is the capital sigma in Greek, so think "S for Sum"). Using this notation,
+$$\sum \limits_{i=1}^n Y_i = Y_1 + Y_2 + \cdots + Y_n$$
+This shorthand means "sum up all the $Y_i$, starting with $i = 1$ and going to $i = n$". In other words, sum up $Y_1,...,Y_n$.
+
+What about products? The product of $Y_1,...,Y_n$ is 
+$$Y_1 Y_2 \cdots Y_n$$
+which we can write more cleanly as $\prod \limits_{i=1}^n Y_i$. Here $\prod \limits_{i=1}^n$ just means "multiply these $n$ things together". ($\Pi$ is the capital pi in Greek, so think "P for Product")
+
+## Logs and properties of logs
+
+Recall that logarithms (*logs* for short) are what we use to undo exponents. That is, $\log(x) = y$ means that $x = e^{y}$. (By default, $\log$ in math and statistics is the *natural* log. Equivalent definitions exist for other bases: $\log_{10}(x) = y$ means that $x = 10^{y}$).
+
+There are some useful properties of logs that we use in STA 214, particularly for maximum likelihood estimation:
+
+* Logs turn products into sums:
+$$\log(a \cdot b) = \log(a) + \log(b)$$
+More generally,
+$$\log \left( \prod \limits_{i=1}^n a_i \right) = \sum \limits_{i=1}^n \log(a_i)$$
+Likewise, 
+$$\log(a/b) = \log(a) - \log(b)$$
+
+* Logs turn exponents into multiples:
+$$\log(x^a) = a \log(x)$$
+
+* Logs have nice derivatives:
+$$ \dfrac{d}{dx} \log(x) = \dfrac{1}{x}$$
+
+## Calculus review: differentiation
+
+Recall the following rules for derivative:
+
+* $\dfrac{d}{dx} c f(x) = c \dfrac{d}{dx} f(x)$ for constant $c$
+More generally
+* $\dfrac{d}{dx} (f(x) + c) = \dfrac{d}{dx} f(x)$ for constant $c$
+* The derivative of a sum is the sum of derivatives:
+$$\dfrac{d}{dx} (f(x) + g(x)) = \dfrac{d}{dx} f(x) + \dfrac{d}{dx} g(x)$$
+More generally, this means that derivatives can move inside $\sum$:
+$$\dfrac{d}{dx} \sum \limits_{i=1}^n f_i(x) = \sum \limits_{i=1}^n \dfrac{d}{dx} f_i(x)$$
+* Chain rule:
+$$\dfrac{d}{dx} f(g(x)) = f'(g(x)) g'(x)$$
+
+# Writing math in R Markdown
+
+If you want to write mathematical notation, we need to tell Markdown, “Hey, we’re going to make a math symbol!” To do that, you use dollar signs. For instance, to make $\widehat{\beta}_1$, you simply put `$\widehathat{\beta}_1$` into the white space (not a chunk) in your Markdown.
+
+Here are some examples of writing math, which you can adapt:
+
+| Math | Code |
+| --- | --- |
+| $Y_i \sim Bernoulli(\pi_i)$ | `$Y_i \sim Bernoulli(\pi_i)$` |
+| $\log \left( \dfrac{\pi_i}{1 - \pi_i} \right)$ | `$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right)$` |
+| $\widehat{\pi}_i$ | `$\widehat{\pi}_i$` |
+| $\beta_0 + \beta_1 X_i$ | `$\beta_0 + \beta_1 X_i$` |
+| $\sum \limits_{i=1}^n$ | `$\sum \limits_{i=1}^n$` |
+| $\prod \limits_{i=1}^n$ | `$\prod \limits_{i=1}^n$` |
+
+
+<div id="license">
+<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc/4.0/88x31.png" /></a><br />This work was created by Ciaran Evans and is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">Creative Commons Attribution-NonCommercial 4.0 International License</a>. Last updated 2022 March 25.
+</div>

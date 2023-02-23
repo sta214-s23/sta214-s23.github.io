@@ -1,0 +1,21 @@
+---
+---
+---
+title: "HW 3"
+author: "Your Name"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+
+titanic <- read.csv("https://sta214-s23.github.io/homework/Titanic.csv")
+```
+
+## Question 1
+
+## Question 2
+
+(Now add space and chunks to answer the remaining questions)
+

@@ -1,0 +1,243 @@
+---
+title: "HW 5 Solutions"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=F, warning=F)
+library(tidyverse)
+library(MASS)
+library(gamair)
+data("chicago")
+```
+
+
+
+## Question 1
+
+### (a) (3 pts)
+
+$Y_i \sim NB(\theta, p)$, so $P(Y_i = y) = \dfrac{(y + \theta - 1)!}{y!(\theta - 1)!} (1 - p)^\theta p^y$.
+
+We observe $Y_1,...,Y_n$, so the likelihood is
+
+$L(p) = \prod \limits_{i=1}^n \dfrac{(Y_i + \theta - 1)!}{Y_i!(\theta - 1)!} (1 - p)^\theta p^Y_i$
+
+Thus the log likelihood is
+
+$\ell(p) = \log L(p) = \sum \limits_{i=1}^n \left( \log \left( \dfrac{(Y_i + \theta - 1)!}{Y_i!(\theta - 1)!} \right) + \theta \log(1 - p) + Y_i \log(p) \right)$
+
+**Grading:** They can receive full credit if they use the fact that $\ell(p) = \sum \limits_{i=1}^n \log(P(Y = Y_i))$, correctly substitute in the probability function, and correct apply rules of logs. Additional simplification beyond my solution is possible, but is not required.
+
+### (b) (5 pts)
+
+We take the derivative and set equal to 0:
+
+$\dfrac{d}{dp} \ell(p) = \sum \limits_{i=1}^n \left( -\dfrac{\theta}{1 - p} + \dfrac{Y_i}{p} \right) \overset{set}{=} 0$
+
+So,
+
+$\sum \limits_{i=1}^n \dfrac{Y_i}{p} = \sum \limits_{i=1}^n \dfrac{\theta}{1 - p} = \dfrac{n \theta}{1 - p}$
+
+Rearranging,
+
+$\dfrac{1 - p}{p} = \dfrac{n \theta}{\sum \limits_{i=1}^n Y_i}$
+
+so
+
+$\dfrac{1}{p} = \dfrac{n \theta + \sum \limits_{i=1}^n Y_i}{\sum \limits_{i=1}^n Y_i}$
+
+and thus
+
+$\widehat{p} = \dfrac{\sum \limits_{i=1}^n Y_i}{n\theta + \sum \limits_{i=1}^n Y_i}$
+
+**Grading:** 2 pts for correctly taking the derivative, 1 pt for setting to 0, 2 pts for correctly rearranging and solving for $\widehat{p}$.
+
+
+## Question 2
+
+### (a) (3 pts)
+
+```{r}
+set.seed(3)
+x <- rnorm(100, 0, 1)
+p <- exp(-2 + 3*x)/(1 + exp(-2 + 3*x))
+y <- rbinom(100, 1, p)
+```
+
+**Grading:** 1 pt for generating x, 1 pt for p, 1 pt for y. Note that the coefficients to use for p should be -2 and 3. I have set a seed for the purposes of these solutions, but a seed isn't necessary for their homework.
+
+### (b) (2 pts)
+
+```{r}
+m1 <- glm(y ~ x, family = binomial)
+summary(m1)
+
+2.33 - 1.96*0.48
+2.33 + 1.96*0.48
+```
+
+A 95% confidence interval for $\beta_1$ is (1.39, 3.27). Yes, the interval captures $\beta_1$.
+
+**Grading:** 1 pt for CI, 1 pt for commenting whether it captures $\beta_1$. Lose 1 pt if no code showing. Note that their intervals will be different to mine. Most of them should capture $\beta_1$, but some of them might not.
+
+### (c) (2 pts)
+
+A "95% confidence interval" means that if we collected many sets of data, and created a confidence interval for $\beta_1$ from each dataset, then 95% of them should capture the true $\beta_1$.
+
+### (d) (6 pts)
+
+```{r}
+nsim <- 1000
+contains_beta <- rep(0, nsim)
+for(i in 1:nsim){
+  x <- rnorm(100, 0, 1)
+  p <- exp(-2 + 3*x)/(1 + exp(-2 + 3*x))
+  y <- rbinom(100, 1, p)
+  
+  m1 <- glm(y ~ x, family = binomial)
+  
+  upper <- summary(m1)$coefficients[2,1] + 
+    1.96*summary(m1)$coefficients[2,2]
+  lower <- summary(m1)$coefficients[2,1] - 
+    1.96*summary(m1)$coefficients[2,2]
+  
+  contains_beta[i] <- upper > 3 && lower < 3
+}
+mean(contains_beta)
+```
+
+In this simulation, 95.7% of the intervals contained $\beta_1$, which is close to the expected fraction of 95%. 
+
+**Grading:** 
+
+* 1 pt for simulating new data at each iteration. 
+* 1 pt for fitting a model at each iteration. 
+* 1 pt for correctly calculating the upper and lower endpoints at each iteration. 
+* 1 pt for storing the result (whether the interval contains $\beta_1$) at each iteration.
+* 1 pt for calculating the fraction of intervals which contained $\beta_1$
+* 1 pt for the expected fraction of intervals containing $\beta_1$ (95%)
+
+No credit if code is not shown! Lose 3 pts if they add outliers to this part of the assignment.
+
+### (e) (2 pts)
+
+```{r}
+nsim <- 1000
+contains_beta <- rep(0, nsim)
+for(i in 1:nsim){
+  x <- rnorm(100, 0, 1)
+  p <- exp(-2 + 3*x)/(1 + exp(-2 + 3*x))
+  y <- rbinom(100, 1, p)
+  
+  m1 <- glm(y ~ x, family = binomial)
+  
+  upper <- summary(m1)$coefficients[2,1] + 
+    qnorm(0.005, lower.tail=F)*summary(m1)$coefficients[2,2]
+  lower <- summary(m1)$coefficients[2,1] - 
+    qnorm(0.005, lower.tail=F)*summary(m1)$coefficients[2,2]
+  
+  contains_beta[i] <- upper > 3 && lower < 3
+}
+mean(contains_beta)
+```
+
+Our observed coverage probability is indeed close to the expected coverage probability of 99%.
+
+**Grading:** No points if no code is shown. No credit if they don't change the critical value to the correct value (`qnorm(0.005, lower.tail=F)` is approximately 2.58)
+
+
+## Question 3
+
+### (a) (4 pts)
+
+```{r}
+nsim <- 1000
+contains_beta <- rep(0, nsim)
+for(i in 1:nsim){
+  x <- rnorm(100, 0, 1)
+  p <- exp(-2 + 3*x)/(1 + exp(-2 + 3*x))
+  y <- rbinom(100, 1, p)
+  
+  x1 <- c(x, -2)
+  y1 <- c(y, 1)
+  
+  m1 <- glm(y1 ~ x1, family = binomial)
+  
+  upper <- summary(m1)$coefficients[2,1] + 
+    1.96*summary(m1)$coefficients[2,2]
+  lower <- summary(m1)$coefficients[2,1] - 
+    1.96*summary(m1)$coefficients[2,2]
+  
+  contains_beta[i] <- upper > 3 && lower < 3
+}
+mean(contains_beta)
+```
+
+Our coverage probability has decreased substantially with the outlier, which are affecting our estimated coefficients. 
+
+**Grading:** Lose 2 pts if the outlier is not at the appropriate place (-2, 1). Lose 1 pt if they don't fit the model with the new data containing the outlier. Lose 1 pt if they don't interpret the results. No credit if code is not shown.
+
+
+### (b) (8 pts)
+
+```{r}
+nsim <- 1000
+xlocs <- c(-1, -2, -3, -4, -5)
+coverage <- rep(0, length(xlocs))
+
+for(j in 1:length(xlocs)){
+  contains_beta <- rep(0, nsim)
+  for(i in 1:nsim){
+    x <- rnorm(100, 0, 1)
+    p <- exp(-2 + 3*x)/(1 + exp(-2 + 3*x))
+    y <- rbinom(100, 1, p)
+    
+    x1 <- c(x, xlocs[j])
+    y1 <- c(y, 1)
+    
+    m1 <- glm(y1 ~ x1, family = binomial)
+    
+    upper <- summary(m1)$coefficients[2,1] + 
+      1.96*summary(m1)$coefficients[2,2]
+    lower <- summary(m1)$coefficients[2,1] - 
+      1.96*summary(m1)$coefficients[2,2]
+    
+    contains_beta[i] <- upper > 3 && lower < 3
+  }
+  coverage[j] <- mean(contains_beta)
+}
+
+data.frame(x = xlocs, coverage = coverage) %>%
+  ggplot(aes(x = x, y = coverage)) +
+  geom_point() +
+  geom_line() +
+  labs(x = "Outlier location (X)", y = "CI coverage") +
+  theme_bw()
+```
+
+As we can see in the plot, coverage of the confidence intervals decreases as the outlier becomes more extreme in X.
+
+**Grading:** 3 pts for calculating the coverage probabilities, 3 pts for making the plot, 2 pts for their conclusion about outliers and coverage probabilities. No credit if no code is shown. I have written the code using a second for loop over the outlier locations, but this is not necessary.
+
+## Question 4 (Extra credit)
+
+This is an extra credit section. They can earn one point of extra credit for each correct answer.
+
+### (a) (1 pt)
+
+The error says that sqrtFare is not found. This occurs because we never saved this new column in the titanic data. 
+
+### (b) (1 pt)
+
+We can fix the error by saving the sqrtFare column in the titanic data. For example:
+
+```{r, eval=F}
+titanic <- titanic %>% 
+  mutate(sqrtFare = sqrt(Fare))
+```
+
+
+

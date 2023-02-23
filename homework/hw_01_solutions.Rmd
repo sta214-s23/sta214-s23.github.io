@@ -1,0 +1,250 @@
+---
+title: "HW 1 Solutions"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+
+grad_app <- read.csv("https://stats.idre.ucla.edu/stat/data/binary.csv")
+```
+
+## Question 1
+
+### (a) (2 pts)
+
+```{r}
+glimpse(grad_app)
+```
+
+There are 400 rows and 4 columns.
+
+**Grading:** 1 pt for rows, 1 pt for columns. Lose 1 pt if no code is showing. It is ok to use other functions like `nrow` or `ncol` or `dim`.
+
+
+### (b) (1 pt)
+
+A row in the data represents one student who is applying to graduate school.
+
+**Grading:** Lose 1 pt for a wrong answer (e.g., "a row represents a graduate school")
+
+### (c) (2 pts)
+
+```{r}
+grad_app <- grad_app %>%
+  drop_na()
+dim(grad_app)
+```
+
+The number of rows in the data is unchanged after removing missing values, so there were no missing values in the data.
+
+**Grading:** Lose 1 pt for a wrong answer (e.g., "yes, there are missing values"). Lose 1 pt if no code is showing. It is ok if they use other functions to find missing values.
+
+## Question 2
+
+### (a) (2 pts)
+
+```{r}
+grad_app %>%
+  count(admit)
+```
+
+127 students were admitted and 273 were not admitted.
+
+**Grading:** Lose 1 pt for a wrong answer. Lose 1 pt if no code is showing. It is ok to use other functions to find the counts (e.g., `table`)
+
+### (b) (3 pts)
+
+```{r}
+grad_app %>%
+  ggplot(aes(x = as.factor(admit))) +
+  geom_bar() +
+  theme_bw() +
+  labs(x = "Accepted to graduate school?",
+       title = "Outcomes for students applying to graduate school")
+```
+
+**Grading:** 1 pt for code, 1 pt for bar chart, 1 pt for axis label and title. Using `ggplot` is not required, but it does make the question easier. If they don't use convert `admit` to a categorical variable (`as.factor(admit)`), they don't lose points, but you can leave a note that it makes the plot look nicer.
+
+## Question 3
+
+### (a) (3 pts)
+
+```{r}
+grad_app %>%
+  ggplot(aes(x = gpa)) +
+  geom_histogram(bins = 25) +
+  theme_bw() +
+  labs(x = "GPA", 
+       title = "Distribution of applicants' GPAs")
+```
+
+**Grading:** 1 pt for code, 1 pt for histogram, 1 pt for axis label and title. Using `ggplot` is not required. They do not need to use 25 bins, but lose 1 point if the number of bins is unreasonable (e.g., 5 bins, 100 bins, etc.)
+
+### (b) (3 pts)
+
+The distribution isn't too skewed, so either the mean or median is acceptable for the measure of center, and either the standard deviation or IQR is acceptable for the measure of spread. Here are all four measures:
+
+```{r}
+grad_app %>%
+  summarize(mean_gpa = mean(gpa),
+            median_gpa = median(gpa),
+            sd_gpa = sd(gpa),
+            iqr_gpa = IQR(gpa))
+```
+
+**Grading:** 1 pt for code, 1 pt for measure of center (they need either the mean or median), 1 pt for measure of spread (they need either the sd or IQR). Using the `summarize` function is not required.
+
+### (c) (4 pts)
+
+The distribution of GPA appears bimodal and left-skewed, with peaks around 3.3 and 4.0. The peak at 4.0 likely occurs because it is impossible for students to have a GPA above 4.0 (all As). Most students have a GPA above 3.0, with an average GPA of bout 3.39 and a standard deviation of 0.38. There are no observations which appear to be clear outliers, but a few students have a GPA below 2.5.
+
+**Grading:** 1 pt for center, 1 pt for spread, 1 pt for shape (skewness and modality), 1 pt for potential outliers. When they discuss modality, they need to talk about where the modes of the distribution are. If they say the distribution has more than two modes, suggest that they experiment more with the number of bins.
+
+## Question 4
+
+### (a) (3 pts)
+
+```{r}
+grad_app %>%
+  ggplot(aes(x = as.factor(admit), 
+             y = gpa)) +
+  geom_boxplot() +
+  theme_bw() +
+  labs(x = "Accepted to grad school?",
+       y = "GPA",
+       title = "GPA scores by grad school admission")
+```
+
+**Grading:** 1 pt for code, 1 pt for side-by-side boxplots, 1 pt for title and labels. Lose 1 pt if they don't have *two* boxplots here (they will need to convert `admit` into a categorical variable in R to get both boxplots).
+
+### (b) (3 pts)
+
+```{r}
+grad_app %>%
+  group_by(admit) %>%
+  summarize(mean_gpa = mean(gpa),
+            sd_gpa = sd(gpa))
+```
+
+**Grading:** 1 pt for code, 1 pt for mean, 1 pt for standard deviation. Lose 1 pt if they don't group by `admit`.
+
+### (c) (2 pts)
+
+There may be a relationship between GPA and acceptance to grad school (which would make sense). Students who are accepted tend to have higher GPAs, on average, than students who are not accepted.
+
+**Grading:** Responses can vary here, as long as they say something reasonable.
+
+## Question 5
+
+### (a) (2 pts)
+
+A linear regression model is *not* appropriate because the response variable (`admit`) is binary. Using linear regression with a binary response can cause problems, for example with predictions outside the allowed range of the binary response.
+
+**Grading:** 1 pt for saying linear regression is not appropriate because response is binary. 1 pt for then explaining *why* it is bad to use linear regression with a binary response.
+
+### (b) (4 pts)
+
+$Admit_i \sim Bernoulli(\pi_i)$
+
+$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 GPA_i$
+
+**Grading:** Lose 2 points if missing the random component. Lose 2 points if missing the systematic component. Lose 1 pt for issues in notation (e.g., missing subscripts $i$, adding hats to $\pi_i$, etc.). Lose 1 pt if they confuse the explanatory and response variable. Lose 1 pt if they don't use the log odds in the systematic component. Etc.
+
+### (c) (2 pts)
+
+The role of the noise term $\varepsilon_i$ is to capture variability in the response variable. Here, that variability is captured by the random component, which specifies the distribution of $Admit_i$. When we write a model in terms of the random and systematic components, we don't include the noise term $\varepsilon_i$, even for a linear model.
+
+**Grading:** Responses may vary somewhat. They can receive full credit if their response is correct and reasonable.
+
+### (d) (3 pts)
+
+```{r}
+m1 <- glm(admit ~ gpa, data = grad_app, family = binomial)
+summary(m1)
+```
+
+$\widehat{\beta}_0 = -4.36$, $\widehat{\beta}_1 = 1.05$
+
+**Grading:** 1 pt for code, 1 pt for estimated intercept, 1 pt for estimated slope. Lose 1 pt if it is unclear which number is the estimated intercept and which is the estimated slope.
+
+### (e) (2 pts)
+
+For a GPA of 0, we predict a log odds of acceptance to graduate school of -4.36. A one-unit increase in GPA is associated with an increase in the log odds of acceptance by 1.05.
+
+**Grading:** 1 pt for intercept, 1 pt for slope.
+
+### (f) (2 pts)
+
+For a GPA of 0, we predict an odds of acceptance to graduate school of $e^{-4.36} = 0.013$. A one-unit increase in GPA is associated with an increase by a factor of $e^{1.05} = 2.86$ in the odds of acceptance.
+
+**Grading:** 1 pt for intercept, 1 pt for slope.
+
+## Question 6
+
+### (a) (3 pts)
+
+The predicted probability for a student with a GPA of 3.8 is
+
+$$\dfrac{\exp\{-4.36 + 1.05(3.8)\} }{1 + \exp\{-4.36 + 1.05(3.8)\}} \approx 0.41$$
+
+**Grading:** Lose 1 pt for not showing any work. Lose 2 pts if they calculate the odds or the log odds instead of the probability. They might round slightly differently than me, which is fine.
+
+### (b) (3 pts)
+
+A probability of acceptance of 0.2 corresponds to a log odds of -1.39. So, we need to find the range of GPAs such that
+
+$$-4.36 + 1.05 \ GPA_i \geq -1.39$$
+which means $GPA \geq 2.83$ (approximately).
+
+**Grading:** Lose 1 pt for not showing any work. 
+
+## Question 7
+
+Here is all the code for question 7 in one chunk (it is ok if they put all code in one chunk for this question):
+
+```{r}
+set.seed(3)
+x <- runif(200, 0, 5)
+pis <- exp(-3 + 2*x)/(1 + exp(-3 + 2*x))
+y <- rbinom(200, 1, pis)
+
+m1 <- lm(y ~ x)
+summary(m1)
+
+m2 <- glm(y ~ x, family = binomial)
+summary(m2)
+```
+
+### (a) (1 pt)
+
+**Grading:** they just need to run the code
+
+### (b) (1 pt)
+
+**Grading:** They just need to run the code
+
+### (c) (1 pt)
+
+**Grading:** They just need to run the code
+
+### (d) (2 pts)
+
+I got estimates of 0.057 and 0.243, not very close to the true coefficients of -3 and 2! 
+
+**Grading:** 1 pt for reporting their estimated coefficients, 1 pt for comparing to the true values. Their numbers will be different than mine (just by random chance), but the conclusion is likely the same.
+
+### (e) (2 pts)
+
+The logistic regression estimates I got are -3.34 and 2.01, much closer to the true values of -3 and 2.
+
+**Grading:** 1 pt for reporting their estimated coefficients, 1 pt for comparing to the true values. Their numbers will be different than mine (just by random chance), but the conclusion is likely the same.
+
+### (f) (2 pts)
+
+$0.057 + 0.243 X > 1$ if $X > 3.88$. 
+
+**Grading:** Lose 1 pt for not showing any work. Their numbers will be different than mine (just by random chance), but the conclusion is likely the same (for a value of $X$ around 4 or so, we get $\widehat{Y} > 1$).

@@ -1,0 +1,27 @@
+---
+title: "Class Activity, January 23"
+output: 
+  tufte::tufte_html:
+    css: "lab.css"
+    tufte_variant: "envisioned"
+    highlight: pygments
+link-citations: yes
+---
+
+In this class activity, we will work with the grad application data from HW 1:
+
+```{r, eval=F}
+grad_app <- read.csv("https://stats.idre.ucla.edu/stat/data/binary.csv")
+```
+
+On HW 1, you fit a logistic regression model on the grad application data with GPA as a predictor. Now let's consider GRE as a predictor instead. Our logistic regression model is
+
+$Y_i \sim Bernoulli(\pi_i) \hspace{0.5cm} \log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 \text{GRE}_i$
+
+1. Fit this logistic regression model in R, and report the equation of the fitted model.
+
+2. What is the deviance of the model you fit in Exercise 2? What is the log likelihood?
+
+3. The deviance of the logistic regression model with GPA as the predictor was 487. Compare this to your deviance from Exercise 2. Which variable (GPA or GRE score) gives a better fit to the data? (For now we are only considering models with a single predictor).
+
+4. Now suppose we want to know if there is actually a relationship between GRE score and grad school admission. How can we write this as null and alternative hypotheses about one or more parameters in the logistic regression model?

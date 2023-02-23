@@ -1,0 +1,208 @@
+---
+title: "HW 3 Solutions"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+
+titanic <- read.csv("https://sta214-s23.github.io/homework/Titanic.csv")
+titanic <- titanic %>%
+  drop_na()
+```
+
+## Question 1 (2 pts)
+
+The null hypothesis is $H_0: \beta_1 = 0$, and the alternative hypothesis is $H_A: \beta_1 \neq 0$.
+
+**Grading:** 1 pt for null, 1 pt for alternative. Lose 1 pt if not written in terms of $\beta_1$.
+
+## Question 2 (4 pts)
+
+Full model:
+
+$Survived_i \sim Bernoulli(\pi_i)$
+
+$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 Age_i$
+
+Reduced model:
+
+$Survived_i \sim Bernoulli(\pi_i)$
+
+$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0$
+
+**Grading:** 2 pts for full model, 2 pts for reduced model. Lose 1 pt for incorrect notation (missing subscripts, adding hats, etc.) Lose 1 pt if only the systematic component is included (missing random component).
+
+## Question 3
+
+### (a) (3 pts)
+
+```{r}
+m2 <- glm(Survived ~ 1, data = titanic, family = binomial)
+summary(m2)
+```
+
+$Survived_i \sim Bernoulli(\pi_i)$
+
+$\log \left( \dfrac{\widehat{\pi}_i}{1 - \widehat{\pi}_i} \right) = -0.38$
+
+**Grading:** Lose 1 pt if missing code, lose 2 pts if missing equation of the fitted reduced model. Lose 1 pt for incorrect notation (missing subscripts, hats, etc.)
+
+### (b) (1 pt)
+
+The deviance of the reduced model is 964.52
+
+**Grading:** it is ok if they round slightly. If they didn't remove missing values before fitting the model, they would get 1186.7 instead. If they don't remove missing values, lose 1 pt.
+
+### (c) (3 pts)
+
+```{r}
+m1 <- glm(Survived ~ Age, data = titanic, family = binomial)
+summary(m1)
+```
+
+$Survived_i \sim Bernoulli(\pi_i)$
+
+$\log \left( \dfrac{\widehat{\pi}_i}{1 - \widehat{\pi}_i} \right) = -0.057 - 0.011 Age_i$
+
+**Grading:** Lose 1 pt if missing code, lose 2 pts if missing equation of the fitted full model. Lose 1 pt for incorrect notation (missing subscripts, hats, etc.)
+
+### (d) (1 pt)
+
+The deviance of the full model is 960.23
+
+
+## Question 4 (2 pts)
+
+In this case, the reduced model *is* the intercept-only model. Therefore, the deviance of the reduced model agrees with the null deviance.
+
+## Question 5 (1 pt)
+
+$G = 964.52 - 960.23 = 4.29$
+
+**Grading:** it is ok if they round slightly
+
+## Question 6
+
+### (a) (3 pts)
+
+```{r}
+nsim <- 500
+null_statistics <- rep(0, nsim)
+for(i in 1:nsim){
+  x <- titanic$Age 
+  p <- exp(-0.38 + 0*x)/(1 + exp(-0.38 + 0*x))
+  y <- rbinom(length(x), 1, p)
+  m1 <- glm(y ~ x, family = binomial)
+  
+  null_statistics[i] <- m1$null.deviance - 
+    m1$deviance
+}
+hist(null_statistics)
+```
+
+**Grading:** Lose 1 pt for not changing the explanatory variable `x` (should be Age), lose 1 pt for not changing the intercept in the probabilities (should be -0.38).
+
+### (b) (2 pts)
+
+The observed test statistic was $G = 4.29$, which looks reasonably unusual compared to our null statistics. Most simulated statistics from the null distribution are below 4 or so.
+
+**Grading:** 1 pt for correct answer, 1 pt for explaining reasoning
+
+### (c) (2 pts)
+
+```{r}
+mean(null_statistics >= 4.29)
+```
+
+**Grading:** 1 pt for showing code, 1 pt for correctly using observed drop in deviance
+
+## Question 7 (2 pts)
+
+```{r}
+x <- seq(0, 1, 0.1)
+x_cubed <- rep(0, length(x))
+for(i in 1:length(x)){
+  x_cubed[i] <- x[i]^3 
+}
+x_cubed
+```
+
+**Grading:** 2 pts for using `x[i]^3`. They don't need to rename the vector `x_cubed`, but it would be helpful.
+
+
+## Question 8 (2 pts)
+
+```{r}
+x <- seq(0, 2, 0.05)
+x_cubed <- rep(0, length(x))
+for(i in 1:length(x)){
+  x_cubed[i] <- x[i]^3 
+}
+x_cubed
+```
+
+**Grading:** They need to change both the range of `x` (0 to 2), and the increment (by 0.05). It is fine for them to calculate either $x^2$ or $x^3$
+
+
+## Question 9
+
+### (a) (2 pts)
+
+```{r}
+n <- 1000
+normal_sample <- rep(0, n)
+for(i in 1:n){
+  normal_sample[i] <- rnorm(1, 0, 1)
+}
+hist(normal_sample)
+```
+
+### (b) (1 pt)
+
+Yes, the histogram looks like a normal distribution (unimodal, symmetric, bell-shaped, etc.)
+
+**Grading:** 1 pt for correct answer.
+
+## Question 10
+
+### (a) (2 pts)
+
+```{r}
+n <- 2000
+chisq_sample <- rep(0, n)
+for(i in 1:n){
+  chisq_sample[i] <- rchisq(1, df=1)
+}
+hist(chisq_sample)
+```
+
+**Grading:** They need to change both `n` and the distribution they are sampling from. They don't need to change the name of the vector, but it would be helpful.
+
+### (b) (1 pt)
+
+It looks pretty similar!
+
+**Grading:** 1 pt for correct answer
+
+## Question 11 (Extra credit)
+
+They can earn 1 pt of extra credit for each part of this question which they answer correctly.
+
+### (a) (1 pt)
+
+The issue is that `pi0` has length 11, but `likelihood` has length 12. When we go to access `pi0[12]`, there is nothing there!
+
+### (b) (1 pt)
+
+```{r}
+pi0 <- seq(0, 1, 0.1)
+likelihood <- rep(0, 12)
+for(i in 1:11){
+  likelihood[i] <- pi0[i]^2 * (1 - pi0[i])^3
+}
+likelihood
+```

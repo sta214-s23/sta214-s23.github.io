@@ -1,0 +1,345 @@
+---
+title: Simulation and parametric bootstrap
+output:
+  xaringan::moon_reader:
+    css: "lab-slides.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, include=F}
+library(tidyverse)
+grad_app <- read.csv("https://stats.idre.ucla.edu/stat/data/binary.csv")
+
+library(knitr)
+hook_output <- knit_hooks$get("output")
+knit_hooks$set(output = function(x, options) {
+   lines <- options$output.lines
+   if (is.null(lines)) {
+     return(hook_output(x, options))  # pass to default hook
+   }
+   x <- unlist(strsplit(x, "\n"))
+   more <- "..."
+   if (length(lines)==1) {        # first n lines
+     if (length(x) > lines) {
+       # truncate the output, but add ....
+       x <- c(head(x, lines), more)
+     }
+   } else {
+     x <- c(more, x[lines], more)
+   }
+   # paste these lines together
+   x <- paste(c(x, ""), collapse = "\n")
+   hook_output(x, options)
+ })
+```
+
+### Recap: Steps in hypothesis testing
+
+.large[
+$$Admit_i \sim Bernoulli(\pi_i) \hspace{0.5cm} \log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 \text{GRE}_i$$
+
+* Specify hypotheses
+
+$$H_0: \beta_1 = 0 \hspace{1cm} H_A: \beta_1 \neq 0$$
+
+* Calculate a test statistic
+
+$$G = \text{deviance for reduced model - deviance for full model}$$
+
+* Calculate a p-value
+]
+
+---
+
+### Recap: calculating p-values
+
+.large[
+.question[
+What *is* a p-value?
+]
+]
+
+.large[
+**p-value:** How unusual the data is *if* $H_0$ is true. e.g., 
+
+$$P(G \geq 13.92 | H_0)$$
+
+.question[
+How do we calculate a p-value?
+]
+
+Compare the observed test statistic to the null distribution
+
+.question[
+How do we get the null distribution?
+]
+]
+
+---
+
+### Plan
+
+---
+
+### Exploring the null distribution with simulation
+
+.large[
+* Want to know how $G$ (drop in deviance) behaves if $H_0$ is true
+* So, need data for which we *know* $H_0$ is true!
+
+```{r, output.lines = 17:19}
+x <- runif(1000, 0, 5)
+p <- exp(-3 + 0*x)/(1 + exp(-3 + 0*x))
+y <- rbinom(1000, 1, p)
+
+m1 <- glm(y ~ x, family = binomial)
+summary(m1)
+```
+]
+
+---
+
+### Exploring the null distribution with simulation
+
+.large[
+* Simulating one set of data only gives us one statistic under $H_0$
+* We need to simulate many datasets to explore the full distribution
+
+.question[
+How can we efficiently create *many* simulated datasets?
+]
+]
+
+---
+
+### Exploring the null distribution with simulation
+
+.large[
+* Simulating one set of data only gives us one statistic under $H_0$
+* We need to simulate many datasets to explore the full distribution
+
+```{r}
+null_statistics <- c()
+nsim <- 500
+for(i in 1:nsim){
+  x <- runif(1000, 0, 5)
+  p <- exp(-3 + 0*x)/(1 + exp(-3 + 0*x))
+  y <- rbinom(1000, 1, p)
+  m1 <- glm(y ~ x, family = binomial)
+  
+  null_statistics[i] <- m1$null.deviance - 
+    m1$deviance
+}
+```
+]
+
+---
+
+### Exploring the null distribution with simulation
+
+```{r, fig.width=7, fig.height=5, fig.align='center'}
+hist(null_statistics)
+```
+
+.large[
+.question[
+Are there any issues with this approach to approximating the null distribution?
+]
+]
+
+---
+
+### The problem with simulation
+
+.large[
+**Goal:** Want to know how unusual the observed test statistic ( $G = 13.92$ ) for the grad admissions data is if $H_0$ is true (there is no relationship between GRE score and admission)
+
+**Potential problem:** Our simulated data looks nothing like the grad admissions data
+
+**Strategy:**
+]
+
+---
+
+### Step 1
+
+.large[
+**Step 1:** Pretend the reduced model is correct:
+$$Admit_i \sim Bernoulli(\pi_i)$$
+$$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0$$
+
+.question[
+How do I fit this model in R?
+]
+]
+
+---
+
+### Step 1
+
+.large[
+**Step 1:** Pretend the reduced model is correct:
+$$Admit_i \sim Bernoulli(\pi_i)$$
+$$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0$$
+
+```{r, output.lines = 10:12}
+m1 <- glm(admit ~ 1, family = binomial, 
+          data = grad_app)
+summary(m1)
+```
+]
+
+---
+
+### Step 2
+
+.large[
+**Step 2:** Simulate from the reduced model
+
+$$\log \left( \dfrac{\widehat{\pi}_i}{1 - \widehat{\pi}_i} \right) = -0.77$$
+
+.question[
+What should I change in my code to simulate from this reduced model?
+]
+]
+
+.large[
+```{r}
+x <- runif(1000, 0, 5)
+p <- exp(-3 + 0*x)/(1 + exp(-3 + 0*x))
+y <- rbinom(1000, 1, p)
+```
+]
+
+---
+
+### Step 2
+
+.large[
+**Step 2:** Simulate from the reduced model
+
+$$\log \left( \dfrac{\widehat{\pi}_i}{1 - \widehat{\pi}_i} \right) = -0.77$$
+
+```{r, eval=F}
+x <- grad_app$gre
+p <- exp(-0.77 + 0*x)/(1 + exp(-0.77 + 0*x))
+y <- rbinom(length(x), 1, p)
+```
+]
+
+---
+
+### Step 3
+
+.large[
+**Step 3:** Calculate a test statistic for the simulated data
+
+```{r, include=F}
+set.seed(4)
+```
+
+```{r}
+x <- grad_app$gre
+p <- exp(-0.77 + 0*x)/(1 + exp(-0.77 + 0*x))
+y <- rbinom(length(x), 1, p)
+
+m <- glm(y ~ x, family = binomial)
+m$null.deviance - m$deviance
+```
+
+.question[
+In the observed data, $G = 13.92$. In this simulated data, $G = 0.015$. Does the observed test statistic seem unusual, if $H_0$ were true?
+]
+]
+
+---
+
+### Class activity
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_7.html](https://sta214-s23.github.io/class_activities/ca_lecture_7.html)
+]
+
+---
+
+### Class activity
+
+.large[
+```{r}
+null_statistics <- c()
+nsim <- 500
+for(i in 1:nsim){
+  x <- runif(1000, 0, 5)
+  p <- exp(-3 + 0*x)/(1 + exp(-3 + 0*x))
+  y <- rbinom(1000, 1, p)
+  m1 <- glm(y ~ x, family = binomial)
+  
+  null_statistics[i] <- m1$null.deviance - 
+    m1$deviance
+}
+```
+
+.question[
+How do I adapt this code to simulate many times from the reduced model?
+]
+]
+
+---
+
+### Class activity
+
+.large[
+```{r}
+null_statistics <- c()
+nsim <- 500
+for(i in 1:nsim){
+  x <- grad_app$gre
+  p <- exp(-0.77 + 0*x)/(1 + exp(-0.77 + 0*x))
+  y <- rbinom(length(x), 1, p)
+  m1 <- glm(y ~ x, family = binomial)
+  
+  null_statistics[i] <- m1$null.deviance - 
+    m1$deviance
+}
+```
+]
+
+---
+
+### Class activity
+
+```{r, fig.align='center', fig.width=7, fig.height=5}
+hist(null_statistics)
+```
+
+.large[
+.question[
+Compared to the test statistics simulated from the reduced model, how unusual is the observed test statistic of $G = 13.92$?
+]
+]
+
+---
+
+### Approximating a p-value
+
+.large[
+**p-value:** How unusual the data is *if* $H_0$ is true. e.g., 
+
+$$P(G \geq 13.92 | H_0)$$
+
+We can approximate this probability using the test statistics simulated from the reduced model:
+
+```{r}
+mean(null_statistics >= 13.92)
+```
+]
+
+---
+
+### Parametric bootstrapping

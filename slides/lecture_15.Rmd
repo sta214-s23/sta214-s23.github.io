@@ -1,0 +1,84 @@
+---
+title: Prediction
+output:
+  xaringan::moon_reader:
+    css: "lab-slides.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r include=F}
+library(tidyverse)
+sba <- read.csv("https://sta214-s23.github.io/class_activities/sba_small.csv")
+
+m1 <- glm(Default ~ log(DisbursementGross) + Term + 
+            as.factor(UrbanRural), 
+          family = binomial, data = sba)
+```
+
+### Last time: Class activity
+
+.large[
+Changing thresholds:
+
+```{r}
+table(Prediction = m1$fitted.values > 0.3, 
+      Truth = sba$Default)
+```
+
+```{r}
+table(Prediction = m1$fitted.values > 0.7, 
+      Truth = sba$Default)
+```
+
+]
+
+---
+
+### Changing thresholds
+
+.large[
+.question[
+How can I assess prediction performance across many different thresholds?
+]
+]
+
+---
+
+### ROC curve
+
+.large[
+```{r, echo=F, message=F, warning=F, fig.align='center', fig.width=7, fig.height=6}
+library(ROCR)
+pred <- prediction(m1$fitted.values, sba$Default)
+perf <- performance(pred,"tpr","fpr")
+
+# performance(pred, "auc")@y.values # 0.82
+
+data.frame(fpr = perf@x.values[[1]],
+           tpr = perf@y.values[[1]]) %>%
+  ggplot(aes(x = fpr, y = tpr)) +
+  geom_line(lwd=1.5) +
+  geom_abline(slope = 1, intercept = 0, lty = 2,
+              lwd = 1.5) +
+  labs(x = "False positive rate (1 - Specificity)",
+       y = "True positive rate (Sensitivity)") +
+  theme_classic() +
+  theme(text = element_text(size = 20))
+```
+]
+
+---
+
+### Homework 6
+
+.large[
+* Reading the dengue research paper
+* Reproducing the paper's results
+* Practice with model selection and assessing prediction performance
+]

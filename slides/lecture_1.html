@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Welcome to STA 214</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Dr. Ciaran Evans" />
+    <script src="libs/header-attrs-2.16/header-attrs.js"></script>
+    <link rel="stylesheet" href="lab-slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# Welcome to STA 214
+]
+.author[
+### Dr. Ciaran Evans
+]
+
+---
+
+
+### Agenda
+
+.large[
+* Introductions
+* Beginning logistic regression
+* Plan for week 1 and the semester
+* Syllabus highlights
+]
+
+---
+
+### Motivating example: Dengue fever
+
+.large[
+**Dengue fever:** a mosquito-borne viral disease affecting 400 million people a year
+]
+
+.center[
+&lt;img src="DengueSymptomsUpdated.jpg" alt="drawing" width="350"/&gt;
+]
+
+---
+
+### Motivating example: Dengue data
+
+.large[
+**Data:** Data on 5720 Vietnamese children, admitted to the hospital with possible dengue fever. Variables include:
+
+* *Sex*: patient's sex (female or male)
+* *Age*: patient's age (in years)
+* *WBC*: white blood cell count
+* *PLT*: platelet count
+* other diagnostic variables...
+* *Dengue*: whether the patient has dengue (0 = no, 1 = yes)
+]
+
+---
+
+### Research questions
+
+.large[
+* How well can we predict whether a patient has dengue?
+* Which diagnostic measurements are most useful?
+* Is there a significant relationship between age and dengue?
+]
+
+.large[
+.question[
+How can I answer each of these questions? Discuss with a neighbor for 2 minutes, then we will discuss as a class.
+]
+]
+
+---
+
+### Exploratory data analysis (EDA)
+
+.large[
+.question[
+What plot can we use to visualize the response (dengue status)?
+]
+]
+
+---
+
+### Exploratory data analysis (EDA)
+
+.large[
+.question[
+What plot can we use to visualize the response (dengue status)?
+]
+
+**Answer:** Bar chart
+]
+
+&lt;img src="lecture_1_files/figure-html/unnamed-chunk-1-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+### Exploratory data analysis (EDA)
+
+.large[
+.question[
+What plot can we use to visualize an explanatory variable like Age?
+]
+]
+
+---
+
+### Exploratory data analysis (EDA)
+
+.large[
+.question[
+What plot can we use to visualize an explanatory variable like Age?
+]
+
+**Answer:** Histogram (or boxplot)
+]
+
+&lt;img src="lecture_1_files/figure-html/unnamed-chunk-2-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+### Class activity
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_1.html](https://sta214-s23.github.io/class_activities/ca_lecture_1.html)
+
+In the class activity, you'll start to explore the relationship between age and dengue.
+
+Spend a few minutes to do the following:
+
+* Say hi to the people around you, introduce yourself
+* Work in groups on the class activity
+* You don't need to submit your work
+]
+
+---
+
+### Class activity
+
+.large[
+.question[
+What is the (empirical) probability that a patient in the study has dengue?
+]
+]
+
+.large[
+`\(P(\text{Dengue} = 1) =\)`
+]
+
+---
+
+### Class activity
+
+.large[
+.question[
+What is the (empirical) probability that a 5 year old patient has dengue? What about a 10 year old patient?
+]
+]
+
+.large[
+`\(P(\text{Dengue} = 1 | \text{Age} = 5) =\)`
+
+`\(P(\text{Dengue} = 1 | \text{Age} = 10) =\)`
+]
+
+
+---
+
+
+## Odds
+
+.large[
+.question[
+What are the (empirical) odds that a 5 year old patient has dengue?
+]
+]
+
+
+---
+
+### Fitting a model: initial attempt
+
+.large[
+What if we try a linear regression model?
+
+`$$Y_i = \text{dengue status of } i\text{th  patient}$$`
+
+`$$Y_i = \beta_0 + \beta_1 Age_i + \varepsilon_i \hspace{1cm} \varepsilon_i \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)$$`
+]
+
+.large[
+.question[
+What are some potential issues with this linear regression model? Discuss with your neighbors for 1--2 minutes, then we will discuss as a class.
+]
+]
+
+---
+
+### Don't fit linear regression with a binary response
+
+&lt;img src="lecture_1_files/figure-html/setup-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+### Revisiting the linear regression model
+
+---
+
+### Parametric modeling
+
+.large[
+
+A regression model is an example of a more general process called **parametric modeling**
+
+* **Step 1:** Choose a reasonable distribution for `\(Y_i\)`
+* **Step 2:** Build a model for the parameters of interest
+* **Step 3:** Fit the model
+
+]
+
+---
+
+### Step 1: Choose a reasonable distribution for `\(Y_i\)`
+
+.large[
+.question[
+What do I mean by a *distribution*?
+]
+]
+
+---
+
+### Step 1: Choose a reasonable distribution for `\(Y_i\)`
+
+.large[
+.question[
+What do I mean by a *distribution*?
+]
+]
+
+.large[
+* A **distribution** tells us what outcomes are possible for `\(Y_i\)`, and how often these outcomes occur.
+
+Here the possible values of `\(Y_i\)` are 0 (no dengue) and 1 (dengue).
+
+.question[
+How often do these values occur in the population?
+]
+
+]
+
+---
+
+### Step 1: Choose a reasonable distribution for `\(Y_i\)`
+
+.large[
+.question[
+What do I mean by a *distribution*?
+]
+]
+
+.large[
+* A **distribution** tells us what outcomes are possible for `\(Y_i\)`, and how often these outcomes occur.
+
+Here the possible values of `\(Y_i\)` are 0 (no dengue) and 1 (dengue).
+
+.question[
+How often do these values occur in the population?
+]
+
+]
+
+.large[
+* We don't know, so we will estimate from the sample
+* We assume the probability `\(Y_i = 1\)` depends on `\(Age_i\)`
+]
+
+---
+
+### Step 1: Choose a reasonable distribution for `\(Y_i\)`
+
+.large[
+.question[
+How should I describe the distribution of `\(Y_i\)`?
+]
+]
+
+---
+
+### Bernoulli distribution
+
+.large[
+**Definition:** Let `\(Y_i\)` be a binary random variable, and `\(\pi_i = P(Y_i = 1)\)`. Then `\(Y_i \sim Bernoulli(\pi_i)\)`.
+
+.question[
+What do I mean by a *random variable*?
+]
+]
+
+---
+
+### Bernoulli distribution
+
+.large[
+**Definition:** Let `\(Y_i\)` be a binary random variable, and `\(\pi_i = P(Y_i = 1)\)`. Then `\(Y_i \sim Bernoulli(\pi_i)\)`.
+
+.question[
+What do I mean by a *random variable*?
+]
+]
+
+.large[
+A **random variable** is an event that has a set of possible outcomes, but we don't know which one will occur
+
+* Here `\(Y_i = 0\)` or `\(1\)`
+* Our goal is to use the observed data to estimate `\(\pi_i = P(Y_i = 1)\)`
+]
+
+---
+
+### Second attempt at a model
+
+.large[
+`$$Y_i \sim Bernoulli(\pi_i) \hspace{1cm} \pi_i = P(Y_i = 1 | Age_i)$$`
+
+`$$\pi_i = \beta_0 + \beta_1 Age_i$$`
+]
+
+.large[
+.question[
+Are there still any potential issues with this approach?
+]
+]
+
+---
+
+### Fixing the issues
+
+---
+
+### Logistic regression model
+
+.large[
+
+`\(Y_i =\)` dengue status (0 = negative, 1 = positive) 
+
+`\(Age_i =\)` age (in years)
+
+**Random component:** `\(\hspace{1cm} Y_i \sim Bernoulli(\pi_i)\)`
+
+**Systematic component:** `\(\hspace{1cm} \log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 \ Age_i\)`
+
+]
+
+---
+
+### Next steps
+
+.large[
+* We will spend the next few weeks talking in depth about logistic regression
+* Download R and RStudio today or tomorrow
+    - Instructions on course website
+    - Please come to office hours or contact me if you have problems!
+* Bring laptop to class
+* HW 1 released on the course website
+* Course codebook also on the course website
+]
+
+---
+
+### Semester plan
+
+.large[
+* Logistic regression
+* Multinomial regression
+* Poisson regression
+* Mixed effects
+* Parametric bootstrapping (time permitting)
+]
+
+---
+
+### Course prerequisites
+
+.large[
+Prerequisites:
+
+* STA 112 (previously numbered 212) and MTH 111 (Calculus I)
+* You may *not* take this class if you previously took STA 279 with me or Dr. Dalzell!
+
+I expect you to be familiar with:
+
+* EDA (Exploratory data analysis)
+* Linear regression with multiple predictors
+* Comparing and interpreting models
+* Confidence intervals and hypothesis tests
+* Basic R computing
+]
+
+---
+
+### Getting help
+
+.large[
+* Office hours 
+    - sign up for 15-minute time slots
+    - see course web page
+* Email (evansc@wfu.edu)
+]
+
+---
+
+### Diversity and Inclusion
+
+.large[
+In this class, we will embrace diversity of age, background, beliefs, ethnicity, gender, gender identity, gender expression, national origin, neurotype, race, religious affiliation, sexual orientation, and other visible and non-visible categories. The university and I do not tolerate discrimination.
+
+* Let me know ways to improve the effectiveness of the course for you personally, or for other students or student groups.
+* *Names/Pronouns:* You deserve to be addressed in the manner you prefer. To guarantee that I address you properly, you are welcome to tell me your pronoun(s) and/or preferred name at any time, either in person or via email.
+]
+
+---
+
+### Course components
+
+.large[
+| Component | Weight |
+| --------- | ------ |
+| Homework and Labs |  20%   |
+| Exam 1    |  15%   |
+| Exam 2    |  15%   |
+| Final Exam | 20% |
+| Project 1 |  15%   |
+| Project 2 |  15%   |
+]
+
+---
+
+### Extensions and late work
+
+.large[
+**Extensions:** You have a bank of **5** extension days, which you may use over the course of the semester. You may use either one or two days for a given assignment. *Additional extensions may be given, on an individual basis, in extenuating circumstances.*
+
+**Late work:** An assignment will be marked off 20% for every 24 hours it is late (past the original due date).
+
+If you know you cannot turn in an assignment (for instance, if you are ill or there is a family emergency), let me know before the assignment is due, and we will work something out. There will be no grade changes
+after our last day of class.
+]
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

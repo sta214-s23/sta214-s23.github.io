@@ -1,0 +1,70 @@
+---
+title: "Class Activity, January 25"
+output: 
+  tufte::tufte_html:
+    css: "lab.css"
+    tufte_variant: "envisioned"
+    highlight: pygments
+link-citations: yes
+---
+
+In this class activity, we will work with the grad application data from HW 1:
+
+```{r, eval=F}
+grad_app <- read.csv("https://stats.idre.ucla.edu/stat/data/binary.csv")
+```
+
+On HW 1, you fit a logistic regression model on the grad application data with GPA as a predictor. Now let's consider GRE as a predictor instead. Our logistic regression model is
+
+$Y_i \sim Bernoulli(\pi_i) \hspace{0.5cm} \log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 \text{GRE}_i$
+
+We are interested in testing $H_0: \beta_1 = 0$ vs. $H_A: \beta_1 \neq 0$. Our null hypothesis corresponds to the reduced model 
+
+$Y_i \sim Bernoulli(\pi_i) \hspace{0.5cm} \log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0$
+
+The equation of the fitted reduced model is 
+
+$$\log \left( \dfrac{\widehat{\pi}_i}{1 - \widehat{\pi}_i} \right) = -0.77$$
+
+# Questions
+
+To test these hypotheses, we want to do the following:
+
+* Pretend the reduced model is correct
+* Use the reduced model to simulate new data
+* Calculate a test statistic for the simulated data
+* Repeat the process many times to approximate the null distribution of the test statistic
+
+On the slides, we wrote code to create a single simulated dataset from the reduced model, and calculate a test statistic:
+
+```{r, eval=F}
+x <- grad_app$gre
+p <- exp(-0.77 + 0*x)/(1 + exp(-0.77 + 0*x))
+y <- rbinom(length(x), 1, p)
+
+m <- glm(y ~ x, family = binomial)
+m$null.deviance - m$deviance
+```
+
+Now we want to repeat this process many times, and store the test statistics from each simulation.
+
+1. Fill in the following `for` loop to create 500 simulated datasets and store the drop-in-deviance statistic $G$ for each simulation:
+
+```{r, eval=F}
+null_statistics <- c()
+nsim <- ...
+for(i in 1:nsim){
+  ...
+  
+  null_statistics[i] <- ...
+}
+```
+
+2. We can use a histogram to visualize the distribution of test statistics in the simulated data (i.e., the simulated null distribution):
+
+```{r, eval=F}
+hist(null_statistics)
+```
+
+3. Compared to the test statistics simulated from the reduced model, how unusual is the observed test statistic of $G = 13.92$?
+

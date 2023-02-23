@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Logistic regression assumptions and diagnostics</title>
+    <meta charset="utf-8" />
+    <script src="libs/header-attrs-2.16/header-attrs.js"></script>
+    <link rel="stylesheet" href="lab-slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# Logistic regression assumptions and diagnostics
+]
+
+---
+
+
+### Recap: quantile residual plots
+
+.large[
+
+
+&lt;img src="lecture_11_files/figure-html/unnamed-chunk-2-1.png" style="display: block; margin: auto;" /&gt;
+
+
+]
+
+---
+
+
+### Multicollinearity
+
+.large[
+.question[
+What is multicollinearity?
+]
+]
+
+---
+
+### Class activity, Part I
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_11.html](https://sta214-s23.github.io/class_activities/ca_lecture_11.html)
+
+.question[
+* Simulate correlated data
+* Assess the impact on estimated coefficients
+]
+]
+
+---
+
+### The impact of multicollinearity
+
+.large[
+.question[
+How does correlation between the explanatory variables impact the fitted model?
+]
+]
+
+---
+
+### Example: College scorecard data
+
+.large[
+The Department of Education compiles the College Scorecard, which is used to help prospective college students compare schools. For each school, variables include:
+
+* CONTROL: whether the school is public or private
+* SATVRMID: midpoint of SAT critical reading scores of students attending the school
+* ACTCMMID: midpoint of the ACT cumulative scores
+* UGDS: number of undergraduate students at the school
+* NPT4: average cost to attend the school
+* PCTFLOAN: fraction of undergraduates receiving a federal student loan
+* MD_EARN_WNE_P10: median salary of students 10 years after graduation
+]
+
+---
+
+### Example: College scorecard data
+
+.large[
+
+* CONTROL: whether the school is public or private
+* SATVRMID: midpoint of SAT critical reading scores of students attending the school
+* ACTCMMID: midpoint of the ACT cumulative scores
+* UGDS: number of undergraduate students at the school
+* NPT4: average cost to attend the school
+* PCTFLOAN: fraction of undergraduates receiving a federal student loan
+* MD_EARN_WNE_P10: median salary of students 10 years after graduation
+
+.question[
+Which of these variables may suffer from multicollinearity?
+]
+]
+
+---
+
+### Diagnosing multicollinearity
+
+.large[
+.question[
+How do I detect multicollinearity in my data?
+]
+]
+
+---
+
+### Scatterplot and correlation matrix
+
+
+
+&lt;img src="lecture_11_files/figure-html/unnamed-chunk-4-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+### Variance inflation factors
+
+---
+
+### Variance inflation factors in R
+
+
+```r
+library(car)
+
+m1 &lt;- glm(RPY_3YR_70 ~ CONTROL + SATVRMID + 
+            SATMTMID + SATWRMID + ACTCMMID + ACTENMID + 
+            ACTMTMID + ACTWRMID + UGDS +
+            PCTFLOAN + MD_EARN_WNE_P10 + NPT4,
+          data = scorecard, family = binomial)
+vif(m1)
+```
+
+```
+##         CONTROL        SATVRMID        SATMTMID        SATWRMID        ACTCMMID 
+##        3.511039       14.752767       11.246146       13.763868       11.629501 
+##        ACTENMID        ACTMTMID        ACTWRMID            UGDS        PCTFLOAN 
+##       12.258720        8.837329        1.671265        2.426494        2.042923 
+## MD_EARN_WNE_P10            NPT4 
+##        1.333261        2.536284
+```
+
+
+---
+
+### Addressing model issues
+
+.large[
+.question[
+How should we handle multicollinearity in the explanatory variables? Discuss with a neighbor for a few minutes, then we will discuss as a group.
+]
+]
+
+---
+
+### Outliers and influential points
+
+.large[
+.question[
+What is an outlier?
+]
+]
+
+---
+
+### Class activity, Part II
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_11.html](https://sta214-s23.github.io/class_activities/ca_lecture_11.html)
+
+.question[
+* Simulate data with a potential outlier
+* Assess the impact on estimated coefficients
+]
+]
+
+---
+
+### Class activity
+
+.large[
+.question[
+How does an outlier influence the fitted regression model?
+]
+]
+
+---
+
+### Cook's distance
+
+---
+
+### Cook's distance in R
+
+.large[
+
+
+
+```r
+x1 &lt;- c(x, -2)
+y1 &lt;- c(y, 1)
+m1 &lt;- glm(y1 ~ x1, family = binomial)
+
+plot(x1, cooks.distance(m1))
+```
+
+&lt;img src="lecture_11_files/figure-html/unnamed-chunk-8-1.png" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+### Cook's distance in R
+
+.large[
+
+
+```r
+x1 &lt;- c(x, -5)
+y1 &lt;- c(y, 1)
+m1 &lt;- glm(y1 ~ x1, family = binomial)
+
+plot(x1, cooks.distance(m1))
+```
+
+&lt;img src="lecture_11_files/figure-html/unnamed-chunk-10-1.png" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+### Addressing model issues
+
+.large[
+.question[
+How should we handle outliers and influential points? Discuss with a neighbor for a few minutes, then we will discuss as a group.
+]
+]
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

@@ -1,0 +1,29 @@
+---
+title: "Class Activity, January 13"
+output: 
+  tufte::tufte_html:
+    css: "lab.css"
+    tufte_variant: "envisioned"
+    highlight: pygments
+link-citations: yes
+---
+
+In this activity, we will work with the fitted logistic regression model from the dengue data. The fitted logistic regression model is 
+
+$$\hspace{1cm} Y_i \sim Bernoulli(\pi_i)$$
+$$\hspace{1cm} \log \left( \dfrac{\widehat{\pi}_i}{1 - \widehat{\pi}_i} \right) = -2.45 + 0.22 \ Age_i$$
+
+# Questions
+
+1. What is the predicted odds of dengue for a 10 year old patient? What about the predicted *probability* of dengue for a 10 year old patient?
+
+2. Suppose we want to identify patients for whom the predicted probability of dengue is at least 0.5. What age range should we focus on?
+
+3. What is the predicted odds of dengue for an 11 year old patient? 
+
+Now let's compare the odds for an 11 year old patient to the odds for a 10 year old patient. We usually compare odds by their *ratio*:
+
+$$\dfrac{0.97}{0.78} = 1.25$$
+That is, the odds that an 11 year old patient has dengue are 1.25 times higher than the odds that a 10 year old patient has dengue.
+
+4. Compare the odds of dengue for a 12 year old patient to the odds of dengue for an 11 year old patient. What do you notice?

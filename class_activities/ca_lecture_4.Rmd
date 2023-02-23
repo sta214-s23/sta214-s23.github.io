@@ -1,0 +1,50 @@
+---
+title: "Class Activity, January 18"
+output: 
+  tufte::tufte_html:
+    css: "lab.css"
+    tufte_variant: "envisioned"
+    highlight: pygments
+link-citations: yes
+---
+
+In a study of patients with tumors, scientists were interesting in determining the relationship between the size of tumors in centimeters ( $X$ ) found on lymph nodes and whether or not the tumor was cancerous ( $Y$ ). Let $Y_i = 1$ if patient $i$ in the study has a tumor that is cancerous, and $Y_i = 0$ if the tumor is not cancerous. Let $\pi_i = P(Y_i = 1)$.
+
+The data from the first five patients in the study are:
+
+| Tumor cancerous | Yes | No | No | Yes | No |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+| **Size of tumor (cm)** | **6** | **1** | **0.5** | **4** | **1.2** |
+
+# Part I
+
+One scientist (Scientist A) proposes that the probability $\pi_i$ does not depend on tumor size, so $\pi_i$ is the same for each patient. They also propose $\widehat{\pi}_i = 0.2$ or $\widehat{\pi}_i = 0.3$.
+
+1. Calculate the likelihood for both potential values of $\widehat{\pi}_i$. Which of the two choices seems more reasonable, and why?
+
+2. The table below shows the calculation of the likelihood for a variety of other choices for $\pi_i$. Based on the table and Exercise 1, which value of $\widehat{\pi}_i$ would you pick?
+
+| $\widehat{\pi}_i$ | $L(\widehat{\pi}_i)$ |
+| :---: | :---: |
+| 0 | 0 |
+| 0.05 | 0.002 |
+| 0.10 | 0.007 |
+| 0.15 | 0.014 |
+| 0.20 | |
+| 0.25 | 0.026 |
+| 0.30 | |
+| 0.35 | 0.033 |
+| 0.40 | 0.036 |
+| 0.45 | 0.033 |
+
+# Part II
+
+A second scientist (Scientist B) proposes that the probability $\pi_i$ *does* depend on tumor size, and suggests the logistic regression model
+
+$Y_i \sim Bernoulli(\pi_i)$
+
+$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 \ Size_i$
+
+3. Scientist B suggests $\widehat{\beta}_0 = -2$ and $\widehat{\beta}_1 = 0.5$. Calculate $\widehat{\pi}_i$ for each of the five patients in the data above.
+
+4. Using your probability estimates from Exercise 3, calculate the likelihood $L(\widehat{\beta}_0, \widehat{\beta}_1) = P(y_1,...,y_5 | \widehat{\beta}_0, \widehat{\beta}_1)$.

@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Estimating parameters</title>
+    <meta charset="utf-8" />
+    <script src="libs/header-attrs-2.16/header-attrs.js"></script>
+    <link rel="stylesheet" href="lab-slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# Estimating parameters
+]
+
+---
+
+
+### Goal
+
+.large[
+Logistic regression model:
+
+`\(Y_i \sim Bernoulli(\pi_i) \hspace{0.5cm} \log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 X_i\)`
+
+.question[
+Given data `\((X_1, Y_1), (X_2, Y_2), ..., (X_n, Y_n)\)`, how do I estimate `\(\beta_0\)` and `\(\beta_1\)`?
+]
+]
+
+---
+
+### Motivating example
+
+.large[
+`\(Y_i =\)` result of flipping a coin (Heads or Tails)
+
+.question[
+Is `\(Y_i\)` a random variable?
+]
+]
+
+---
+
+### Motivating example
+
+.large[
+`\(Y_i =\)` result of flipping a coin (Heads or Tails)
+
+Let's make a model:
+
+* **Step 1:** Distribution of the response
+
+.center[
+`\(Y_i \sim Bernoulli(\pi)\)`
+]
+
+* **Step 2:** Construct a model for the parameters
+
+.center[
+`\(\pi = ??\)`
+]
+]
+
+---
+
+### Motivating example
+
+.large[
+`\(Y_i =\)` result of flipping a coin (Heads or Tails)
+
+Suppose your friend estimates that the probability of heads is 0.9
+
+* `\(Y_i \sim Bernoulli(\pi)\)`
+* `\(\widehat{\pi} = 0.9\)`
+
+.question[
+How can we assess whether this estimate `\(\widehat{\pi}\)` is reasonable?
+]
+]
+
+---
+
+### Motivating example
+
+.large[
+Suppose we flip the coin 5 times, and observe
+
+.center[
+`\(y_1,...,y_5 = T, T, T, T, H\)`
+]
+
+.question[
+What is the probability of (i.e., how *likely* is) getting this string of flips if `\(\pi = 0.9\)`? Discuss with your neighbor for a minute, then we will discuss as a class.
+]
+]
+
+---
+
+### Likelihood
+
+.large[
+**Definition:** The *likelihood* `\(L(Model) = P(Data | Model)\)` of a model is the probability of the observed data, given that we assume a certain model and certain values for the parameters that define that model.
+]
+
+.large[
+* Model: `\(Y_i \sim Bernoulli(\pi)\)`, and `\(\widehat{\pi} = 0.9\)`
+* Data: `\(y_1,...,y_5 = T, T, T, T, H\)`
+* Likelihood: `\(L(\widehat{\pi}) = P(y_1,...y_5 | \pi = 0.9) = 0.00009\)`
+]
+
+---
+
+### Class Activity, Part I
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_4.html](https://sta214-s23.github.io/class_activities/ca_lecture_4.html)
+]
+
+---
+
+### Class Activity
+
+.large[
+`\begin{align}
+L(0.2) &amp;= P(y_1,...,y_5 | \pi = 0.2) \\
+&amp;= (0.2)(0.8)(0.8)(0.2)(0.8) = 0.020
+\end{align}`
+
+`\begin{align}
+L(0.3) &amp;= P(y_1,...,y_5 | \pi = 0.3) \\ &amp;= (0.3)(0.7)(0.7)(0.3)(0.7) = 0.031
+\end{align}`
+
+.question[
+Which value, 0.2 or 0.3, seems more reasonable?
+]
+]
+
+---
+
+### Class Activity
+
+.large[
+.question[
+Which value of `\(\widehat{\pi}\)` in the table would you pick?
+]
+]
+
+---
+
+### Maximum likelihood
+
+.large[
+**Maximum likelihood principle:** estimate the parameters to be the values that maximize the likelihood
+
+| `\(\widehat{\pi}\)` | Likelihood |
+| :---: | :---: |
+| 0.30 | 0.031 |
+| 0.35 | 0.033 |
+| 0.40 | 0.036 |
+| 0.45 | 0.033 |
+
+Maximum likelihood estimate: `\(\widehat{\pi} = 0.4\)`
+]
+
+---
+
+### Maximum likelihood
+
+.large[
+**Maximum likelihood principle:** estimate the parameters to be the values that maximize the likelihood
+
+Steps for maximum likelihood estimation:
+
+* *Likelihood*: For each potential value of the parameter, compute the likelihood of the observed data
+* *Maximize*: Find the parameter value that gives the largest likelihood
+]
+
+---
+
+### Maximum likelihood for logistic regression
+
+.large[
+`\(\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 \ Size_i \hspace{1cm} \pi_i = \dfrac{\exp\{\beta_0 + \beta_1 \ Size_i \}}{1 + \exp\{\beta_0 + \beta_1 \ Size_i \}}\)`
+
+**Observed data:** 
+
+| Tumor cancerous | Yes | No | No | Yes | No |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+| **Size of tumor (cm)** | **6** | **1** | **0.5** | **4** | **1.2** |
+
+]
+
+.large[
+.question[
+Suppose `\(\beta_0 = -2, \ \beta_1 = 0.5\)`. How would I compute the likelihood?
+]
+]
+
+---
+
+### Class Activity, Part II
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_4.html](https://sta214-s23.github.io/class_activities/ca_lecture_4.html)
+]
+
+---
+
+### Class Activity
+
+.large[
+`\(\widehat{\pi}_i = \dfrac{\exp\{-2 + 0.5 \ Size_i \}}{1 + \exp\{-2 + 0.5 \ Size_i \}}\)`
+
+| Tumor cancerous | Yes | No | No | Yes | No |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+| **Size of tumor (cm)** | **6** | **1** | **0.5** | **4** | **1.2** |
+| `\(\widehat{\pi}_i\)` | `\(\hspace{2cm}\)`  | `\(\hspace{2cm}\)` | `\(\hspace{2cm}\)` | `\(\hspace{2cm}\)`  | `\(\hspace{2cm}\)`  |
+]
+
+.large[
+Likelihood = 
+]
+
+---
+
+### Maximum likelihood for logistic regression
+
+.large[
+**Likelihood:** 
+* For estimates `\(\widehat{\beta}_0\)` and `\(\widehat{\beta}_1\)`, `\(\widehat{\pi}_i = \dfrac{\exp\{\widehat{\beta}_0 + \widehat{\beta}_1 X_i\}}{1 + \exp\{\widehat{\beta}_0 + \widehat{\beta}_1 X_i\}}\)`
+* `\(L(\widehat{\beta}_0, \widehat{\beta}_1) = P(Y_1,...,Y_n | \widehat{\beta}_0, \widehat{\beta}_1)\)`
+    
+**Maximize:** 
+* Choose `\(\widehat{\beta}_0\)`, `\(\widehat{\beta}_1\)` to maximize `\(L(\widehat{\beta}_0, \widehat{\beta}_1)\)`
+]
+
+.large[
+.question[
+So far, we only considered a few values for `\(\beta_0\)` and `\(\beta_1\)`. How should we check other values, to make sure our estimates actually maximize likelihood?
+]
+]
+
+---
+
+### Computing likelihood in R
+
+.large[
+Observed data: T, T, T, T, H
+
+* We are going to consider several different potential values for `\(\widehat{\pi}\)`:
+
+.center[
+`\(0, 0.1, 0.2, 0.3,..., 0.9, 1\)`
+]
+
+* For each potential value, we will compute the likelihood:
+
+.center[
+`\(L(\widehat{\pi}) = (1 - \widehat{\pi})^4(\widehat{\pi})\)`
+]
+
+* We then see which value has the highest likelihood.
+* Is this all possible values? No, but let's start here.
+]
+
+---
+
+### R code
+
+.large[
+```r
+# List the values for pi hat
+pi_hat &lt;- seq(from = 0, to = 1, by = 0.1)
+```
+]
+
+
+---
+
+### R code
+
+.large[
+```r
+# List the values for pi hat
+pi_hat &lt;- seq(from = 0, to = 1, by = 0.1)
+
+# Create a space to store the likelihoods
+likelihood &lt;- rep(0,length(pi_hat))
+```
+]
+
+
+---
+
+### R code
+
+.large[
+```r
+# List the values for pi hat
+pi_hat &lt;- seq(from = 0, to = 1, by = 0.1)
+
+# Create a space to store the likelihoods
+likelihood &lt;- rep(0,length(pi_hat))
+
+# Compute and store the likelihoods
+for( i in 1:length(pi_hat) ){
+  likelihood[i] &lt;- pi_hat[i]*(1-pi_hat[i])^4
+}
+```
+]
+
+---
+
+### R code
+
+.large[
+```r
+# List the values for pi hat
+pi_hat &lt;- seq(from = 0, to = 1, by = 0.1)
+
+# Create a space to store the likelihoods
+likelihood &lt;- rep(0,length(pi_hat))
+
+# Compute and store the likelihoods
+for( i in 1:length(pi_hat) ){
+  likelihood[i] &lt;- pi_hat[i]*(1-pi_hat[i])^4
+}
+```
+]
+
+.large[
+.question[
+Run this code in your R console. Which value of `\(\widehat{\pi}\)` gives the highest likelihood?
+]
+]
+
+
+---
+
+### Results
+
+
+| pi_hat| likelihood|
+|------:|----------:|
+|    0.0|    0.00000|
+|    0.1|    0.06561|
+|    0.2|    0.08192|
+|    0.3|    0.07203|
+|    0.4|    0.05184|
+|    0.5|    0.03125|
+|    0.6|    0.01536|
+|    0.7|    0.00567|
+|    0.8|    0.00128|
+|    0.9|    0.00009|
+|    1.0|    0.00000|
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

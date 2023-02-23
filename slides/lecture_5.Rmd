@@ -1,0 +1,309 @@
+---
+title: Maximum likelihood estimation
+output:
+  xaringan::moon_reader:
+    css: "lab-slides.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+editor_options: 
+  chunk_output_type: console
+---
+
+### Recap
+
+.large[
+**Definition:** The *likelihood* $L(Model) = P(Data | Model)$ of a model is the probability of the observed data, given that we assume a certain model and certain values for the parameters that define that model.
+]
+
+.large[
+Coin example: flip a coin 5 times, with $\pi = P(Heads)$
+* Model: $Y_i \sim Bernoulli(\pi)$, and $\widehat{\pi} = 0.9$
+* Data: $y_1,...,y_5 = T, T, T, T, H$
+* Likelihood: $L(\widehat{\pi}) = P(y_1,...y_5 | \pi = 0.9) = 0.00009$
+]
+
+---
+
+### Recap
+
+.large[
+**Maximum likelihood estimation:** pick the parameter estimate that maximizes the likelihood.
+
+Coin example: flip a coin 5 times, with $\pi = P(Heads)$
+
+* Observed data: T, T, T, T, H
+* Likelihood: $L(\widehat{\pi}) = (1 - \widehat{\pi})^4(\widehat{\pi})$
+* Choose $\widehat{\pi}$ to maximize $L(\widehat{\pi})$
+]
+
+---
+
+### Computing likelihood in R
+
+.large[
+Observed data: T, T, T, T, H
+
+* We are going to consider several different potential values for $\widehat{\pi}$:
+
+.center[
+$0, 0.1, 0.2, 0.3,..., 0.9, 1$
+]
+
+* For each potential value, we will compute the likelihood:
+
+.center[
+$L(\widehat{\pi}) = (1 - \widehat{\pi})^4(\widehat{\pi})$
+]
+
+* We then see which value has the highest likelihood.
+* Is this all possible values? No, but let's start here.
+]
+
+---
+
+### R code
+
+.large[
+```r
+# List the values for pi hat
+pi_hat <- seq(from = 0, to = 1, by = 0.1)
+
+# Create a space to store the likelihoods
+likelihood <- rep(0,length(pi_hat))
+```
+]
+
+---
+
+### R code
+
+.large[
+```r
+# List the values for pi hat
+pi_hat <- seq(from = 0, to = 1, by = 0.1)
+
+# Create a space to store the likelihoods
+likelihood <- rep(0,length(pi_hat))
+
+# Compute and store the likelihoods
+for( i in 1:length(pi_hat) ){
+  likelihood[i] <- pi_hat[i]*(1-pi_hat[i])^4
+}
+```
+]
+
+---
+
+### R code
+
+.large[
+```r
+# List the values for pi hat
+pi_hat <- seq(from = 0, to = 1, by = 0.1)
+
+# Create a space to store the likelihoods
+likelihood <- rep(0,length(pi_hat))
+
+# Compute and store the likelihoods
+for( i in 1:length(pi_hat) ){
+  likelihood[i] <- pi_hat[i]*(1-pi_hat[i])^4
+}
+```
+]
+
+.large[
+.question[
+Run this code in your R console. Which value of $\widehat{\pi}$ gives the highest likelihood?
+]
+]
+
+
+---
+
+### Results
+
+```{r, echo=F}
+# List the values for pi hat
+pi_hat <- seq(from = 0, to = 1, by = 0.1)
+
+# Create a space to store the likelihoods
+likelihood <- rep(0,length(pi_hat))
+
+# Compute and store the likelihoods
+for( i in 1:length(pi_hat) ){
+  likelihood[i] <- pi_hat[i]*(1-pi_hat[i])^4
+}
+
+knitr::kable(data.frame(pi_hat = pi_hat, likelihood = likelihood))
+  
+```
+
+---
+
+### Maximum likelihood estimation with calculus
+
+.large[
+Suppose that $Y_i \sim Bernoulli(\pi)$. We observe $n$ observations $Y_1,...,Y_n$ and want to estimate $\pi$.
+]
+
+.large[
+**Step 1:** Write down the likelihood
+
+* Let $\widehat{\pi}$ be the estimate of $\pi$
+* Let $k$ be the number of times $Y_i = 1$ in the data
+
+.center[
+$L(\widehat{\pi}) =$
+]
+
+]
+
+---
+
+### Maximum likelihood estimation with calculus
+
+.large[
+**Step 1:** Write down the likelihood
+
+.center[
+$L(\widehat{\pi}) = \widehat{\pi}^k(1 - \widehat{\pi})^{n-k}$
+]
+
+**Step 2:** Take the log
+]
+
+.large[
+$\log L(\widehat{\pi}) =$
+
+* An advantage of taking the log is that it turns multiplication into addition, and exponents into multiplication
+* This makes maximization easier
+* Maximizing the log likelihood is the same as maximizing the likelihood
+]
+
+---
+
+### Maximum likelihood estimation with calculus
+
+.large[
+**Step 2:** log likelihood
+
+.center[
+$\log L(\widehat{\pi}) = k \log (\widehat{\pi}) + (n - k) \log (1 - \widehat{\pi})$
+]
+]
+
+.large[
+* We want to find the value of $\widehat{\pi}$ that maximizes this function
+
+.question[
+How do we find where maxima/minima occur for a function?
+]
+]
+
+---
+
+### Maximum likelihood estimation with calculus
+
+.large[
+**Step 2:** log likelihood
+
+.center[
+$\log L(\widehat{\pi}) = k \log (\widehat{\pi}) + (n - k) \log (1 - \widehat{\pi})$
+]
+]
+
+.large[
+* We want to find the value of $\widehat{\pi}$ that maximizes this function
+
+.question[
+How do we find where maxima/minima occur for a function?
+]
+]
+
+.large[
+*Take the first derivative and set equal to 0!*
+]
+
+---
+
+### Maximum likelihood estimation with calculus
+
+.large[
+Want to differentiate
+.center[
+$\log L(\widehat{\pi}) = k \log (\widehat{\pi}) + (n - k) \log (1 - \widehat{\pi})$
+]
+]
+
+.large[
+Remember some rules for differentiation:
+
+* $\dfrac{d}{dx} \log x = \dfrac{1}{x}$
+* $\dfrac{d}{dx} c f(x) = c \dfrac{d}{dx} f(x)$ for constant $c$
+* $\dfrac{d}{dx} (f(x) + g(x)) = \dfrac{d}{dx} f(x) + \dfrac{d}{dx} g(x)$
+]
+
+---
+
+### Maximum likelihood estimation with calculus
+
+.large[
+**Step 3:** take the first derivative, and set = 0
+.center[
+$\log L(\widehat{\pi}) = k \log (\widehat{\pi}) + (n - k) \log (1 - \widehat{\pi})$
+]
+]
+
+.large[
+$\dfrac{d}{d \widehat{\pi}} \log L(\widehat{\pi}) =$
+]
+
+---
+
+
+### Maximum likelihood estimation with calculus
+
+.large[
+So our maximum likelihood estimate is $\widehat{\pi} = \dfrac{k}{n}$, the sample proportion
+
+* Our data: T, T, T, T, H
+* This implies that $\widehat{\pi} = \dfrac{1}{5} = 0.2$
+* This matches what we saw in R
+]
+
+---
+
+### Class activity
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_5.html](https://sta214-s23.github.io/class_activities/ca_lecture_5.html)
+]
+
+---
+
+### Class activity
+
+.large[
+* $P(Y_i = 0) = \pi_0$
+* $P(Y_i = -1) = 2 \pi_0$
+* $P(Y_i = 1) = 1 - 3 \pi_0$
+
+Observe data $-1, -1, 0, 1, 0, -1$.
+
+$L(\widehat{\pi}_0) = \ ?$
+]
+
+---
+
+### Class activity
+
+.large[
+.center[
+$\log L(\widehat{\pi}_0) = 3 \log(2) + 3 \log(\widehat{\pi}_0) + 2 \log( \widehat{\pi}_0) + \log(1 - 3 \widehat{\pi}_0)$
+
+$\dfrac{d}{d \widehat{\pi}_0} \log L(\widehat{\pi}_0) =$
+]
+]

@@ -1,0 +1,191 @@
+---
+title: "Project 1, Part 1"
+output: 
+  rmdformats::robobook:
+    css: "homework.css"
+    highlight: pygments
+link-citations: yes
+---
+
+**Due dates:** Friday, February 3 at 12pm (noon) on Canvas. Submit *both* your knitted HTML file and the R Markdown file to Canvas.
+
+**Collaboration:** This project *must* be completed independently. See "Collaboration" below for more details.
+
+# Overview
+
+In this project, you will use logistic regression to investigate several research questions. You will then write a data analysis report that communicates the results of your analysis and draws a conclusion about the research questions. As discussed in the Collaboration section below, this project must be completed independently.
+
+This project will be broken into several different parts. In Part 1, you will do exploratory data analysis. This involves getting familiar with the data, making plots and calculating summary statistics, and communicating this information to someone reading your analysis.
+
+# Data
+
+The Behavioral Risk Factor Surveillance System (BRFSS) is an annual telephone survey of 350,000 people in the United States. As its name implies, the BRFSS is designed to identify risk factors in the adult population and report emerging health trends. For example, respondents are asked about their diet and weekly physical activity, their HIV/AIDS status, possible tobacco use, and even their level of healthcare coverage. The [BRFSS Web site](https://www.cdc.gov/brfss/) contains a complete description of the survey, including the research questions that motivate the study and many interesting results derived from the data.
+
+We will focus on a random sample of 20,000 people from the BRFSS survey. While there are over 200 variables in this data set, we will work with a small subset for this project.
+
+## Variables
+
+The dataset provided for this project contains the following columns:
+
+* `genhlth`: respondents were asked to evaluate their general health, responding either excellent, very good, good, fair or poor.
+* `exerany`: indicates whether the respondent exercised in the past month (1) or did not (0).
+* `hlthplan`: indicates whether the respondent had some form of health coverage (1) or did not (0).
+* `smoke100`: indicates whether the respondent had smoked at least 100 cigarettes in their lifetime.
+* `height`: in inches
+* `weight`: in pounds
+* `wtdesire`: desired weight in pounds
+* `age`: in years
+* `gender`: biological sex, limited to male/female.
+
+## Downloading the data
+
+To load the data, use the code below. It will import a data set called `cdc` into R.
+
+```r
+source("http://www.openintro.org/stat/data/cdc.R")
+```
+
+# Research questions
+
+You are asked by a team of researchers to investigate respondents' exercise habits. In particular, they are interested in the following two questions:
+
+1. Is there a relationship between how much weight someone wants to lose, and the probability that they exercise regularly, after accounting for their age, general health, and health coverage?
+2. How well can we predict whether a patient exercises regularly, using other variables in the data?
+
+To address these research questions, you will perform exploratory data analysis, fit one or more models, and analyze the results.
+
+# Content and outline
+
+For the first part of the project, you will perform exploratory data analysis and write up your results. You will submit two documents on Canvas for part 1:
+
+* Your written EDA (.html file):
+  * This is the knitted write up that will present your EDA
+  * There should be **no code** showing. This
+includes warnings and other stray code output – hide it all.
+  * You will be graded on writing as well as your statistical analysis.
+* Your R Markdown (.Rmd) file, with all the code you used for your analysis
+  * The goal is that a person who reads your report, and wants to
+replicate your results, could look at your .Rmd file and completely reproduce the results and figures in the knitted report.
+
+
+Your written report for part 1 will contain three sections: Data Summary, Univariate EDA, and Multivariate EDA. Your goal is to create any visualizations necessary to exploring the data before fitting a model (e.g. tables, histograms, empirical log-odds plots to choose transformations, etc.).
+
+### Data Summary
+
+Write 1-2 paragraphs which:
+
+* Describe details of the data. What does a row in the data represent? How many rows and columns? What information do the variables record? Are there any missing data?
+* Describe any data manipulation. Did you remove any missing values? Did you focus only on a subset of the data? Did you create any new variables?
+
+### Univariate EDA
+
+Choose at least **3** variables that are relevant to the research questions. For each variable: make a plot, calculate any appropriate summary statistics, and discuss the distribution in 2–3 sentences. Make sure to add a title and good labels to each plot. Plots and summary statistics depend on the type of variable.
+
+### Multivariate EDA
+
+Using the variables from Univariate EDA, create one or more plots that allow you to address the research questions. You may be able to address both questions with a single plot, or you may need to make a separate plot for each question. Calculate any appropriate summary statistics. Use the plot(s) and summary statistics to address the research questions in a 1–2 paragraphs.
+
+# Appearance and style
+
+### Writing
+
+The report should be written like an article or research paper: in full sentences and paragraphs, with headings for each section. You should not write your report with question numbers or as a list of bullet points. Scientific articles are generally written in third person, though "we" can also be acceptable ("we can see from Figure 2.1 ...") in some disciplines.
+
+### Code
+
+As with previous assignments, you will write the document in R Markdown. However, in full reports, the only output that should be visible from code chunks are figures and tables. If a code chunk does not produce a figure or table, you can hide it from the knitted document with `include=F`:
+
+````
+```{r, include=F}`r ''`
+
+```
+````
+
+If a code chunk produces a figure or table, only the figure or table should be visible in the knitted document. You can hide the chunk but display the output with `echo=F, message=F, warning=F`:
+
+````
+```{r, echo=F, message=F, warning=F}`r ''`
+
+```
+````
+
+### Figures
+
+Figures should have labeled axes, and should be clear and easy to read. Figures should also be captioned and numbered; to caption a figure, use `fig.cap = "..."` in the chunk options. For example (scroll to the right on the code to see it all),
+
+````
+```{r, echo=F, message=F, warning=F, fig.cap="Figure 2.1: Bill depth vs. bill length for penguins near Palmer Station, Antarctica."}`r ''`
+penguins %>%
+  ggplot(aes(x = bill_length_mm, 
+             y = bill_depth_mm)) +
+  geom_point() +
+  labs(x = "Bill length (mm)",
+       y = "Bill depth (mm)") +
+  theme_bw()
+```
+````
+
+is displayed as
+
+```{r include=F}
+library(tidyverse)
+library(palmerpenguins)
+```
+
+```{r, echo=F, message=F, warning=F, fig.cap="Figure 1: Bill depth vs. bill length for penguins near Palmer Station, Antarctica."}
+penguins %>%
+  ggplot(aes(x = bill_length_mm, 
+             y = bill_depth_mm)) +
+  geom_point() +
+  labs(x = "Bill length (mm)",
+       y = "Bill depth (mm)") +
+  theme_bw()
+```
+
+Captions should provide enough information to understand what is being plotted, but interpretation can be left to the main text. Refer to figures by their number in the text. Make sure that any figures you include are discussed in the text.
+
+### Tables
+
+Tables should be nicely formatted, and have a number and caption. This can be done with the `kable` function in the `knitr` package.
+
+For example,
+
+````
+```{r, echo=F, message=F}`r''`
+table(penguins$island, penguins$species) %>%
+  knitr::kable(caption = "Table 3.2: Penguins by island and species")
+```
+````
+
+is displayed as
+
+```{r, echo=F, message=F}
+table(penguins$island, penguins$species) %>%
+  knitr::kable(caption = "Table 3.2: Penguins by island and species")
+```
+
+### Writing math in R Markdown
+
+If you want to write mathematical notation, we need to tell Markdown, “Hey, we’re going to make a math symbol!” To do that, you use dollar signs. For instance, to make $\widehat{\beta}_1$, you simply put `$\widehathat{\beta}_1$` into the white space (not a chunk) in your Markdown.
+
+Here are some examples of writing math, which you can adapt:
+
+| Math | Code |
+| --- | --- |
+| $Y_i \sim Bernoulli(\pi_i)$ | `$Y_i \sim Bernoulli(\pi_i)$` |
+| $\log \left( \dfrac{\pi_i}{1 - \pi_i} \right)$ | `$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right)$` |
+| $\widehat{\pi}_i$ | `$\widehat{\pi}_i$` |
+
+# Collaboration
+
+One purpose of the projects is to capture your knowledge and understanding of statistics and data analysis. Unlike homework and lab assignments, this project must be completed on your own, without collaborating with other students. 
+
+You may:
+
+* ask the instructor for help
+* use resources from the class notes and internet (Wikipedia, StackExchange, etc.)
+
+You may not:
+
+* work with another student on the project
+* ask a TA or tutor (e.g., at the MSC) for help

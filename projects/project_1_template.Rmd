@@ -1,0 +1,28 @@
+---
+---
+---
+title: "Project 1"
+author: "Your Name"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+source("http://www.openintro.org/stat/data/cdc.R")
+```
+
+## Abstract
+
+## Section 1: Introduction
+
+## Section 2: Data
+
+## Section 3: Modeling
+
+### Section 3.1: Exercise and weight loss goals
+
+### Section 3.2: Predicting exercise
+
+## Section 4: Discussion
+

@@ -1,0 +1,353 @@
+---
+title: Estimating parameters
+output:
+  xaringan::moon_reader:
+    css: "lab-slides.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+editor_options: 
+  chunk_output_type: console
+---
+
+### Goal
+
+.large[
+Logistic regression model:
+
+$Y_i \sim Bernoulli(\pi_i) \hspace{0.5cm} \log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 X_i$
+
+.question[
+Given data $(X_1, Y_1), (X_2, Y_2), ..., (X_n, Y_n)$, how do I estimate $\beta_0$ and $\beta_1$?
+]
+]
+
+---
+
+### Motivating example
+
+.large[
+$Y_i =$ result of flipping a coin (Heads or Tails)
+
+.question[
+Is $Y_i$ a random variable?
+]
+]
+
+---
+
+### Motivating example
+
+.large[
+$Y_i =$ result of flipping a coin (Heads or Tails)
+
+Let's make a model:
+
+* **Step 1:** Distribution of the response
+
+.center[
+$Y_i \sim Bernoulli(\pi)$
+]
+
+* **Step 2:** Construct a model for the parameters
+
+.center[
+$\pi = ??$
+]
+]
+
+---
+
+### Motivating example
+
+.large[
+$Y_i =$ result of flipping a coin (Heads or Tails)
+
+Suppose your friend estimates that the probability of heads is 0.9
+
+* $Y_i \sim Bernoulli(\pi)$
+* $\widehat{\pi} = 0.9$
+
+.question[
+How can we assess whether this estimate $\widehat{\pi}$ is reasonable?
+]
+]
+
+---
+
+### Motivating example
+
+.large[
+Suppose we flip the coin 5 times, and observe
+
+.center[
+$y_1,...,y_5 = T, T, T, T, H$
+]
+
+.question[
+What is the probability of (i.e., how *likely* is) getting this string of flips if $\pi = 0.9$? Discuss with your neighbor for a minute, then we will discuss as a class.
+]
+]
+
+---
+
+### Likelihood
+
+.large[
+**Definition:** The *likelihood* $L(Model) = P(Data | Model)$ of a model is the probability of the observed data, given that we assume a certain model and certain values for the parameters that define that model.
+]
+
+.large[
+* Model: $Y_i \sim Bernoulli(\pi)$, and $\widehat{\pi} = 0.9$
+* Data: $y_1,...,y_5 = T, T, T, T, H$
+* Likelihood: $L(\widehat{\pi}) = P(y_1,...y_5 | \pi = 0.9) = 0.00009$
+]
+
+---
+
+### Class Activity, Part I
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_4.html](https://sta214-s23.github.io/class_activities/ca_lecture_4.html)
+]
+
+---
+
+### Class Activity
+
+.large[
+\begin{align}
+L(0.2) &= P(y_1,...,y_5 | \pi = 0.2) \\
+&= (0.2)(0.8)(0.8)(0.2)(0.8) = 0.020
+\end{align}
+
+\begin{align}
+L(0.3) &= P(y_1,...,y_5 | \pi = 0.3) \\ &= (0.3)(0.7)(0.7)(0.3)(0.7) = 0.031
+\end{align}
+
+.question[
+Which value, 0.2 or 0.3, seems more reasonable?
+]
+]
+
+---
+
+### Class Activity
+
+.large[
+.question[
+Which value of $\widehat{\pi}$ in the table would you pick?
+]
+]
+
+---
+
+### Maximum likelihood
+
+.large[
+**Maximum likelihood principle:** estimate the parameters to be the values that maximize the likelihood
+
+| $\widehat{\pi}$ | Likelihood |
+| :---: | :---: |
+| 0.30 | 0.031 |
+| 0.35 | 0.033 |
+| 0.40 | 0.036 |
+| 0.45 | 0.033 |
+
+Maximum likelihood estimate: $\widehat{\pi} = 0.4$
+]
+
+---
+
+### Maximum likelihood
+
+.large[
+**Maximum likelihood principle:** estimate the parameters to be the values that maximize the likelihood
+
+Steps for maximum likelihood estimation:
+
+* *Likelihood*: For each potential value of the parameter, compute the likelihood of the observed data
+* *Maximize*: Find the parameter value that gives the largest likelihood
+]
+
+---
+
+### Maximum likelihood for logistic regression
+
+.large[
+$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 \ Size_i \hspace{1cm} \pi_i = \dfrac{\exp\{\beta_0 + \beta_1 \ Size_i \}}{1 + \exp\{\beta_0 + \beta_1 \ Size_i \}}$
+
+**Observed data:** 
+
+| Tumor cancerous | Yes | No | No | Yes | No |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+| **Size of tumor (cm)** | **6** | **1** | **0.5** | **4** | **1.2** |
+
+]
+
+.large[
+.question[
+Suppose $\beta_0 = -2, \ \beta_1 = 0.5$. How would I compute the likelihood?
+]
+]
+
+---
+
+### Class Activity, Part II
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_4.html](https://sta214-s23.github.io/class_activities/ca_lecture_4.html)
+]
+
+---
+
+### Class Activity
+
+.large[
+$\widehat{\pi}_i = \dfrac{\exp\{-2 + 0.5 \ Size_i \}}{1 + \exp\{-2 + 0.5 \ Size_i \}}$
+
+| Tumor cancerous | Yes | No | No | Yes | No |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+| **Size of tumor (cm)** | **6** | **1** | **0.5** | **4** | **1.2** |
+| $\widehat{\pi}_i$ | $\hspace{2cm}$  | $\hspace{2cm}$ | $\hspace{2cm}$ | $\hspace{2cm}$  | $\hspace{2cm}$  |
+]
+
+.large[
+Likelihood = 
+]
+
+---
+
+### Maximum likelihood for logistic regression
+
+.large[
+**Likelihood:** 
+* For estimates $\widehat{\beta}_0$ and $\widehat{\beta}_1$, $\widehat{\pi}_i = \dfrac{\exp\{\widehat{\beta}_0 + \widehat{\beta}_1 X_i\}}{1 + \exp\{\widehat{\beta}_0 + \widehat{\beta}_1 X_i\}}$
+* $L(\widehat{\beta}_0, \widehat{\beta}_1) = P(Y_1,...,Y_n | \widehat{\beta}_0, \widehat{\beta}_1)$
+    
+**Maximize:** 
+* Choose $\widehat{\beta}_0$, $\widehat{\beta}_1$ to maximize $L(\widehat{\beta}_0, \widehat{\beta}_1)$
+]
+
+.large[
+.question[
+So far, we only considered a few values for $\beta_0$ and $\beta_1$. How should we check other values, to make sure our estimates actually maximize likelihood?
+]
+]
+
+---
+
+### Computing likelihood in R
+
+.large[
+Observed data: T, T, T, T, H
+
+* We are going to consider several different potential values for $\widehat{\pi}$:
+
+.center[
+$0, 0.1, 0.2, 0.3,..., 0.9, 1$
+]
+
+* For each potential value, we will compute the likelihood:
+
+.center[
+$L(\widehat{\pi}) = (1 - \widehat{\pi})^4(\widehat{\pi})$
+]
+
+* We then see which value has the highest likelihood.
+* Is this all possible values? No, but let's start here.
+]
+
+---
+
+### R code
+
+.large[
+```r
+# List the values for pi hat
+pi_hat <- seq(from = 0, to = 1, by = 0.1)
+```
+]
+
+
+---
+
+### R code
+
+.large[
+```r
+# List the values for pi hat
+pi_hat <- seq(from = 0, to = 1, by = 0.1)
+
+# Create a space to store the likelihoods
+likelihood <- rep(0,length(pi_hat))
+```
+]
+
+
+---
+
+### R code
+
+.large[
+```r
+# List the values for pi hat
+pi_hat <- seq(from = 0, to = 1, by = 0.1)
+
+# Create a space to store the likelihoods
+likelihood <- rep(0,length(pi_hat))
+
+# Compute and store the likelihoods
+for( i in 1:length(pi_hat) ){
+  likelihood[i] <- pi_hat[i]*(1-pi_hat[i])^4
+}
+```
+]
+
+---
+
+### R code
+
+.large[
+```r
+# List the values for pi hat
+pi_hat <- seq(from = 0, to = 1, by = 0.1)
+
+# Create a space to store the likelihoods
+likelihood <- rep(0,length(pi_hat))
+
+# Compute and store the likelihoods
+for( i in 1:length(pi_hat) ){
+  likelihood[i] <- pi_hat[i]*(1-pi_hat[i])^4
+}
+```
+]
+
+.large[
+.question[
+Run this code in your R console. Which value of $\widehat{\pi}$ gives the highest likelihood?
+]
+]
+
+
+---
+
+### Results
+
+```{r, echo=F}
+# List the values for pi hat
+pi_hat <- seq(from = 0, to = 1, by = 0.1)
+
+# Create a space to store the likelihoods
+likelihood <- rep(0,length(pi_hat))
+
+# Compute and store the likelihoods
+for( i in 1:length(pi_hat) ){
+  likelihood[i] <- pi_hat[i]*(1-pi_hat[i])^4
+}
+
+knitr::kable(data.frame(pi_hat = pi_hat, likelihood = likelihood))
+  
+```

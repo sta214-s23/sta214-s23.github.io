@@ -1,0 +1,196 @@
+---
+title: Logistic regression review
+output:
+  xaringan::moon_reader:
+    css: "lab-slides.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r include=F}
+library(tidyverse)
+earthquake <- read.csv("https://sta214-s23.github.io/class_activities/earthquake_small.csv")
+
+library(knitr)
+hook_output <- knit_hooks$get("output")
+knit_hooks$set(output = function(x, options) {
+   lines <- options$output.lines
+   if (is.null(lines)) {
+     return(hook_output(x, options))  # pass to default hook
+   }
+   x <- unlist(strsplit(x, "\n"))
+   more <- "..."
+   if (length(lines)==1) {        # first n lines
+     if (length(x) > lines) {
+       # truncate the output, but add ....
+       x <- c(head(x, lines), more)
+     }
+   } else {
+     x <- c(more, x[lines], more)
+   }
+   # paste these lines together
+   x <- paste(c(x, ""), collapse = "\n")
+   hook_output(x, options)
+ })
+```
+
+### Class activity: Question 2
+
+```{r, output.lines = 10:17}
+m1 <- glm(Damage ~ age*land_surface_condition, 
+          family = binomial, data = earthquake)
+summary(m1)
+```
+
+---
+
+### Class activity: Question 3
+
+```{r, echo=F, output.lines = 10:17}
+summary(m1)
+```
+
+---
+
+### Class activity: Question 4
+
+```{r, echo=F, output.lines = 10:17}
+summary(m1)
+```
+
+---
+
+### Class activity: Question 5
+
+.large[
+$H_0:$
+
+$H_A:$
+]
+
+---
+
+### Class activity: Question 6
+
+```{r}
+m1 <- glm(Damage ~ age*land_surface_condition, 
+          family = binomial, data = earthquake)
+m2 <- glm(Damage ~ age + land_surface_condition, 
+          family = binomial, data = earthquake)
+
+m2$deviance - m1$deviance
+
+pchisq(5.12, df=2, lower.tail=F)
+```
+
+---
+
+### Class activity: Question 7
+
+```{r, echo=F, output.lines = 10:17}
+summary(m1)
+```
+
+---
+
+### Class activity: Question 8
+
+.large[
+```{r, echo=F, message=F, fig.align='center', fig.width=8, fig.height=6}
+library(statmod)
+earthquake %>%
+  mutate(resids = qresid(m1)) %>%
+  ggplot(aes(x = age, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "Age", y = "Quantile residuals") +
+  theme_bw() +
+  theme(text = element_text(size = 20))
+```
+]
+
+---
+
+### Class activity: Question 10
+
+.large[
+```{r}
+table(Prediction = m1$fitted.values > 0.85, 
+      Truth = earthquake$Damage)
+```
+]
+
+---
+
+### Class activity: Question 11
+
+```{r, message=F, warning=F, output.lines = 10:25}
+library(MASS)
+m0 <- glm(Damage ~ 1, family = binomial, data = earthquake)
+forward_aic <- stepAIC(m0, scope = ~ age + area_percentage + 
+                         height_percentage + land_surface_condition + 
+                         foundation_type + roof_type + 
+                         count_families + has_secondary_use,
+                       trace = 0, direction = "forward")
+summary(forward_aic)
+```
+
+---
+
+### Class activity: Question 12
+
+.large[
+.question[
+Why can't we use a hypothesis test to compare the results of forward selection with our original model?
+]
+]
+
+---
+
+### Class activity: Question 13
+
+.large[
+```{r, echo=F, message=F, fig.align='center', fig.width=10, fig.height=4}
+library(ROCR)
+library(gridExtra)
+
+pred <- prediction(m1$fitted.values, earthquake$Damage)
+perf <- performance(pred,"tpr","fpr")
+#performance(pred, "auc")@y.values
+p1 <- data.frame(fpr = perf@x.values[[1]], 
+           tpr = perf@y.values[[1]]) %>%
+  ggplot(aes(x = fpr, y = tpr)) +
+  geom_line(lwd=1.5) +
+  geom_abline(slope = 1, intercept = 0, lty = 2,
+  lwd = 1.5) +
+  labs(x = "False positive rate (1 - Specificity)", 
+       y = "True positive rate (Sensitivity)", 
+       title = "Original model (AUC = 0.73)") +
+  theme_classic()
+
+pred <- prediction(forward_aic$fitted.values, earthquake$Damage)
+perf <- performance(pred,"tpr","fpr")
+#performance(pred, "auc")@y.values
+p2 <- data.frame(fpr = perf@x.values[[1]], 
+           tpr = perf@y.values[[1]]) %>%
+  ggplot(aes(x = fpr, y = tpr)) +
+  geom_line(lwd=1.5) +
+  geom_abline(slope = 1, intercept = 0, lty = 2,
+  lwd = 1.5) +
+  labs(x = "False positive rate (1 - Specificity)", 
+       y = "True positive rate (Sensitivity)", 
+       title = "Model from stepwise selection (AUC = 0.82)") +
+  theme_classic()
+
+grid.arrange(p1, p2, ncol=2)
+```
+]
+
+
+
+

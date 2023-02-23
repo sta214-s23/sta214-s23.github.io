@@ -1,0 +1,60 @@
+---
+title: "Class Activity, February 1"
+output: 
+  tufte::tufte_html:
+    css: "lab.css"
+    tufte_variant: "envisioned"
+    highlight: pygments
+link-citations: yes
+---
+
+# Part I
+
+In the first part of this class activity, we will continue working with the grad application data from HW 1:
+
+```{r, eval=F}
+grad_app <- read.csv("https://stats.idre.ucla.edu/stat/data/binary.csv")
+```
+
+Our logistic regression model is
+
+$$Admit_i \sim Bernoulli(\pi_i)$$
+$$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 GRE_i + \beta_2 GPA_i + \beta_3 Rank2_i \\ \hspace{1cm} + \beta_4 Rank3_i + \beta_5 Rank4_i + \beta_6 GPA_i \cdot Rank2_i$$
+$$\hspace{3cm} + \beta_7 GPA_i \cdot Rank3_i + \beta_8 GPA_i \cdot Rank4_i$$
+
+Our hypotheses are
+
+$$H_0: \beta_6 = \beta_7 = \beta_8 = 0$$
+$$H_A: \text{at least one of } \beta_6, \beta_7, \beta_8 \neq 0$$
+
+1. Fit the full model in R, and calculate the deviance of the full model. *Remember to make `rank` a categorical variable in your model!*
+
+2. Fit the reduced model in R, and calculate the deviance of the reduced model.
+
+3. Calculate the drop-in-deviance test statistic $G$ comparing the reduced and full models.
+
+4. Now we want to calculate a p-value. Rather than use parametric bootstrapping, we will use a $\chi^2$ distribution for the null distribution. Fill in the following code to calculate the p-value:
+
+```{r, eval=F}
+pchisq(..., ... , lower.tail=F)
+```
+
+# Part II
+
+In the second part of this class activity, we will return to the dengue data from class. Our model is
+
+$$Dengue_i \sim Bernoulli(\pi_i)$$
+$$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 WBC_i$$
+
+Below is the output from R:
+
+```{r, echo=F}
+dengue <- read.csv("https://sta279-s22.github.io/labs/dengue.csv")
+
+m1 <- glm(Dengue ~ WBC, data = dengue, family = binomial)
+summary(m1)
+```
+
+5. Calculate a 99% confidence interval for the change in the log odds of dengue associated with a one-unit increase in WBC.
+
+6. How could we calculate a 99% confidence interval for the change in the *odds* of dengue associated with a one-unit increase in WBC?

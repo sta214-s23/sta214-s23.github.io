@@ -1,0 +1,251 @@
+---
+title: Model comparison and selection
+output:
+  xaringan::moon_reader:
+    css: "lab-slides.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+editor_options: 
+  chunk_output_type: console
+---
+
+### SBA data
+
+.large[
+Data on loan defaults for US Small Business Administration (SBA) loans:
+
+* `Default`: whether the business defaulted on the loan (1 = yes, 0 = no)
+* `UrbanRural`: 1 if business is in urban area, 2 if business is in rural area, 0 if unknown
+* `NewExist`: 1 if business already existed, 2 if business is new, 0 if unknown
+* `Term`: Length of the loan term (months)
+* `DisbursementGross`: The amount of money disbursed (loaned), in dollars
+* Many other variables...
+]
+
+---
+
+### SBA data
+
+.large[
+* `Default`: whether the business defaulted on the loan (1 = yes, 0 = no)
+* `UrbanRural`: 1 if business is in urban area, 2 if business is in rural area, 0 if unknown
+* `NewExist`: 1 if business already existed, 2 if business is new, 0 if unknown
+* `Term`: Length of the loan term (months)
+* `DisbursementGross`: The amount of money disbursed (loaned), in dollars
+* Many other variables...
+
+.question[
+**Research question:** Which combination of variables "best" models loan default?
+]
+]
+
+---
+
+### A new research question
+
+.large[
+.question[
+**Research question:** Which combination of variables "best" models loan default?
+]
+
+We need:
+
+* A metric to compare different models
+* A way to efficiently search through many different models
+]
+
+---
+
+### Comparing different models
+
+$$Default_i \sim Bernoulli(\pi_i)$$
+
+**Model 1:** 
+
+$$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 Term_i + \beta_2 \log(DisbursementGross_i)$$
+
+**Model 2:** 
+
+$$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 Term_i + \beta_2 Urban_i + \beta_3 Rural_i + \beta_4 Employees_i$$
+.large[
+.question[
+Can I perform a drop-in-deviance test or a Wald test to compare these two models?
+]
+]
+
+---
+
+### AIC
+
+.large[
+.question[
+In linear regression, what quantity did we use to compare models with different numbers of parameters?
+]
+]
+
+---
+
+### AIC
+
+.large[
+Suppose our model has $p$ parameters (the number of $\beta$s, including the intercept). Then the AIC is
+
+$$AIC = 2p + \text{deviance}$$
+]
+
+---
+
+### AIC
+
+.large[
+$$AIC = 2p + \text{deviance}$$
+]
+
+**Model 1:** 
+
+$$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 Term_i + \beta_2 \log(DisbursementGross_i)$$
+.large[
+`Residual Deviance: 3974 	AIC: 3980`
+]
+
+**Model 2:** 
+
+$$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 Term_i + \beta_2 Urban_i + \beta_3 Rural_i + \beta_4 Employees_i$$
+.large[
+`Residual Deviance: 3827   AIC:`
+
+.question[
+Which model do we prefer, based on AIC?
+]
+]
+
+---
+
+### Back to the research question
+
+.large[
+.question[
+**Research question:** Which combination of variables "best" models loan default?
+]
+
+We need:
+
+* A metric to compare different models
+  * Solution: AIC
+* A way to efficiently search through many different models
+
+.question[
+How should we search many different models?
+]
+]
+
+---
+
+### Some model search algorithms
+
+.large[
+Best subset selection:
+
+<br/>
+
+<br/>
+
+<br/>
+
+Forward stepwise selection:
+]
+
+---
+
+### Class activity, Part I
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_13.html](https://sta214-s23.github.io/class_activities/ca_lecture_13.html)
+]
+
+---
+
+### Class activity
+
+.large[
+.question[
+Will stepwise selection detect multicollinearity in the explanatory variables?
+]
+]
+
+---
+
+### Class activity
+
+.large[
+.question[
+Will stepwise selection fix violations to the shape assumption?
+]
+]
+
+---
+
+### Uses and limitations of variable selection
+
+.large[
+Uses:
+
+* Identifying a subset of variables which make a model with "good" performance (e.g. low AIC)
+* Useful when we have many variables, and little information about which variables to include
+
+Limitations:
+
+* Should not be used when we have a specific research question about specific variables
+* Still need to do model diagnostics and EDA before performing variable selection
+* Should *not* test hypotheses after performing variable selection based on measures like AIC, deviance, etc.
+]
+
+---
+
+### Class activity, Part II
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_13.html](https://sta214-s23.github.io/class_activities/ca_lecture_13.html)
+]
+
+---
+
+### Class activity
+
+.large[
+```{r, echo=F, message=F, warning=F, fig.align='center', fig.width=8, fig.height=6}
+library(MASS)
+
+set.seed(3)
+n <- 500
+d <- 100
+x <- matrix(rnorm(n*d),nrow=n)
+y <- rbinom(n, 1, 0.5)
+df <- data.frame(y=y,x)
+
+m1 <- glm(y ~ ., data = df, family = binomial)
+hist(summary(m1)$coefficients[,4], 
+     xlab = "p-values", main = "Histogram of p-values")
+```
+]
+
+---
+
+### Class activity
+
+.large[
+```{r, echo=F, message=F, warning=F, fig.align='center', fig.width=8, fig.height=6}
+m0 <- glm(y ~ 1, data = df, family = binomial)
+
+forward_aic <- stepAIC(m0, scope = list(upper = m1),
+                    direction = "forward",
+                    trace = 0)
+
+hist(summary(forward_aic)$coefficients[,4], 
+     xlab = "p-values", main = "Histogram of p-values after model selection")
+```
+]
+

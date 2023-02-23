@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Likelihood and Deviance</title>
+    <meta charset="utf-8" />
+    <script src="libs/header-attrs-2.16/header-attrs.js"></script>
+    <link rel="stylesheet" href="lab-slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# Likelihood and Deviance
+]
+
+---
+
+
+### Goals for today
+
+.large[
+* Summarize the fit of a logistic regression model
+* Compare fit for nested models
+]
+
+---
+
+### Logistic regression
+
+.large[
+**Data:** Grad application data
+  * `admit`: accepted to grad school? (0 = no, 1 = yes)
+  * `gre`: GRE score
+  * `gpa`: undergrad GPA
+  * `rank`: prestige of undergrad institution
+  
+`\(Admit_i \sim Bernoulli(\pi_i) \hspace{0.5cm} \log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 GPA_i\)`
+
+**Goal:** Summarize how well our model fits the data
+
+.question[
+How do we summarize model fit in *linear* regression?
+]
+]
+
+---
+
+### Summarizing linear regression model fit
+
+
+
+.large[
+Example model:
+
+
+```r
+linear_mod &lt;- lm(gre ~ gpa, data = grad_app)
+summary(linear_mod)
+```
+
+```
+...
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)   192.30      47.92   4.013 7.15e-05 ***
+## gpa           116.64      14.05   8.304 1.60e-15 ***
+## Residual standard error: 106.8 on 398 degrees of freedom
+## Multiple R-squared:  0.1477,	Adjusted R-squared:  0.1455 
+...
+```
+
+.question[
+Is `\(R^2_{adj}\)` appropriate for logistic regression?
+]
+]
+
+---
+
+### Summarizing logistic regression
+
+.large[
+
+```r
+logistic_mod &lt;- glm(admit ~ gpa, data = grad_app,
+                    family = binomial)
+summary(logistic_mod)
+```
+
+```
+...
+##             Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)  -4.3576     1.0353  -4.209 2.57e-05 ***
+## gpa           1.0511     0.2989   3.517 0.000437 ***
+## ---
+##     Null deviance: 499.98  on 399  degrees of freedom
+## Residual deviance: 486.97  on 398  degrees of freedom
+...
+```
+]
+
+---
+
+### Deviance
+
+.large[
+
+```r
+logistic_mod &lt;- glm(admit ~ gpa, data = grad_app,
+                    family = binomial)
+summary(logistic_mod)
+```
+
+```
+...
+##             Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)  -4.3576     1.0353  -4.209 2.57e-05 ***
+## gpa           1.0511     0.2989   3.517 0.000437 ***
+## ---
+##     Null deviance: 499.98  on 399  degrees of freedom
+## Residual deviance: 486.97  on 398  degrees of freedom
+...
+```
+]
+
+---
+
+### Class activity
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_6.html](https://sta214-s23.github.io/class_activities/ca_lecture_6.html)
+]
+
+---
+
+### Class activity: deviance
+
+.large[
+
+```r
+glm(admit ~ gre, family = binomial, data = grad_app)
+```
+
+```
+...
+## Degrees of Freedom: 399 Total (i.e. Null);  398 Residual
+## Null Deviance:	    500 
+## Residual Deviance: 486.1 	AIC: 490.1
+...
+```
+]
+
+.large[
+.question[
+What is the deviance of my fitted model?
+]
+]
+---
+
+### Class activity: deviance
+
+.large[
+
+```r
+glm(admit ~ gre, family = binomial, data = grad_app)
+```
+
+```
+...
+## Degrees of Freedom: 399 Total (i.e. Null);  398 Residual
+## Null Deviance:	    500 
+## Residual Deviance: 486.1 	AIC: 490.1
+...
+```
+]
+
+.large[
+.question[
+Which predictor (GRE or GPA) gives a model with a better fit?
+]
+]
+
+---
+
+### Class activity: deviance
+
+.large[
+
+```r
+glm(admit ~ gre, family = binomial, data = grad_app)
+```
+
+```
+...
+## Degrees of Freedom: 399 Total (i.e. Null);  398 Residual
+## Null Deviance:	    500 
+## Residual Deviance: 486.1 	AIC: 490.1
+...
+```
+]
+
+.large[
+.question[
+Which predictor (GRE or GPA) gives a model with a better fit?
+]
+]
+
+.large[
+GRE has a slightly smaller deviance (486.1 vs. 487), so GRE gives a slightly better fit.
+]
+
+---
+
+### Class activity: hypotheses
+
+.large[
+`\(Y_i \sim Bernoulli(\pi_i) \hspace{0.5cm} \log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 \text{GRE}_i\)`
+
+We want to know if there is actually a relationship between GRE score and grad school admission.
+
+.question[
+How can I express this as null and alternative hypotheses about one or more model parameters?
+]
+]
+
+---
+
+### Steps in hypothesis testing
+
+---
+
+### Test statistic: drop in deviance
+
+.large[
+
+```
+...
+## 
+*##     Null deviance: 499.98  on 399  degrees of freedom
+*## Residual deviance: 486.06  on 398  degrees of freedom
+...
+```
+
+499.98 = deviance for intercept-only model `\(\hspace{0.5cm} \log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0\)` 
+
+486.06 = deviance for full model `\(\hspace{0.5cm} \log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 \text{GRE}_i\)`
+]
+
+.large[
+**drop-in-deviance:** 
+]
+
+---
+
+### Steps in hypothesis testing
+
+.large[
+`$$Admit_i \sim Bernoulli(\pi_i) \hspace{0.5cm} \log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 \text{GRE}_i$$`
+
+* Specify hypotheses
+
+`$$H_0: \beta_1 = 0 \hspace{1cm} H_A: \beta_1 \neq 0$$`
+
+* Calculate a test statistic
+
+`$$G = \text{deviance for reduced model - deviance for full model}$$`
+
+* Calculate a p-value
+]
+
+---
+
+### Calculating p-values
+
+.large[
+.question[
+What *is* a p-value?
+]
+]
+
+---
+
+### Calculating p-values
+
+.large[
+.question[
+What *is* a p-value?
+]
+]
+
+.large[
+**p-value:** How unusual the data is *if* `\(H_0\)` is true. e.g., 
+
+`$$P(G \geq 13.92 | H_0)$$`
+
+.question[
+How do we calculate a p-value?
+]
+]
+
+---
+
+### Calculating p-values
+
+.large[
+.question[
+What *is* a p-value?
+]
+]
+
+.large[
+**p-value:** How unusual the data is *if* `\(H_0\)` is true. e.g., 
+
+`$$P(G \geq 13.92 | H_0)$$`
+
+.question[
+How do we calculate a p-value?
+]
+
+Compare the observed test statistic to the null distribution
+
+.question[
+How do we get the null distribution?
+]
+]
+
+---
+
+### Exploring the null distribution with simulation
+
+.large[
+* Want to know how `\(G\)` (drop in deviance) behaves if `\(H_0\)` is true
+* So, need data for which we *know* `\(H_0\)` is true!
+
+
+```r
+x &lt;- runif(1000, 0, 5)
+p &lt;- exp(-3 + 0*x)/(1 + exp(-3 + 0*x))
+y &lt;- rbinom(1000, 1, p)
+
+m1 &lt;- glm(y ~ x, family = binomial)
+summary(m1)
+```
+
+```
+...
+## 
+##     Null deviance: 442.86  on 999  degrees of freedom
+## Residual deviance: 442.80  on 998  degrees of freedom
+...
+```
+]
+
+---
+
+### Exploring the null distribution with simulation
+
+.large[
+* Simulating one set of data only gives us one statistic under `\(H_0\)`
+* We need to simulate many datasets to explore the full distribution
+
+
+```r
+null_statistics &lt;- c()
+nsim &lt;- 500
+for(i in 1:nsim){
+  x &lt;- runif(1000, 0, 5)
+  p &lt;- exp(-3 + 0*x)/(1 + exp(-3 + 0*x))
+  y &lt;- rbinom(1000, 1, p)
+  m1 &lt;- glm(y ~ x, family = binomial)
+  
+  null_statistics[i] &lt;- m1$null.deviance - 
+    m1$deviance
+}
+```
+]
+
+---
+
+### Exploring the null distribution with simulation
+
+
+```r
+hist(null_statistics)
+```
+
+&lt;img src="lecture_6_files/figure-html/unnamed-chunk-11-1.png" style="display: block; margin: auto;" /&gt;
+
+.large[
+.question[
+Are there any issues with this approach to approximating the null distribution?
+]
+]
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

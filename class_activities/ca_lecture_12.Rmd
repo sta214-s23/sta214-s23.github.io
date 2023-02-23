@@ -1,0 +1,195 @@
+---
+title: "Class Activity, February 8"
+output: 
+  tufte::tufte_html:
+    css: "lab.css"
+    tufte_variant: "envisioned"
+    highlight: pygments
+link-citations: yes
+---
+
+# Part I
+
+In the first part of this class activity, we will explore the effects of influential points on our fitted regression model. The following code simulates data from the logistic regression model
+
+$$Y_i \sim Bernoulli(\pi_i)$$
+
+$$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = -1 + 2 X_i$$
+then adds a potential outlier at $X = -2$.
+
+```{r, eval=F}
+# simulate a single explanatory variable from a Normal distribution
+x <- rnorm(100)
+
+# create P(Y = 1 | X) for each entry in x
+# Here log odds = -1 + 2x
+p <- exp(-1 + 2*x)/(1 + exp(-1 + 2*x))
+
+# Finally, simulate a binary response at each x
+y <- rbinom(100, 1, p)
+
+x1 <- c(x, -2)
+y1 <- c(y, 1)
+
+# Fit a model WITH the unusual observation
+m1 <- glm(y1 ~ x1, family = binomial)
+summary(m1)
+
+# Fit a model WITHOUT the unusual observation
+m2 <- glm(y ~ x, family = binomial)
+summary(m2)
+```
+
+## Questions
+
+1. Run the code several times. How does the potential outlier impact the parameter estimates?
+
+2. Play with the location of the potential outlier (e.g., try $X = -5$, or $X = -10$). Then re-run the code several times. How does the location of the outlier change its influence on the parameter estimates?
+
+# Part II
+
+In the second part of this class activity, we will work with a dataset on US small business loans. 
+
+The US Small Business Administration (SBA) is a government agency dedicated to helping support small businesses. The SBA provides loans to small businesses, but some businesses *default* on their loan (i.e., fail to pay it back). Researchers at the SBA are interested in predicting whether a business will default on the loan, and they have collected a random sample of 4991 different loans.
+
+To predict default rates, the SBA would like to build a model which accounts for the loan amount, the term of the loan, the size of the business, whether the business is urban or rural, and whether the business is new. They have collected the following variables for each loan in the data:
+
+* `Default`: whether the business defaulted on the loan (1 = yes, 0 = no)
+* `UrbanRural`: 1 if business is in urban area, 2 if business is in rural area, 0 if unknown
+* `NewExist`: 1 if business already existed, 2 if business is new, 0 if unknown
+* `Term`: Length of the loan term (months)
+* `NoEmp`: Number of employees of the business before receiving the loan
+* `GrAppv`: Gross amount of loan approved by the bank, in dollars
+* `SBA_Appv`: Amount of the loan guaranteed by the SBA, in dollars
+* `DisbursementGross`: The amount of money disbursed (loaned), in dollars
+
+You can load the SBA data into R with
+
+```{r, eval=F}
+sba <- read.csv("https://sta214-s23.github.io/class_activities/sba_small.csv")
+```
+
+## Questions
+
+3. Before building a model, we should check for potential multicollinearity in the explanatory variables. Which of the explanatory variables may be highly correlated?
+
+To explore correlation in the quantitative explanatory variables, we can use a pairs plot (a matrix of scatterplots and correlations). The code below will create a nicely formatted pairs plot using the `ggpairs` function in the `GGally` package. *You will need to install the `GGally` package first.*
+
+```{r, eval=F}
+library(tidyverse)
+library(GGally)
+
+sba %>%
+  select(GrAppv, SBA_Appv, DisbursementGross,
+         Term, NoEmp) %>%
+  ggpairs(upper = list(continuous = "points"),
+          lower = list(continuous = 
+                         GGally::wrap(ggally_cor, stars = F))) +
+  theme_classic()
+```
+
+4. Run the code to create the pairs plot. Which variables appear highly correlated? Which variables will be easiest to interpret? Choose a subset of variables with which to predict loan default in the SBA data, and explain your choice. (You may create new variables if you wish)
+
+Now let's explore the shape assumption with empirical logit plots. The code below creates an empirical logit plot for `Term`:
+
+```{r, eval=F}
+logodds_plot <- function(data, num_bins, bin_method,
+                         x_name, y_name, grouping = NULL, reg_formula = y ~ x){
+  
+  if(is.null(grouping)){
+    dat <- data.frame(x = data %>% pull(x_name), 
+                      y = data %>% pull(y_name),
+                      group = 1)
+  } else {
+    dat <- data.frame(x = data %>% pull(x_name), 
+                      y = data %>% pull(y_name),
+                      group = as.factor(data %>% pull(grouping)))
+  }
+  
+  if(bin_method == "equal_size"){
+    logodds_table <- dat %>%
+      drop_na() %>%
+      arrange(group, x) %>%
+      group_by(group) %>%
+      mutate(obs = y,
+             bin = rep(1:num_bins,
+                       each=ceiling(n()/num_bins))[1:n()]) %>%
+      group_by(bin, group) %>%
+      summarize(mean_x = mean(x),
+                prop = mean(c(obs, 0.5)),
+                num_obs = n()) %>%
+      ungroup() %>%
+      mutate(logodds = log(prop/(1 - prop)))
+  } else {
+    logodds_table <- dat %>%
+      drop_na() %>%
+      group_by(group) %>%
+      mutate(obs = y,
+             bin = cut(x, 
+                       breaks = num_bins,
+                       labels = F)) %>%
+      group_by(bin, group) %>%
+      summarize(mean_x = mean(x),
+                prop = mean(c(obs, 0.5)),
+                num_obs = n()) %>%
+      ungroup() %>%
+      mutate(logodds = log(prop/(1 - prop)))
+  }
+  
+  if(is.null(grouping)){
+    logodds_table %>%
+      ggplot(aes(x = mean_x,
+                 y = logodds)) +
+      geom_point(size=2) +
+      geom_smooth(se=F, method="lm", formula = reg_formula) +
+      theme_bw() +
+      labs(x = x_name,
+           y = "Empirical log odds") +
+      theme(text = element_text(size=15))
+  } else {
+    logodds_table %>%
+      ggplot(aes(x = mean_x,
+                 y = logodds,
+                 color = group,
+                 shape = group)) +
+      geom_point(size=2) +
+      geom_smooth(se=F, method="lm", formula = reg_formula) +
+      theme_bw() +
+      labs(x = x_name,
+           y = "Empirical log odds",
+           color = grouping,
+           shape = grouping) +
+      theme(text = element_text(size=15))
+  }
+}
+
+logodds_plot(sba, 25, "equal_size", "Term",
+             "Default")
+```
+
+5. Does the shape assumption seem reasonable? Create empirical logit plots for some other quantitative explanatory variables, and experiment with transformations if needed.
+
+6. Fill in the code below to fit a logistic regression model to predict `Default`, using your explanatory variables from question 4, and any transformations from question 5. Make sure categorical variables are coded as categorical variables!
+
+```{r, eval=F}
+m1 <- glm(Default ~ ...,
+          data = sba, family = binomial)
+summary(m1)
+```
+
+7. Check again for multicollinearity using VIFs. Do you see any issues? If so, make further adjustments to your model.
+
+```{r, eval=F}
+library(car) # you may need to install this package first!
+vif(m1)
+```
+
+8. Look at the standard errors for the `NewExist` variable in your summary output. Investigate why they are so large.
+
+Finally, let's check Cook's distance for influential observations. The largest Cook's distance is given by
+
+```{r, eval=F}
+max(cooks.distance(m1))
+```
+
+9. We are typically concerned about influential points if Cook's distance is larger than 0.5 or 1. Should we be concerned here?

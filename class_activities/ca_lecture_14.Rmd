@@ -1,0 +1,70 @@
+---
+title: "Class Activity, February 15"
+output: 
+  tufte::tufte_html:
+    css: "lab.css"
+    tufte_variant: "envisioned"
+    highlight: pygments
+link-citations: yes
+---
+
+# Part I
+
+In the first part of this class activity, we will return to the titanic data we have seen on HW and in class:
+
+```{r, eval=F}
+titanic <- read.csv("https://sta214-s23.github.io/homework/Titanic.csv")
+
+titanic <- titanic %>%
+  drop_na()
+```
+
+Consider the model
+
+$Survived \sim Bernoulli(\pi_i)$
+
+$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 Age_i + \beta_3 Male_i + \beta_4 Class2_i + \beta_5 Class3_i$
+
+## Questions
+
+1. Fit the model in R.
+
+2. What is the estimated probability of survival for a male, first-class passenger aged 20? What about for a male, second-class passenger aged 30?
+
+3. For each of these two passengers, do you predict they will survive or not?
+
+# Part II
+
+In the second part of this class activity, we will assess predictive performance with the SBA data. Recall the SBA data contains the following variables:
+
+* `Default`: whether the business defaulted on the loan (1 = yes, 0 = no)
+* `UrbanRural`: 1 if business is in urban area, 2 if business is in rural area, 0 if unknown
+* `NewExist`: 1 if business already existed, 2 if business is new, 0 if unknown
+* `Term`: Length of the loan term (months)
+* `NoEmp`: Number of employees of the business before receiving the loan
+* `GrAppv`: Gross amount of loan approved by the bank, in dollars
+* `SBA_Appv`: Amount of the loan guaranteed by the SBA, in dollars
+* `DisbursementGross`: The amount of money disbursed (loaned), in dollars
+
+You can load the SBA data into R with
+
+```{r, eval=F}
+sba <- read.csv("https://sta214-s23.github.io/class_activities/sba_small.csv")
+```
+
+## Questions
+
+4. Fit a logistic regression model to predict loan default using loan term, disbursement gross, and whether the business is urban or rural.
+
+5. Use the following code to create a confusion matrix for the SBA predictions (replace `m1` with the name of your fitted model):
+
+```{r, eval=F}
+table(Prediction = m1$fitted.values > 0.5, 
+      Truth = sba$Default)
+```
+
+6. Calculate accuracy, sensitivity, specificity, and positive predictive value.
+
+7. Is our model doing a good job at predicting loan default?
+
+8. What happens we change the threshold? Instead of a threshold of 0.5, experiment with other values (e.g., 0.3, 0.7, etc.)

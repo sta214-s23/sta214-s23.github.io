@@ -1,0 +1,52 @@
+---
+title: "Class Activity, January 30"
+output: 
+  tufte::tufte_html:
+    css: "lab.css"
+    tufte_variant: "envisioned"
+    highlight: pygments
+link-citations: yes
+---
+
+In this class activity, we will continue working with the grad application data from HW 1:
+
+```{r, eval=F}
+grad_app <- read.csv("https://stats.idre.ucla.edu/stat/data/binary.csv")
+```
+
+Our logistic regression model is
+
+$$Admit_i \sim Bernoulli(\pi_i)$$
+$$\log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 GRE_i + \beta_2 GPA_i + \beta_3 Rank2_i + \beta_4 Rank3_i + \beta_5 Rank4_i$$
+
+Our hypotheses are
+
+$$H_0: \beta_3 = \beta_4 = \beta_5 = 0$$
+$$H_A: \text{at least one of } \beta_3, \beta_4, \beta_5 \neq 0$$
+
+1. Fit the full model in R, and calculate the deviance of the full model. *Remember to make `rank` a categorical variable in your model!*
+
+2. Fit the reduced model in R, and calculate the deviance of the reduced model.
+
+3. Calculate the drop-in-deviance test statistic $G$ comparing the reduced and full models.
+
+4. Now we want to calculate a p-value, which requires us to know the distribution of $G$ under $H_0$. In class, we used the following code to simulate from the reduced model, *when the reduced model was the intercept-only model*:
+
+```{r, eval=F}
+nsim <- 500
+null_statistics <- rep(0, nsim)
+for(i in 1:nsim){
+  x <- grad_app$gre
+  p <- exp(-0.77 + 0*x)/(1 + exp(-0.77 + 0*x))
+  y <- rbinom(length(x), 1, p)
+  m1 <- glm(y ~ x, family = binomial)
+  null_statistics[i] <- m1$null.deviance - m1$deviance
+}
+hist(null_statistics)
+```
+
+Adapt this code for our current hypothesis test, for which the reduced model is *not* the intercept only model. You will need to make several changes:
+
+* Your full model contains three variables from the `grad_app` data, not just `gre`. You will need to pull all three variables from the data (you could call them `x1`, `x2`, and `x3`, e.g.)
+* Your reduced model, used for calculating `p`, is no longer the intercept-only model
+* You will need to fit both the full and reduced models at each iteration (you could call them `m1` and `m2`, e.g.), and compare their deviances

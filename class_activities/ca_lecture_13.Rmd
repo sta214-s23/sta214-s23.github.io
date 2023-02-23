@@ -1,0 +1,103 @@
+---
+title: "Class Activity, February 13"
+output: 
+  tufte::tufte_html:
+    css: "lab.css"
+    tufte_variant: "envisioned"
+    highlight: pygments
+link-citations: yes
+---
+
+# Part I
+
+In the first part of this class activity, we will experiment with stepwise selection, using AIC to compare models on the SBA data. Recall that the SBA data contains the variables
+
+* `Default`: whether the business defaulted on the loan (1 = yes, 0 = no)
+* `UrbanRural`: 1 if business is in urban area, 2 if business is in rural area, 0 if unknown
+* `NewExist`: 1 if business already existed, 2 if business is new, 0 if unknown
+* `Term`: Length of the loan term (months)
+* `NoEmp`: Number of employees of the business before receiving the loan
+* `GrAppv`: Gross amount of loan approved by the bank, in dollars
+* `SBA_Appv`: Amount of the loan guaranteed by the SBA, in dollars
+* `DisbursementGross`: The amount of money disbursed (loaned), in dollars
+
+You can load the SBA data into R with
+
+```{r, eval=F}
+sba <- read.csv("https://sta214-s23.github.io/class_activities/sba_small.csv")
+```
+
+## Questions
+
+The code below uses forward stepwise selection to choose a model on the SBA data. The smallest model considered (our starting model) is the intercept-only model, and the largest model considered (`scope` in the code) includes all the available variables. The code uses the `stepAIC` function in the `MASS` package, which you may need to install.
+
+```{r, eval=F}
+library(MASS)
+
+# specify the starting model (intercept-only)
+m0 <- glm(Default ~ 1, data = sba, family = binomial)
+
+# forward selection using AIC
+# Note we have to specify the largest model we want to consider
+forward_aic <- stepAIC(m0, scope = ~ Term + DisbursementGross + 
+                         UrbanRural + NoEmp + NewExist +
+                         GrAppv + SBA_Appv,
+                       direction = "forward",
+                       trace = 0)
+
+summary(forward_aic)
+```
+
+1. Run the code. Which variables are chosen using forward selection with AIC?
+
+2. Think back to our previous class activity, in which we performed model diagnostics with the SBA data. Are there any issues with our final fitted model? How would we correct them?
+
+3. Will stepwise selection detect multicollinearity in the explanatory variables?
+
+4. Will stepwise selection fix violations to the shape assumption?
+
+# Part II
+
+In the second part of this class activity, we will see what happens when we try to test hypotheses after performing variable selection. 
+
+The code below generates $n = 500$ observations, with 100 different explanatory variables. The data is generated so there is *no relationship* between any of the explanatory variables and the response.
+
+It then fits a model using all explanatory variables, and creates a histogram of the p-values for the hypothesis test $H_0: \beta_j = 0$ vs. $H_A: \beta_j \neq 0$ for each coefficient $\beta_j$. *By construction, $H_0$ is true for all these tests!*
+
+
+```{r, eval=F}
+library(MASS)
+
+n <- 500
+d <- 100
+x <- matrix(rnorm(n*d),nrow=n)
+y <- rbinom(n, 1, 0.5)
+df <- data.frame(y=y,x)
+
+m1 <- glm(y ~ ., data = df, family = binomial)
+hist(summary(m1)$coefficients[,4], 
+     xlab = "p-values", main = "Histogram of p-values")
+```
+
+## Questions
+
+5. Run the above code several times. What do you notice about the distribution of the p-values? What do you conclude about the distribution of p-values when $H_0$ is true?
+
+Now let's perform stepwise selection, and look only at the p-values of the variables selected:
+
+```{r, eval=F}
+m0 <- glm(y ~ 1, data = df, family = binomial)
+
+forward_aic <- stepAIC(m0, scope = list(upper = m1),
+                    direction = "forward",
+                    trace = 0)
+
+hist(summary(forward_aic)$coefficients[,4], 
+     xlab = "p-values", main = "Histogram of p-values after model selection")
+
+```
+
+6. How has the distribution of p-values changed? What do you conclude about the distribution of p-values after model selection?
+
+7. Explain why testing hypotheses *after* performing model selection is a **bad idea**.
+

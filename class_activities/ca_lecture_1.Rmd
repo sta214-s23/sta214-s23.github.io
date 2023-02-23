@@ -1,0 +1,45 @@
+---
+title: "Class Activity, January 9"
+output: 
+  tufte::tufte_html:
+    css: "lab.css"
+    tufte_variant: "envisioned"
+    highlight: pygments
+link-citations: yes
+---
+
+In this activity, you will start to investigate the relationship between age and dengue status, from the dataset of 5720 Vietnamese children admitted to hospital with potential dengue fever.
+
+# Questions
+
+One way to examine the relationship between age and dengue status is with a table:
+
+| Age|  Dengue = 0| Dengue =  1|
+|---:|---:|---:|
+|   1| 184|  16|
+|   2| 419|  42|
+|   3| 532|  68|
+|   4| 457| 108|
+|   5| 487| 122|
+|   6| 369| 110|
+|   7| 360| 148|
+|   8| 289| 161|
+|   9| 244| 186|
+|  10| 185| 185|
+|  11| 165| 148|
+|  12| 126| 137|
+|  13|  96| 107|
+|  14|  68|  97|
+|  15|  42|  62|
+| **Total**  | 4023 | 1697 |
+
+```{marginfigure}
+I say *empirical* probability here because we are estimating it from the observed data.
+```
+
+1. What is the (empirical) probability that a patient in the study has dengue?
+
+2. What is the (empirical) probability that a 5 year old patient has dengue? What about a 10 year old patient?
+
+3. If $\pi$ is the probability of some event, then the *odds* are $\dfrac{\pi}{1 - \pi}$. Calculate the (empirical) odds that a 5 year old patient has dengue.
+

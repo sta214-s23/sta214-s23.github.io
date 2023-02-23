@@ -1,0 +1,113 @@
+---
+title: Logistic regression interpretation
+output:
+  xaringan::moon_reader:
+    css: "lab-slides.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+editor_options: 
+  chunk_output_type: console
+---
+
+### Recap: logistic regression
+
+.large[
+**Data:** Data on 5720 Vietnamese children, admitted to the hospital with possible dengue fever. Variables include:
+
+* *Sex*: patient's sex (female or male)
+* *Age*: patient's age (in years)
+* *WBC*: white blood cell count
+* *PLT*: platelet count
+* other diagnostic variables...
+* *Dengue*: whether the patient has dengue (0 = no, 1 = yes)
+
+**Goal:** Build a model to predict dengue status
+]
+
+---
+
+### Recap: logistic regression
+
+.large[
+$$\hspace{1cm} Y_i \sim Bernoulli(\pi_i)$$
+
+$$\hspace{1cm} \log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 \ Age_i$$
+]
+
+---
+
+### Class activity
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_3.html](https://sta214-s23.github.io/class_activities/ca_lecture_3.html)
+
+* Spend 5 minutes working in pairs on the questions
+* We will then discuss as a class
+]
+
+---
+
+### Class activity
+
+.large[
+$$\hspace{1cm} \log \left( \dfrac{\widehat{\pi}_i}{1 - \widehat{\pi}_i} \right) = -2.45 + 0.22 \ Age_i$$
+
+.question[
+What is the predicted probability of dengue for a 10 year old patient?
+]
+]
+
+---
+
+### Class activity
+
+.large[
+$$\hspace{1cm} \log \left( \dfrac{\widehat{\pi}_i}{1 - \widehat{\pi}_i} \right) = -2.45 + 0.22 \ Age_i$$
+
+.question[
+Suppose we want to identify patients for whom the predicted probability of dengue is at least 0.5. What age range should we focus on?
+]
+]
+
+---
+
+### Class activity
+
+.large[
+$$\hspace{1cm} \log \left( \dfrac{\widehat{\pi}_i}{1 - \widehat{\pi}_i} \right) = -2.45 + 0.22 \ Age_i$$
+
+.question[
+Compare the odds of dengue for a 12 year old patient to the odds of dengue for an 11 year old patient. What do you notice?
+]
+]
+
+---
+
+### Interpretation
+
+.large[
+$$\hspace{1cm} \log \left( \dfrac{\widehat{\pi}_i}{1 - \widehat{\pi}_i} \right) = -2.45 + 0.22 \ Age_i$$
+]
+
+---
+
+### Adding more variables
+
+.large[
+Now let's add WBC as a variable to the model:
+
+```{r, eval=F}
+m2 <- glm(Dengue ~ Age + WBC, data = dengue,
+          family = binomial)
+summary(m2)
+```
+
+$$\hspace{1cm} \log \left( \dfrac{\widehat{\pi}_i}{1 - \widehat{\pi}_i} \right) = 0.34 + 0.15 \ Age_i - 0.31 WBC_i$$
+
+.question[
+How should I interpret each coefficient in the fitted model?
+]
+]

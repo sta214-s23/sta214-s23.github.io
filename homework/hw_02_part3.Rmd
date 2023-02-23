@@ -1,0 +1,18 @@
+---
+---
+---
+title: "HW 2, Part 3"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+titanic <- read.csv("https://sta214-s23.github.io/homework/Titanic.csv")
+```
+
+```{r}
+titanic %>%
+  ggplot(aes(x = Survived)) +
+  geom_bar()
+```
+

@@ -1,0 +1,334 @@
+---
+title: Likelihood and Deviance
+output:
+  xaringan::moon_reader:
+    css: "lab-slides.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+editor_options: 
+  chunk_output_type: console
+---
+
+### Goals for today
+
+.large[
+* Summarize the fit of a logistic regression model
+* Compare fit for nested models
+]
+
+---
+
+### Logistic regression
+
+.large[
+**Data:** Grad application data
+  * `admit`: accepted to grad school? (0 = no, 1 = yes)
+  * `gre`: GRE score
+  * `gpa`: undergrad GPA
+  * `rank`: prestige of undergrad institution
+  
+$Admit_i \sim Bernoulli(\pi_i) \hspace{0.5cm} \log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 GPA_i$
+
+**Goal:** Summarize how well our model fits the data
+
+.question[
+How do we summarize model fit in *linear* regression?
+]
+]
+
+---
+
+### Summarizing linear regression model fit
+
+```{r, include=F}
+library(tidyverse)
+grad_app <- read.csv("https://stats.idre.ucla.edu/stat/data/binary.csv")
+
+library(knitr)
+hook_output <- knit_hooks$get("output")
+knit_hooks$set(output = function(x, options) {
+   lines <- options$output.lines
+   if (is.null(lines)) {
+     return(hook_output(x, options))  # pass to default hook
+   }
+   x <- unlist(strsplit(x, "\n"))
+   more <- "..."
+   if (length(lines)==1) {        # first n lines
+     if (length(x) > lines) {
+       # truncate the output, but add ....
+       x <- c(head(x, lines), more)
+     }
+   } else {
+     x <- c(more, x[lines], more)
+   }
+   # paste these lines together
+   x <- paste(c(x, ""), collapse = "\n")
+   hook_output(x, options)
+ })
+```
+
+.large[
+Example model:
+
+```{r, output.lines = c(9:12, 16:17)}
+linear_mod <- lm(gre ~ gpa, data = grad_app)
+summary(linear_mod)
+```
+
+.question[
+Is $R^2_{adj}$ appropriate for logistic regression?
+]
+]
+
+---
+
+### Summarizing logistic regression
+
+.large[
+```{r, output.lines = c(10:13, 18:19)}
+logistic_mod <- glm(admit ~ gpa, data = grad_app,
+                    family = binomial)
+summary(logistic_mod)
+```
+]
+
+---
+
+### Deviance
+
+.large[
+```{r, output.lines = c(10:13, 18:19)}
+logistic_mod <- glm(admit ~ gpa, data = grad_app,
+                    family = binomial)
+summary(logistic_mod)
+```
+]
+
+---
+
+### Class activity
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_6.html](https://sta214-s23.github.io/class_activities/ca_lecture_6.html)
+]
+
+---
+
+### Class activity: deviance
+
+.large[
+```{r, output.lines=8:10}
+glm(admit ~ gre, family = binomial, data = grad_app)
+```
+]
+
+.large[
+.question[
+What is the deviance of my fitted model?
+]
+]
+---
+
+### Class activity: deviance
+
+.large[
+```{r, output.lines=8:10}
+glm(admit ~ gre, family = binomial, data = grad_app)
+```
+]
+
+.large[
+.question[
+Which predictor (GRE or GPA) gives a model with a better fit?
+]
+]
+
+---
+
+### Class activity: deviance
+
+.large[
+```{r, output.lines=8:10}
+glm(admit ~ gre, family = binomial, data = grad_app)
+```
+]
+
+.large[
+.question[
+Which predictor (GRE or GPA) gives a model with a better fit?
+]
+]
+
+.large[
+GRE has a slightly smaller deviance (486.1 vs. 487), so GRE gives a slightly better fit.
+]
+
+---
+
+### Class activity: hypotheses
+
+.large[
+$Y_i \sim Bernoulli(\pi_i) \hspace{0.5cm} \log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 \text{GRE}_i$
+
+We want to know if there is actually a relationship between GRE score and grad school admission.
+
+.question[
+How can I express this as null and alternative hypotheses about one or more model parameters?
+]
+]
+
+---
+
+### Steps in hypothesis testing
+
+---
+
+### Test statistic: drop in deviance
+
+.large[
+```{r, echo=F, output.lines=17:19, highlight.output=c(3,4)}
+grad_glm <- glm(admit ~ gre, data = grad_app, 
+                family=binomial)
+summary(grad_glm)
+```
+
+499.98 = deviance for intercept-only model $\hspace{0.5cm} \log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0$ 
+
+486.06 = deviance for full model $\hspace{0.5cm} \log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 \text{GRE}_i$
+]
+
+.large[
+**drop-in-deviance:** 
+]
+
+---
+
+### Steps in hypothesis testing
+
+.large[
+$$Admit_i \sim Bernoulli(\pi_i) \hspace{0.5cm} \log \left( \dfrac{\pi_i}{1 - \pi_i} \right) = \beta_0 + \beta_1 \text{GRE}_i$$
+
+* Specify hypotheses
+
+$$H_0: \beta_1 = 0 \hspace{1cm} H_A: \beta_1 \neq 0$$
+
+* Calculate a test statistic
+
+$$G = \text{deviance for reduced model - deviance for full model}$$
+
+* Calculate a p-value
+]
+
+---
+
+### Calculating p-values
+
+.large[
+.question[
+What *is* a p-value?
+]
+]
+
+---
+
+### Calculating p-values
+
+.large[
+.question[
+What *is* a p-value?
+]
+]
+
+.large[
+**p-value:** How unusual the data is *if* $H_0$ is true. e.g., 
+
+$$P(G \geq 13.92 | H_0)$$
+
+.question[
+How do we calculate a p-value?
+]
+]
+
+---
+
+### Calculating p-values
+
+.large[
+.question[
+What *is* a p-value?
+]
+]
+
+.large[
+**p-value:** How unusual the data is *if* $H_0$ is true. e.g., 
+
+$$P(G \geq 13.92 | H_0)$$
+
+.question[
+How do we calculate a p-value?
+]
+
+Compare the observed test statistic to the null distribution
+
+.question[
+How do we get the null distribution?
+]
+]
+
+---
+
+### Exploring the null distribution with simulation
+
+.large[
+* Want to know how $G$ (drop in deviance) behaves if $H_0$ is true
+* So, need data for which we *know* $H_0$ is true!
+
+```{r, output.lines = 17:19}
+x <- runif(1000, 0, 5)
+p <- exp(-3 + 0*x)/(1 + exp(-3 + 0*x))
+y <- rbinom(1000, 1, p)
+
+m1 <- glm(y ~ x, family = binomial)
+summary(m1)
+```
+]
+
+---
+
+### Exploring the null distribution with simulation
+
+.large[
+* Simulating one set of data only gives us one statistic under $H_0$
+* We need to simulate many datasets to explore the full distribution
+
+```{r}
+null_statistics <- c()
+nsim <- 500
+for(i in 1:nsim){
+  x <- runif(1000, 0, 5)
+  p <- exp(-3 + 0*x)/(1 + exp(-3 + 0*x))
+  y <- rbinom(1000, 1, p)
+  m1 <- glm(y ~ x, family = binomial)
+  
+  null_statistics[i] <- m1$null.deviance - 
+    m1$deviance
+}
+```
+]
+
+---
+
+### Exploring the null distribution with simulation
+
+```{r, fig.width=7, fig.height=5, fig.align='center'}
+hist(null_statistics)
+```
+
+.large[
+.question[
+Are there any issues with this approach to approximating the null distribution?
+]
+]

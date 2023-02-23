@@ -1,0 +1,44 @@
+---
+---
+---
+title: "HW 1"
+author: "Your Name"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+
+grad_app <- read.csv("https://stats.idre.ucla.edu/stat/data/binary.csv")
+```
+
+## Question 1
+
+### (a)
+
+```{r}
+
+```
+
+(Type your answer to question 1(a) here)
+
+
+### (b)
+
+```{r}
+
+```
+
+(Type your answer to question 1(b) here)
+
+### (c)
+
+```{r}
+
+```
+
+(Type your answer to question 1(c) here)
+
+(Now add space and chunks to answer the remaining questions)
+
