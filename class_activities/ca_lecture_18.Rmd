@@ -1,0 +1,63 @@
+---
+title: "Class Activity, February 27"
+output: 
+  tufte::tufte_html:
+    css: "lab.css"
+    tufte_variant: "envisioned"
+    highlight: pygments
+link-citations: yes
+---
+
+## Practice with the Poisson distribution
+
+1. In the graph below, we have four Poisson distributions. Order the graphs from smallest $\lambda$ to largest $\lambda$, and write down a guess at what you think $\lambda$ might be for each graph.
+
+```{r echo=F, message=FALSE, warning=F, fig.align='center', fig.width=8, fig.height=6}
+library(tidyverse)
+library(gridExtra)
+
+set.seed(3)
+
+x1 <- rpois(1000, 15)
+x2 <- rpois(1000, 4)
+x3 <- rpois(1000, 2)
+x4 <- rpois(1000, 7)
+
+p1 <- data.frame(Count = x1) %>%
+  ggplot(aes(x = Count)) +
+  geom_bar() +
+  labs(title = "Graph A") +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  scale_x_continuous(limits=c(0, 25))
+
+p2 <- data.frame(Count = x2) %>%
+  ggplot(aes(x = Count)) +
+  geom_bar() +
+  labs(title = "Graph B") +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  scale_x_continuous(limits=c(0, 25))
+
+p3 <- data.frame(Count = x3) %>%
+  ggplot(aes(x = Count)) +
+  geom_bar() +
+  labs(title = "Graph C") +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  scale_x_continuous(limits=c(0, 25))
+
+p4 <- data.frame(Count = x4) %>%
+  ggplot(aes(x = Count)) +
+  geom_bar() +
+  labs(title = "Graph D") +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  scale_x_continuous(limits=c(0, 25))
+
+grid.arrange(p1, p2, p3, p4, ncol=2)
+```
+
+2. Suppose we are counting the number of animals adopted from the Forsyth County animal shelter. We are told the number of dogs adopted per day follows a Poisson Distribution with $\lambda = 1.5$. What is the probability that on a randomly chosen day, *at most* 2 dogs are adopted?
+
+3. The Poisson distribution is for count data. Why is it ok for $\lambda$ to not be a whole number?

@@ -1,0 +1,461 @@
+---
+title: Poisson Regression 
+output:
+  xaringan::moon_reader:
+    css: "lab-slides.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+editor_options: 
+  chunk_output_type: console
+---
+
+
+### Data
+
+.large[
+2015 Family Income and Expenditure Survey (FIES) on households in the Phillipines. Variables include
+
+* `age`: age of the head of household
+* `numLT5`: number in the household under 5 years old
+* `total`: total number of people other than head of household
+* `roof`: type of roof (stronger material can sometimes be used as a proxy for greater wealth)
+* `location`: where the house is located (Central Luzon, Davao Region, Ilocos Region, Metro Manila, or Visayas)
+]
+
+---
+
+### Data
+
+.large[
+Questions:
+
+* How is the age of head of household related to the number of people in the household?
+* Is the type of roof material related to the number of people in the household?
+
+.question[
+To answer these questions, our response variable is `total` (total number of people other than head). What kind of variable is this?
+]
+]
+
+---
+
+### Building a parametric model
+
+.large[
+**Step 1:** Choose a reasonable distribution for $Y$
+
+* $Y_i = total_i$ is a count variable!
+* Unfortunately, we don't know any distributions for count data
+* Bernoulli and Categorical distributions are for categorical data
+* Normal distributions are for continuous data; count data is discrete
+
+.question[
+We need a new distribution!
+]
+]
+
+---
+
+### Exploring the response
+
+```{r echo=F, message=FALSE, warning=F, fig.align='center', fig.width=7, fig.height=5}
+library(tidyverse)
+fies <- read_csv("~/Documents/Teaching/sta214-f22.github.io/slides/fies.csv")
+
+fies %>%
+  ggplot(aes(x = `Total Number of Family members` - 1)) +
+  geom_bar() +
+  labs(x = "Number of family members") +
+  theme_bw() +
+  theme(text = element_text(size = 25))
+```
+
+.large[
+* **Right skewed, unimodal** distribution
+* We can use a *Poisson* distribution
+]
+
+---
+
+### Poisson distribution
+
+.large[
+If $Y_i \sim Poisson(\lambda)$, then $Y_i$ takes values $y = 0, 1, 2, ...$ with probabilities
+
+$$P(Y_i = y) = \dfrac{e^{-\lambda} \lambda^y}{y!}$$
+
+.question[
+Does this distribution look familiar?
+]
+]
+
+---
+
+### Poisson distribution
+
+```{r echo=F, message=FALSE, warning=F, fig.align='center', fig.width=8, fig.height=6}
+library(gridExtra)
+
+x1 <- rpois(1000, 1)
+x2 <- rpois(1000, 2)
+x3 <- rpois(1000, 5)
+x4 <- rpois(1000, 10)
+
+p1 <- data.frame(Count = x1) %>%
+  ggplot(aes(x = Count)) +
+  geom_bar() +
+  labs(title = "Lambda = 1") +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  scale_x_continuous(limits=c(0, 25))
+
+p2 <- data.frame(Count = x2) %>%
+  ggplot(aes(x = Count)) +
+  geom_bar() +
+  labs(title = "Lambda = 2") +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  scale_x_continuous(limits=c(0, 25))
+
+p3 <- data.frame(Count = x3) %>%
+  ggplot(aes(x = Count)) +
+  geom_bar() +
+  labs(title = "Lambda = 5") +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  scale_x_continuous(limits=c(0, 25))
+
+p4 <- data.frame(Count = x4) %>%
+  ggplot(aes(x = Count)) +
+  geom_bar() +
+  labs(title = "Lambda = 10") +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  scale_x_continuous(limits=c(0, 25))
+
+grid.arrange(p1, p2, p3, p4, ncol=2)
+```
+
+.large[
+.question[
+How is $\lambda$ related to the distribution?
+]
+]
+
+---
+
+### Poisson distribution
+
+.large[
+If $Y_i \sim Poisson(\lambda)$, then $Y_i$ takes values $y = 0, 1, 2, ...$ with probabilities
+
+$$P(Y_i = y) = \dfrac{e^{-\lambda} \lambda^y}{y!}$$
+
+* $\lambda$ is the mean of the distribution
+* $\lambda$ is also the variance! (the mean and variance are the same)
+* Our goal is to estimate $\lambda$, just like our goal was to estimate $\pi$ in logistic regression
+]
+
+---
+
+### Estimating $\lambda$ with maximum likelihood
+
+.large[
+$$P(Y_i = y) = \dfrac{e^{-\lambda} \lambda^y}{y!}$$
+
+Suppose that $Y_1,...,Y_n \overset{iid}{\sim} Poisson(\lambda)$.
+
+.question[
+What is the maximum likelihood estimate $\widehat{\lambda}$?
+]
+]
+
+---
+
+### Class activity
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_18.html](https://sta214-s23.github.io/class_activities/ca_lecture_18.html)
+]
+
+---
+
+### Class activity
+
+```{r echo=F, message=FALSE, warning=F, fig.align='center', fig.width=8, fig.height=6}
+library(gridExtra)
+
+set.seed(3)
+
+x1 <- rpois(1000, 15)
+x2 <- rpois(1000, 4)
+x3 <- rpois(1000, 2)
+x4 <- rpois(1000, 7)
+
+p1 <- data.frame(Count = x1) %>%
+  ggplot(aes(x = Count)) +
+  geom_bar() +
+  labs(title = "Graph A") +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  scale_x_continuous(limits=c(0, 25))
+
+p2 <- data.frame(Count = x2) %>%
+  ggplot(aes(x = Count)) +
+  geom_bar() +
+  labs(title = "Graph B") +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  scale_x_continuous(limits=c(0, 25))
+
+p3 <- data.frame(Count = x3) %>%
+  ggplot(aes(x = Count)) +
+  geom_bar() +
+  labs(title = "Graph C") +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  scale_x_continuous(limits=c(0, 25))
+
+p4 <- data.frame(Count = x4) %>%
+  ggplot(aes(x = Count)) +
+  geom_bar() +
+  labs(title = "Graph D") +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  scale_x_continuous(limits=c(0, 25))
+
+grid.arrange(p1, p2, p3, p4, ncol=2)
+```
+
+.large[
+.question[
+What do you think $\lambda$ is for each graph?
+]
+]
+
+---
+
+### Class activity
+
+.large[
+$Y_i = \text{number of dogs adopted from animal shelter}$
+
+$Y_i \sim Poisson(1.5)$
+
+.question[
+What is the probability that at most two dogs are adopted?
+]
+]
+
+---
+
+### Class activity
+
+.large[
+.question[
+The Poisson distribution is for count data. Why is it ok for $\lambda$ to not be a whole number?
+]
+]
+
+---
+
+### Poisson regression
+
+.large[
+$Y_i =$ number of people in household other than head
+
+How is $Y_i$ related to the age of the head of the household?
+
+**Step 1:** Choose a reasonable distribution for $Y$
+
+$$Y_i \sim Poisson(\lambda_i)$$
+
+**Step 2:** Choose a model for any parameters
+
+$$\log(\lambda_i) = \beta_0 + \beta_1 Age_i$$
+.question[
+Why do you think we use $\log(\lambda_i)$ instead of just $\lambda_i$?
+]
+]
+
+---
+
+### Fitting the model
+
+```{r include=F}
+library(knitr)
+hook_output <- knit_hooks$get("output")
+knit_hooks$set(output = function(x, options) {
+   lines <- options$output.lines
+   if (is.null(lines)) {
+     return(hook_output(x, options))  # pass to default hook
+   }
+   x <- unlist(strsplit(x, "\n"))
+   more <- "..."
+   if (length(lines)==1) {        # first n lines
+     if (length(x) > lines) {
+       # truncate the output, but add ....
+       x <- c(head(x, lines), more)
+     }
+   } else {
+     x <- c(more, x[lines], more)
+   }
+   # paste these lines together
+   x <- paste(c(x, ""), collapse = "\n")
+   hook_output(x, options)
+ })
+fies <- fies %>%
+  mutate(total = `Total Number of Family members`,
+         age = `Household Head Age`)
+```
+
+.large[
+```{r, output.lines=10:12}
+m1 <- glm(total ~ age, family = poisson,
+          data = fies)
+summary(m1)
+```
+
+$$\log(\widehat{\lambda}_i) = 1.714 - 0.0035 \ Age_i$$
+
+.question[
+How can we interpret the slope?
+]
+]
+
+---
+
+### Fitting the model
+
+.large[
+$$\log(\widehat{\lambda}_i) = 1.714 - 0.0035 \ Age_i$$
+
+For every additional year in age of the head of house, we expect the log of the *average* household size to decrease by 0.0035.
+
+.question[
+Can I interpret on the un-logged scale?
+]
+]
+
+---
+
+### Assumptions
+
+.large[
+$$Y_i \sim Poisson(\lambda_i)$$
+$$\log(\lambda_i) = \beta_0 + \beta_1 Age_i$$
+
+.question[
+What assumptions does our Poisson regression model make?
+]
+]
+
+---
+
+### Assumptions
+
+.large[
+$$Y_i \sim Poisson(\lambda_i)$$
+$$\log(\lambda_i) = \beta_0 + \beta_1 Age_i$$
+
+.question[
+What assumptions does our Poisson regression model make?
+]
+]
+
+.large[
+* **Shape:** The shape of the regression model is correct 
+* **Independence:** The observations are independent
+* **Poisson distribution:** A Poisson distribution is a good choice for $Y_i$
+]
+
+---
+
+### The shape assumption
+
+.large[
+**Shape assumption:** The shape of the regression model is correct
+
+.question[
+How can I assess this assumption?
+]
+]
+
+
+---
+
+### Checking the shape assumption
+
+```{r echo=F, message=FALSE, warning=F, fig.align='center', fig.width=7, fig.height=5}
+set.seed(6)
+fies %>%
+  group_by(age) %>%
+  summarize(emp_mean = log(mean(total)),
+            age_mean = mean(age)) %>%
+  ungroup() %>%
+  ggplot(aes(x = age_mean, y = emp_mean)) +
+  geom_jitter(size = 2, width=0.3, height=0.3) +
+  labs(x = "Age", y = "log(Average number of people)") +
+  theme_bw() +
+  theme(text = element_text(size = 25))
+```
+
+.large[
+.question[
+What shape seems appropriate?
+]
+]
+
+---
+
+### Second order polynomial
+
+```{r echo=F, message=FALSE, warning=F, fig.align='center', fig.width=7, fig.height=5}
+set.seed(6)
+fies %>%
+  group_by(age) %>%
+  summarize(emp_mean = log(mean(total)),
+            age_mean = mean(age)) %>%
+  ungroup() %>%
+  ggplot(aes(x = age_mean, y = emp_mean)) +
+  geom_jitter(size = 2, width=0.3, height=0.3) +
+  labs(x = "Age", y = "log(Average number of people)") +
+  theme_bw() +
+  theme(text = element_text(size = 25)) +
+  geom_smooth(se=F, method="lm", formula = y ~ poly(x,2), lwd=1.2)
+```
+
+---
+
+### Poisson distribution assumption
+
+.large[
+$$Y_i \sim Poisson(\lambda_i)$$
+$$\log(\lambda_i) = \beta_0 + \beta_1 Age_i + \beta_2 Age_i^2$$
+
+**Poisson distribution assumption:** The Poisson distribution is a good choice for $Y_i$.
+
+.question[
+What are some characteristics of the Poisson distribution we could check?
+]
+]
+
+---
+
+### Checking distribution shape
+
+.large[
+Look at the distribution of $Y_i$ for different ages:
+
+```{r echo=F, message=FALSE, warning=F, fig.align='center', fig.width=8, fig.height=6}
+fies %>%
+  mutate(age_binned = cut(age, breaks = 9)) %>%
+  ggplot(aes(x = total)) +
+  geom_bar() +
+  facet_wrap(~age_binned) +
+  theme_bw()
+```
+]

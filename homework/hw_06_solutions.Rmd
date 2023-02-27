@@ -1,0 +1,123 @@
+---
+title: "HW 6 Solutions"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+dengue <- read.csv("https://sta214-s23.github.io/homework/dengue.csv")
+```
+
+## Question 12
+
+### (a) (2 pts)
+
+```{r}
+table(dengue$RapidTest, dengue$Dengue)
+```
+
+**Grading:** No points if code missing
+
+### (b) (4 pts)
+
+Accuracy = (3990 + 1194)/5720 = 0.91
+
+Sensitivity = 1194/(1194 + 503) = 0.70
+
+Specificity = 3990/(3990 + 33) = 0.99
+
+PPV = 1194/(1194 + 33) = 0.97
+
+**Grading:** 1 pt for each prediction metric
+
+## Question 13
+
+### (a) (2 pts)
+
+```{r}
+m1 <- glm(Dengue ~ Age + WBC + PLT, data = dengue, family = binomial)
+```
+
+### (b) (2 pts)
+
+```{r}
+table(Prediction = m1$fitted.values > 0.33, 
+      Truth = dengue$Dengue)
+```
+
+**Grading:** Lose 1 pt for using the wrong threshold. No points if the confusion matrix doesn't compare the predictions with Dengue, or if the confusion matrix uses the wrong predictions.
+
+### (c) (4 pts)
+
+Accuracy = (3069 + 1267)/5270 = 0.82
+
+Sensitivity = 1267/(1267 + 430) = 0.75
+
+Specificity = 3069/(3069 + 954) = 0.76
+
+PPV = 1267/(1267 + 954) = 0.57
+
+Yes, these are similar to the values in the original paper.
+
+**Grading:** 1 pt for each prediction metric.
+
+### (d) (2 pts)
+
+Sensitivity is slightly higher (if we changed the threshold, we would change the sensitivity value). The other metrics are lower than for the rapid test.
+
+### (e) (2 pts)
+
+```{r}
+library(ROCR)
+pred <- prediction(m1$fitted.values, dengue$Dengue)
+perf <- performance(pred,"tpr","fpr")
+performance(pred, "auc")@y.values
+data.frame(fpr = perf@x.values[[1]],
+tpr = perf@y.values[[1]]) %>%
+  ggplot(aes(x = fpr, y = tpr)) +
+  geom_line(lwd=1.5) +
+  geom_abline(slope = 1, intercept = 0, lty = 2,
+  lwd = 1.5) +
+  labs(x = "False positive rate (1 - Specificity)",
+  y = "True positive rate (Sensitivity)") +
+  theme_classic()
+```
+
+The AUC is about 0.83, which is similar to the value in the original paper.
+
+**Grading:** 1 pt for ROC curve, 1 pt for AUC
+
+
+## Question 14
+
+### (a) (3 pts)
+
+```{r}
+library(MASS)
+
+m0 <- glm(Dengue ~ 1, family = binomial, data = dengue)
+forward_aic <- stepAIC(m0, scope = ~ Sex + Age + DiseaseDay + Vomiting + Abdominal + Temperature + BMI + WBC + HCT + PLT, trace = 0, direction = "forward")
+summary(forward_aic)
+```
+
+The variables chosen are WBC, Age, PLT, BMI, Temperature, Vomiting, and DiseaseDay.
+
+**Grading:** No points if no code shown. Lose 1 pt if they don't report the selected variables. Lose 1 pt if their scope in the stepAIC function is incorrect.
+
+### (b) (3 pts)
+
+```{r}
+pred <- prediction(forward_aic$fitted.values, dengue$Dengue)
+perf <- performance(pred,"tpr","fpr")
+performance(pred, "auc")@y.values
+```
+
+The AUC for the model chosen by stepwise selection is about 84%, which is very similar to the smaller model considered in question 13.
+
+**Grading:** No points if code not shown. Lose 2 pts if missing AUC. Lose 1 pt if no comparison to question 13.
+
+### (c) (2 pts)
+
+The model in question 13 is much simpler to use and interpret, but has almost the same predictive performance. So we prefer the model in question 13.
+
