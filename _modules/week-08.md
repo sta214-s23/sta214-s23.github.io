@@ -9,13 +9,12 @@ February 27
 : Textbook 3.3.6, 4.2, 4.4.1 - 4.4.3
 
 March 1
-: Poisson regression and inference
+: Assumptions and diagnostics
   : [Slides](https://sta214-s23.github.io/slides/lecture_19.pdf), [Class activity](https://sta214-s23.github.io/class_activities/ca_lecture_19.html)
 
-: Textbook 4.4.3 - 4.4.5
+: Textbook 4.6, 4.7
 
 March 3
-: Assumptions and diagnostics
+: Poisson regression and inference
 
-
-: Textbook 4.6, 4.7
+: Textbook 4.4.3 - 4.4.5
