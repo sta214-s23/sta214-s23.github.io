@@ -1,0 +1,453 @@
+---
+title: Poisson Regression 
+output:
+  xaringan::moon_reader:
+    css: "lab-slides.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+editor_options: 
+  chunk_output_type: console
+---
+
+### Data
+
+.large[
+2015 Family Income and Expenditure Survey (FIES) on households in the Phillipines. Variables include
+
+* `age`: age of the head of household
+* `numLT5`: number in the household under 5 years old
+* `total`: total number of people other than head of household
+* `roof`: type of roof (stronger material can sometimes be used as a proxy for greater wealth)
+* `location`: where the house is located (Central Luzon, Davao Region, Ilocos Region, Metro Manila, or Visayas)
+]
+
+---
+
+### Poisson regression model
+
+.large[
+$Y_i =$ number of people in household other than head
+
+$$Y_i \sim Poisson(\lambda_i)$$
+
+$$\log(\lambda_i) = \beta_0 + \beta_1 Age_i$$
+]
+
+---
+
+### Model assumptions
+
+.large[
+$Y_i =$ number of people in household other than head
+
+$$Y_i \sim Poisson(\lambda_i)$$
+
+$$\log(\lambda_i) = \beta_0 + \beta_1 Age_i$$
+
+Assumptions:
+
+* **Shape:** The shape of the regression model is correct 
+* **Independence:** The observations are independent
+* **Poisson distribution:** A Poisson distribution is a good choice for $Y_i$
+
+.question[
+How could I assess these assumptions?
+]
+]
+
+---
+
+### Shape: log empirical means plot
+
+```{r include=F}
+library(tidyverse)
+fies <- read_csv("~/Documents/Teaching/sta214-f22.github.io/slides/fies.csv")
+
+fies %>%
+  ggplot(aes(x = `Total Number of Family members` - 1)) +
+  geom_bar() +
+  labs(x = "Number of family members") +
+  theme_bw() +
+  theme(text = element_text(size = 25))
+
+fies <- fies %>%
+  mutate(total = `Total Number of Family members`,
+         age = `Household Head Age`)
+```
+
+```{r echo=F, message=FALSE, warning=F, fig.align='center', fig.width=7, fig.height=5}
+set.seed(6)
+fies %>%
+  group_by(age) %>%
+  summarize(emp_mean = log(mean(total)),
+            age_mean = mean(age)) %>%
+  ungroup() %>%
+  ggplot(aes(x = age_mean, y = emp_mean)) +
+  geom_jitter(size = 2, width=0.3, height=0.3) +
+  labs(x = "Age", y = "log(Average number of people)") +
+  theme_bw() +
+  theme(text = element_text(size = 20))
+```
+
+---
+
+### Shape: log empirical means plot
+
+```{r echo=F, message=FALSE, warning=F, fig.align='center', fig.width=7, fig.height=5}
+set.seed(6)
+fies %>%
+  group_by(age) %>%
+  summarize(emp_mean = log(mean(total)),
+            age_mean = mean(age)) %>%
+  ungroup() %>%
+  ggplot(aes(x = age_mean, y = emp_mean)) +
+  geom_jitter(size = 2, width=0.3, height=0.3) +
+  labs(x = "Age", y = "log(Average number of people)") +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  geom_smooth(se=F, method="lm", formula = y ~ poly(x,2), lwd=1.2)
+```
+
+---
+
+### Shape: quantile residual plot
+
+```{r, eval=F}
+m1 <- glm(total ~ age, 
+          data = fies, family = poisson)
+m2 <- glm(total ~ poly(age, 2), 
+          data = fies, family = poisson)
+```
+
+```{r echo=F, message=FALSE, warning=F, fig.align='center', fig.width=10, fig.height=4}
+library(statmod)
+library(gridExtra)
+m1 <- glm(total ~ age, 
+          data = fies, family = poisson)
+m2 <- glm(total ~ poly(age, 2), 
+          data = fies, family = poisson)
+p1 <- fies %>%
+  mutate(resids = qresid(m1)) %>%
+  ggplot(aes(x = age, y = resids)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth() +
+  theme_bw() +
+  labs(x = "Age", y = "Quantile residuals", 
+       title = "No transformation on Age")
+p2 <- fies %>%
+  mutate(resids = qresid(m2)) %>%
+  ggplot(aes(x = age, y = resids)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth() +
+  theme_bw() +
+  labs(x = "Age", y = "Quantile residuals", 
+       title = "Second order polynomial")
+grid.arrange(p1, p2, ncol=2)
+```
+
+---
+
+### Class activity
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_19.html](https://sta214-s23.github.io/class_activities/ca_lecture_19.html)
+]
+
+---
+
+### Class activity
+
+```{r, echo=F, message=FALSE, warning=F, fig.align='center', fig.width=10, fig.height=7}
+set.seed(1)
+r <- 0.5
+n <- 1000
+x <- rnorm(n, sd = 0.5)
+y1 <- rpois(n, lambda = exp(x))
+y2 <- rpois(n, lambda = exp(x^2))
+y3 <- rnbinom(n, size=r, mu=exp(x))
+y4 <- rnbinom(n, size=r, mu=exp(x^2))
+
+m1 <- glm(y1 ~ x, family = poisson)
+m2 <- glm(y2 ~ x, family = poisson)
+m3 <- glm(y3 ~ x, family = poisson)
+m4 <- glm(y4 ~ x, family = poisson)
+
+p1 <- data.frame(x = x, resids = qresid(m1)) %>%
+  ggplot(aes(x = x, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  theme_bw() +
+  labs(x = "Age", y = "Quantile residuals", 
+       title = "Poisson data, shape assumption satisfied") +
+  scale_y_continuous(limits=c(-3, 6))
+p2 <- data.frame(x = x, resids = qresid(m2)) %>%
+  ggplot(aes(x = x, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  theme_bw() +
+  labs(x = "Age", y = "Quantile residuals", 
+       title = "Poisson data, shape assumption violated") +
+  scale_y_continuous(limits=c(-3, 6))
+p3 <- data.frame(x = x, resids = qresid(m3)) %>%
+  ggplot(aes(x = x, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  theme_bw() +
+  labs(x = "Age", y = "Quantile residuals", 
+       title = "Non-Poisson data, shape assumption satisfied") +
+  scale_y_continuous(limits=c(-3, 6))
+p4 <- data.frame(x = x, resids = qresid(m4)) %>%
+  ggplot(aes(x = x, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  theme_bw() +
+  labs(x = "Age", y = "Quantile residuals", 
+       title = "Non-Poisson data, shape assumption violated") +
+  scale_y_continuous(limits=c(-3, 6))
+
+grid.arrange(p1, p2, p3, p4, ncol=2)
+```
+
+---
+
+### Using quantile residual plots
+
+.large[
+We can use the quantile residual plot to assess the shape and distribution assumptions:
+]
+
+---
+
+### Another dataset
+
+.large[
+A concerned parent asks us to investigate crime rates on college campuses. We have access to data on 81 different colleges and universities in the US, including the following variables:
+
+* `type`: college (C) or university (U)
+* `nv`: the number of crimes for that institution in the given year
+* `enroll1000`: the number of enrolled students, in thousands
+* `region`: region of the US C = Central, MW = Midwest, NE = Northeast, SE = Southeast, SW = Southwest, and W = West)
+]
+
+---
+
+### Question
+
+.large[
+We want to know whether there are regional differences in the number of crimes on college campuses.
+
+.question[
+What would be a reasonable model to investigate this question?
+]
+]
+
+---
+
+### Model
+
+.large[
+$$Crimes_i \sim Poisson(\lambda_i)$$
+
+$$\log(\lambda_i) = \beta_0 + \beta_1 MW_i + \beta_2 NE_i + \beta_3 SE_i + \beta_4 SW_i + \beta_5 W_i$$
+
+.question[
+What assumptions is this model making?
+]
+]
+
+---
+
+### Exploratory data analysis
+
+.large[
+```{r echo=F, message=F, warning=F, fig.align='center', fig.width=10, fig.height=6}
+library(tidyverse)
+
+crimes <- read_csv("~/Documents/Teaching/sta214-f22.github.io/slides/c_data.csv")
+
+crimes %>%
+  ggplot(aes(x = nv)) +
+  geom_histogram(bins = 10) +
+  labs(x = "Number of crimes") +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  facet_wrap(~region)
+```
+
+.question[
+Does it look reasonable to assume a Poisson distribution for the response?
+]
+]
+
+---
+
+### Exploratory data analysis
+
+.large[
+```{r}
+crimes %>%
+  group_by(region) %>%
+  summarize(mean_crimes = mean(nv),
+            var_crimes = var(nv))
+```
+
+.question[
+Does the Poisson distribution still seem reasonable?
+]
+]
+
+---
+
+### Quantile residual plot
+
+```{r}
+m1 <- glm(nv ~ region, data = crimes, family = poisson)
+```
+
+```{r, echo=F, message=F, warning=F, fig.align='center', fig.width=7, fig.height=5}
+crimes %>%
+  mutate(resids = qresid(m1)) %>%
+  ggplot(aes(x = region, y = resids)) +
+  geom_point() +
+  theme_bw() +
+  labs(x = "Region", y = "Quantile residuals")  +
+  theme(text = element_text(size = 20))
+```
+
+---
+
+### Goodness of fit
+
+.large[
+Another way to assess whether our model is reasonable is with a *goodness of fit* test.
+
+**Goodness of fit test:** If the model is a good fit for the data, then the residual deviance follows a $\chi^2$ distribution with the same degrees of freedom as the residual deviance
+
+```{r echo=F, message=F, output.lines = 22:23}
+library(knitr)
+hook_output <- knit_hooks$get("output")
+knit_hooks$set(output = function(x, options) {
+   lines <- options$output.lines
+   if (is.null(lines)) {
+     return(hook_output(x, options))  # pass to default hook
+   }
+   x <- unlist(strsplit(x, "\n"))
+   more <- "..."
+   if (length(lines)==1) {        # first n lines
+     if (length(x) > lines) {
+       # truncate the output, but add ....
+       x <- c(head(x, lines), more)
+     }
+   } else {
+     x <- c(more, x[lines], more)
+   }
+   # paste these lines together
+   x <- paste(c(x, ""), collapse = "\n")
+   hook_output(x, options)
+ })
+
+m1 <- glm(nv ~ region, data = crimes, family = poisson)
+summary(m1)
+```
+
+Residual deviance = 621.24, df = 75
+
+.question[
+How likely is a residual deviance of 621.24 if our model is correct?
+]
+]
+
+---
+
+### Goodness of fit
+
+.large[
+**Goodness of fit test:** If the model is a good fit for the data, then the residual deviance follows a $\chi^2$ distribution with the same degrees of freedom as the residual deviance
+
+Residual deviance = 621.24, df = 75
+
+```{r}
+pchisq(621.24, df=75, lower.tail=F)
+```
+
+So our model might not be a very good fit to the data.
+
+.question[
+Why might our model not be a good fit?
+]
+]
+
+---
+
+### Potential issues with our model
+
+.large[
+* The Poisson distribution might not be a good choice
+* There may be additional factors related to the number of crimes which we are not including in the model
+
+.question[
+Which other factors might be related to the number of crimes?
+]
+]
+
+---
+
+### Offsets
+
+.large[
+We will account for school size by including an **offset** in the model:
+
+$$\log(\lambda_i) = \beta_0 + \beta_1 MW_i + \beta_2 NE_i + \beta_3 SE_i + \beta_4 SW_i + \beta_5 W_i \\ + \log(Enrollment_i)$$
+]
+
+---
+
+### Motivation for offsets
+
+.large[
+We can rewrite our regression model with the offset:
+
+$$\log(\lambda_i) = \beta_0 + \beta_1 MW_i + \beta_2 NE_i + \beta_3 SE_i + \beta_4 SW_i + \beta_5 W_i \\ + \log(Enrollment_i)$$
+]
+
+---
+
+### Fitting a model with an offset
+
+.large[
+```{r, output.lines = 10:16}
+m2 <- glm(nv ~ region, offset = log(enroll1000),
+          data = crimes, family = poisson)
+summary(m2)
+```
+
+* The offset doesn't show up in the output (because we're not estimating a coefficient for it)
+]
+
+---
+
+### Fitting a model with an offset
+
+.large[
+$$\log(\widehat{\lambda}_i) = -1.30 + 0.10 MW_i + 0.76 NE_i + \\ 0.87 SE_i + 0.51 SW_i + 0.21 W_i \\  + \log(Enrollment_i)$$
+
+.question[
+How would I interpret the intercept -1.30?
+]
+]
+
+---
+
+### When to use offsets
+
+.large[
+Offsets are useful in Poisson regression when our counts come from groups of very different sizes (e.g., different numbers of students on a college campus). The offset lets us interpret model coefficients in terms of rates instead of raw counts.
+
+.question[
+With your neighbor, brainstorm some other data scenarios where our response is a count variable, and an offset would be useful. What would our offset be?
+]
+]
+

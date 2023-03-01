@@ -1,0 +1,65 @@
+---
+title: "Class Activity, March 1"
+output: 
+  tufte::tufte_html:
+    css: "lab.css"
+    tufte_variant: "envisioned"
+    highlight: pygments
+link-citations: yes
+---
+
+# Exploring quantile residual plots
+
+In linear regression, residuals can be used to assess the shape, constant variance, and normality assumptions. In Poisson regression, we can use quantile residuals to assess both the shape and Poisson distribution assumptions. The purpose of this class activity is to explore how quantile residual plots can diagnose violations of the Poisson regression assumptions.
+
+## Questions
+
+To begin, let's generate data from the model
+
+$$X_i \sim N(0, 0.5)$$
+$$\log(\lambda_i) = X_i$$
+$$Y_i \sim Poisson(\lambda_i)$$
+Note that the Poisson regression assumptions are satisfied for this model.
+
+1. Run the code below to generate data from this model, fit the Poisson regression model in R, and create a quantile residual plot:
+
+```{r, eval=F}
+n <- 1000
+x <- rnorm(n, sd = 0.5)
+y1 <- rpois(n, lambda = exp(x))
+
+m1 <- glm(y1 ~ x, family = poisson)
+
+data.frame(x = x, resids = qresid(m1)) %>%
+  ggplot(aes(x = x, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  theme_bw() +
+  labs(x = "Age", y = "Quantile residuals") 
+```
+
+
+Now what happens if we change the distribution of $Y$? The negative binomial distribution is another count distribution, which is different from the Poisson (we will see much more of the negative binomial later!). Let's generate negative binomial data (violating the Poisson distribution assumption), and see how the quantile residual plot changes.
+
+2. Run the code below to generate negative binomial data, fit a Poisson regression model, and make a quantile residual plot. What differences do you see in your plot compared to question 1?
+
+```{r, eval=F}
+n <- 1000
+x <- rnorm(n, sd = 0.5)
+y2 <- rnbinom(n, size=0.5, mu=exp(x))
+
+m2 <- glm(y2 ~ x, family = poisson)
+
+data.frame(x = x, resids = qresid(m2)) %>%
+  ggplot(aes(x = x, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  theme_bw() +
+  labs(x = "Age", y = "Quantile residuals") 
+```
+
+Finally, let's try violating the shape assumption with Poisson data. 
+
+3. Modify your code from question 1 to violate the shape assumption, but not the Poisson distribution assumption. What differences do you see in your plot compared to question 1?
+
+4. Summarize how quantile residual plots can be used to identify issues with the Poisson regression assumptions.
