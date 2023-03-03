@@ -19,3 +19,7 @@ March 3
   : [Slides](https://sta214-s23.github.io/slides/lecture_20.pdf), [Class activity](https://sta214-s23.github.io/class_activities/ca_lecture_20.html)
 
 : Textbook 4.4.3 - 4.4.5
+
+: **Project 1, Part 3 released**{: .label .label-green }
+  : [Part 2](https://sta214-s23.github.io/projects/project_1_3.html)
+
