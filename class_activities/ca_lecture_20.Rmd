@@ -1,0 +1,43 @@
+---
+title: "Class Activity, March 3"
+output: 
+  tufte::tufte_html:
+    css: "lab.css"
+    tufte_variant: "envisioned"
+    highlight: pygments
+link-citations: yes
+---
+
+## Inference with Poisson regression
+
+
+We are interested in analyzing the number of articles published by biochemistry PhD students. The data contains the following variables:
+
+* `art`: articles published in last three years of Ph.D.
+* `fem`: gender (recorded as male or female)
+* `mar`: marital status (recorded as married or single)
+* `kid5`: number of children under age six
+* `phd`: prestige of Ph.D. program
+* `ment`: articles published by their mentor in last three years
+
+### Questions
+
+Your friend proposes the following Poisson regression model:
+
+$$Articles_i \sim Poisson(\lambda_i)$$
+
+$$\log(\lambda_i) = \beta_0 + \beta_1 Female_i + \beta_2 Married_i + \beta_3 Kids_i + \\  \beta_4 Prestige_i + \beta_5 Mentor_i$$
+
+1. Do you think you need an offset in this model? If so, what would the offset be?
+
+2. We are interested in estimating the relationship between prestige and the number of articles published, after accounting for other factors. What confidence interval should we make?
+
+3. Use the following R output to create your confidence interval from question 2:
+
+```{r, echo=F}
+library(foreign)
+articles <- read.dta("http://www.stata-press.com/data/lf2/couart2.dta")
+
+m1 <- glm(art ~ ., data = articles, family = poisson)
+summary(m1)
+```

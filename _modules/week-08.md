@@ -16,5 +16,6 @@ March 1
 
 March 3
 : Poisson regression and inference
+  : [Slides](https://sta214-s23.github.io/slides/lecture_20.pdf), [Class activity](https://sta214-s23.github.io/class_activities/ca_lecture_20.html)
 
 : Textbook 4.4.3 - 4.4.5
