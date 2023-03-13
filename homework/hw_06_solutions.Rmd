@@ -9,6 +9,56 @@ library(tidyverse)
 dengue <- read.csv("https://sta214-s23.github.io/homework/dengue.csv")
 ```
 
+**Grading for questions 1 - 11:** Answers may vary slightly for some questions, which is ok. Students can receive full credit as long as their answer seems reasonable.
+
+## Question 1 (2 pts)
+
+Dengue is a widespread disease, and early diagnosis is important for treatment and disease management. Gold-standard tests are limited and time-consuming, and rapid tests are not available in all settings. A prediction model provides an alternative to tests which may not be available.
+
+## Question 2 (2 pts)
+
+The goal of the study is to construct a classifier to predict dengue in pediatric patients using commonly-available diagnostic measurements, and assess its performance.
+
+## Question 3 (1 pt)
+
+5729 children
+
+## Question 4 (2 pts)
+
+Inclusion: fever at presentation, less than 72 hours of symptoms, doctor thinks illness could be dengue, aged between 1 and 15 years, parent/guardian has a mobile phone, and parent/guardian provides written consent.
+
+Exclusion: doctor thinks the patient won't follow up, or thinks another diagnosis is more likely than dengue
+
+## Question 5 (2 pts)
+
+Explanatory variables: Age, sex, BMI, day of illness, temperature, vomiting, abdominal pain, skin bleeding, mucosal bleeding, flush, hepatomegaly, rash, infection, WBC, PLT, HCT, ALB, AST, CK
+
+They also recorded whether the patient had dengue from a lab test, and the results of a rapid antigen test
+
+## Question 6 (2 pts)
+
+Logistic regression was used to predict dengue from the available clinical measurements, and techniques like stepwise selection were used to choose variables. Performance was assessed using AUC and confusion matrix metrics (accuracy, sensitivity, specificity, etc.). Performance was also compared to models built using decision trees and random forests.
+
+## Question 7 (2 pts)
+
+The researchers used backward stepwise selection with AIC, and stability selection.
+
+## Question 8 (1 pt)
+
+0.333
+
+## Question 9 (2 pts)
+
+Age, WBC, PLT
+
+## Question 10 (2 pts)
+
+Sensitivity: 74.8%, Specificity: 76.3%
+
+## Question 11 (1 pt)
+
+0.829
+
 ## Question 12
 
 ### (a) (2 pts)
@@ -50,7 +100,7 @@ table(Prediction = m1$fitted.values > 0.33,
 
 ### (c) (4 pts)
 
-Accuracy = (3069 + 1267)/5270 = 0.82
+Accuracy = (3069 + 1267)/5720 = 0.76
 
 Sensitivity = 1267/(1267 + 430) = 0.75
 

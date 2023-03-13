@@ -366,6 +366,74 @@ pre code {
 </div>
 
 
+<p><strong>Grading for questions 1 - 11:</strong> Answers may vary
+slightly for some questions, which is ok. Students can receive full
+credit as long as their answer seems reasonable.</p>
+<div id="question-1-2-pts" class="section level2">
+<h2>Question 1 (2 pts)</h2>
+<p>Dengue is a widespread disease, and early diagnosis is important for
+treatment and disease management. Gold-standard tests are limited and
+time-consuming, and rapid tests are not available in all settings. A
+prediction model provides an alternative to tests which may not be
+available.</p>
+</div>
+<div id="question-2-2-pts" class="section level2">
+<h2>Question 2 (2 pts)</h2>
+<p>The goal of the study is to construct a classifier to predict dengue
+in pediatric patients using commonly-available diagnostic measurements,
+and assess its performance.</p>
+</div>
+<div id="question-3-1-pt" class="section level2">
+<h2>Question 3 (1 pt)</h2>
+<p>5729 children</p>
+</div>
+<div id="question-4-2-pts" class="section level2">
+<h2>Question 4 (2 pts)</h2>
+<p>Inclusion: fever at presentation, less than 72 hours of symptoms,
+doctor thinks illness could be dengue, aged between 1 and 15 years,
+parent/guardian has a mobile phone, and parent/guardian provides written
+consent.</p>
+<p>Exclusion: doctor thinks the patient won’t follow up, or thinks
+another diagnosis is more likely than dengue</p>
+</div>
+<div id="question-5-2-pts" class="section level2">
+<h2>Question 5 (2 pts)</h2>
+<p>Explanatory variables: Age, sex, BMI, day of illness, temperature,
+vomiting, abdominal pain, skin bleeding, mucosal bleeding, flush,
+hepatomegaly, rash, infection, WBC, PLT, HCT, ALB, AST, CK</p>
+<p>They also recorded whether the patient had dengue from a lab test,
+and the results of a rapid antigen test</p>
+</div>
+<div id="question-6-2-pts" class="section level2">
+<h2>Question 6 (2 pts)</h2>
+<p>Logistic regression was used to predict dengue from the available
+clinical measurements, and techniques like stepwise selection were used
+to choose variables. Performance was assessed using AUC and confusion
+matrix metrics (accuracy, sensitivity, specificity, etc.). Performance
+was also compared to models built using decision trees and random
+forests.</p>
+</div>
+<div id="question-7-2-pts" class="section level2">
+<h2>Question 7 (2 pts)</h2>
+<p>The researchers used backward stepwise selection with AIC, and
+stability selection.</p>
+</div>
+<div id="question-8-1-pt" class="section level2">
+<h2>Question 8 (1 pt)</h2>
+<p>0.333</p>
+</div>
+<div id="question-9-2-pts" class="section level2">
+<h2>Question 9 (2 pts)</h2>
+<p>Age, WBC, PLT</p>
+</div>
+<div id="question-10-2-pts" class="section level2">
+<h2>Question 10 (2 pts)</h2>
+<p>Sensitivity: 74.8%, Specificity: 76.3%</p>
+</div>
+<div id="question-11-1-pt" class="section level2">
+<h2>Question 11 (1 pt)</h2>
+<p>0.829</p>
+</div>
 <div id="question-12" class="section level2">
 <h2>Question 12</h2>
 <div id="a-2-pts" class="section level3">
@@ -406,7 +474,7 @@ Dengue, or if the confusion matrix uses the wrong predictions.</p>
 </div>
 <div id="c-4-pts" class="section level3">
 <h3>(c) (4 pts)</h3>
-<p>Accuracy = (3069 + 1267)/5270 = 0.82</p>
+<p>Accuracy = (3069 + 1267)/5720 = 0.76</p>
 <p>Sensitivity = 1267/(1267 + 430) = 0.75</p>
 <p>Specificity = 3069/(3069 + 954) = 0.76</p>
 <p>PPV = 1267/(1267 + 954) = 0.57</p>

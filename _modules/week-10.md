@@ -3,9 +3,10 @@ title: Overdispersion
 ---
 
 March 13
-: Deviance and goodness-of-fit
+: Overdispersion and inference
+  : [Slides](https://sta214-s23.github.io/slides/lecture_21.pdf), [Class activity](https://sta214-s23.github.io/class_activities/ca_lecture_21.html)
 
-: Textbook 4.4.9
+: Textbook 4.4.9, 4.8
 
 March 15
 : Goodness-of-fit and overdispersion

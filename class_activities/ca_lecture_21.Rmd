@@ -1,0 +1,89 @@
+---
+title: "Class Activity, March 13"
+output: 
+  tufte::tufte_html:
+    css: "lab.css"
+    tufte_variant: "envisioned"
+    highlight: pygments
+link-citations: yes
+---
+
+# Overdispersion effects
+
+The Poisson regression model assumes that $Y_i$ follows a Poisson distribution, which requires that the mean and variance of $Y_i$ are the same. However, it is common to encounter data in which the variance of $Y_i$ is much greater than the mean of $Y_i$, a situation called *overdispersion*. In this class activity, we will use simulations to explore the effect of overdispersion on inference about our model.
+
+
+## Questions
+
+To begin, let's generate data from the model
+
+$$X_i \sim N(0, 0.5)$$
+$$\log(\lambda_i) = X_i$$
+$$Y_i \sim Poisson(\lambda_i)$$
+Note that the Poisson regression assumptions are satisfied for this model. The true slope of our model is $\beta_1 = 1$.
+
+1. Run the code below to generate data from this model, fit the Poisson regression model in R, and create a 95% confidence interval for $\beta_1$. Does your interval contain $\beta_1$?
+
+```{r, eval=F}
+n <- 1000
+x <- rnorm(n, sd = 0.5)
+y1 <- rpois(n, lambda = exp(x))
+
+m1 <- glm(y1 ~ x, family = poisson)
+
+upper <- summary(m1)$coefficients[2,1] + 
+    1.96*summary(m1)$coefficients[2,2]
+lower <- summary(m1)$coefficients[2,1] - 
+    1.96*summary(m1)$coefficients[2,2]
+```
+
+2. Now let's run the simulation 500 times, and estimate the true coverage of our confidence intervals:
+
+```{r, eval=F}
+n <- 1000
+nsim <- 500
+contains_beta <- rep(0, nsim)
+for(i in 1:nsim){
+  x <- rnorm(n, sd = 0.5)
+  y1 <- rpois(n, lambda = exp(x))
+  
+  m1 <- glm(y1 ~ x, family = poisson)
+  
+  upper <- summary(m1)$coefficients[2,1] + 
+      1.96*summary(m1)$coefficients[2,2]
+  lower <- summary(m1)$coefficients[2,1] - 
+      1.96*summary(m1)$coefficients[2,2]
+  
+  contains_beta[i] <- upper > 1 && lower < 1
+}
+
+mean(contains_beta)
+```
+
+
+Now what happens if we change the distribution of $Y$? The negative binomial distribution is another count distribution, which is different from the Poisson. In particular, the variance of the negative binomial is greater than the mean! Let's generate negative binomial data (violating the Poisson distribution assumption and creating overdispersion), and see how the coverage of our confidence intervals change.
+
+3. Run the code below to calculate coverage of our Poisson regression confidence intervals when there is overdispersion in the data. How does coverage change compared to question 2?
+
+```{r, eval=F}
+n <- 1000
+nsim <- 500
+contains_beta <- rep(0, nsim)
+for(i in 1:nsim){
+  x <- rnorm(n, sd = 0.5)
+  y2 <- rnbinom(n, size=0.5, mu=exp(x))
+
+  m2 <- glm(y2 ~ x, family = poisson)
+  
+  upper <- summary(m2)$coefficients[2,1] + 
+      1.96*summary(m2)$coefficients[2,2]
+  lower <- summary(m2)$coefficients[2,1] - 
+      1.96*summary(m2)$coefficients[2,2]
+  
+  contains_beta[i] <- upper > 1 && lower < 1
+}
+
+mean(contains_beta)
+```
+
+4. The `size` argument in the `rbinom` function determines how similar the mean and variance of the negative binomial distribution are. Values of `size` close to 0 make the variance much larger than the mean; as `size` increases, the mean and variance become more similar. Re-run the code from question 3, but change the value of `size` in the code. How does coverage change as we decrease overdispersion?

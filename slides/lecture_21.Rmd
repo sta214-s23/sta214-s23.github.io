@@ -1,0 +1,460 @@
+---
+title: Inference and overdispersion 
+output:
+  xaringan::moon_reader:
+    css: "lab-slides.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+editor_options: 
+  chunk_output_type: console
+---
+
+### Last time: modeling article publication
+
+```{r include=F}
+library(knitr)
+library(tidyverse)
+library(MASS)
+
+crimes <- read_csv("~/Documents/Teaching/sta214-f22.github.io/slides/c_data.csv")
+
+hook_output <- knit_hooks$get("output")
+knit_hooks$set(output = function(x, options) {
+   lines <- options$output.lines
+   if (is.null(lines)) {
+     return(hook_output(x, options))  # pass to default hook
+   }
+   x <- unlist(strsplit(x, "\n"))
+   more <- "..."
+   if (length(lines)==1) {        # first n lines
+     if (length(x) > lines) {
+       # truncate the output, but add ....
+       x <- c(head(x, lines), more)
+     }
+   } else {
+     x <- c(more, x[lines], more)
+   }
+   # paste these lines together
+   x <- paste(c(x, ""), collapse = "\n")
+   hook_output(x, options)
+ })
+
+m1 <- glm(nv ~ region, offset = log(enroll1000),
+          data = crimes, family = poisson)
+```
+
+.large[
+We are interested in analyzing the number of articles published by biochemistry PhD students. The data contains the following variables:
+
+* `art`: articles published in last three years of Ph.D.
+* `fem`: gender (recorded as male or female)
+* `mar`: marital status (recorded as married or single)
+* `kid5`: number of children under age six
+* `phd`: prestige of Ph.D. program
+* `ment`: articles published by their mentor in last three years
+
+$$Articles_i \sim Poisson(\lambda_i)$$
+$$\log(\lambda_i) = \beta_0 + \beta_1 Female_i + \beta_2 Married_i + \beta_3 Kids_i + \\  \beta_4 Prestige_i + \beta_5 Mentor_i$$
+]
+
+---
+
+### Recap: confidence interval
+
+.large[
+$$Articles_i \sim Poisson(\lambda_i)$$
+$$\log(\lambda_i) = \beta_0 + \beta_1 Female_i + \beta_2 Married_i + \beta_3 Kids_i + \\  \beta_4 Prestige_i + \beta_5 Mentor_i$$
+
+Confidence interval for $\beta_4$:
+]
+
+
+
+---
+
+### Recap: assumptions
+
+.large[
+$$Articles_i \sim Poisson(\lambda_i)$$
+$$\log(\lambda_i) = \beta_0 + \beta_1 Female_i + \beta_2 Married_i + \beta_3 Kids_i + \\  \beta_4 Prestige_i + \beta_5 Mentor_i$$
+
+.question[
+What assumptions is this Poisson regression model making, and how do we check those assumptions?
+]
+]
+
+---
+
+### Quantile residual plots
+
+```{r, echo=F, message=F, warning=F, fig.align='center', fig.width=10, fig.height=5}
+library(foreign)
+library(statmod)
+library(gridExtra)
+
+articles <- read.dta("http://www.stata-press.com/data/lf2/couart2.dta")
+
+m1 <- glm(art ~ ., data = articles, family = poisson)
+
+p1 <- articles %>%
+  mutate(resids = qresid(m1)) %>%
+  ggplot(aes(x = phd, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "PhD prestige", y = "Quantile residuals") +
+  theme_bw() +
+  theme(text = element_text(size = 20))
+
+p2 <- articles %>%
+  mutate(resids = qresid(m1)) %>%
+  ggplot(aes(x = ment, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "Mentor articles", y = "Quantile residuals") +
+  theme_bw() +
+  theme(text = element_text(size = 20))
+
+grid.arrange(p1, p2, ncol=2)
+```
+
+.large[
+.question[
+Do the model assumptions seem reasonable?
+]
+]
+
+---
+
+### Goodness-of-fit test
+
+.large[
+```{r, output.lines = c(11:16, 21:23)}
+summary(m1)
+```
+
+.question[
+How do I perform the goodness-of-fit test for this regression model?
+]
+]
+
+---
+
+### Goodness-of-fit test
+
+.large[
+```{r, output.lines = c(20:23)}
+summary(m1)
+```
+
+```{r}
+pchisq(1634, 909, lower.tail=F)
+```
+
+.question[
+Why might the model not be a good fit to the data?
+]
+]
+
+---
+
+### Overdispersion
+
+.large[
+**Overdispersion** occurs when the response $Y$ has higher variance than we would expect if $Y$ followed a Poisson distribution.
+
+Formally, let
+
+$$\phi = \dfrac{\text{Variance}}{\text{Mean}}$$
+.question[
+What should $\phi$ be if there is no overdispersion?
+]
+]
+
+---
+
+### Estimating overdispersion
+
+.large[
+The *Pearson residual* for observation $i$ is defined as
+
+$$e_{(P)i} = \dfrac{Y_i - \widehat{\lambda}_i}{\sqrt{\widehat{\lambda}_i}}$$
+]
+
+</br>
+
+.large[
+$$\widehat{\phi} = \dfrac{\sum \limits_{i=1}^n e_{(P)i}^2}{n - p}$$
+
+* $p =$ number of parameters in model
+]
+
+---
+
+### Example: Estimating overdispersion
+
+.large[
+```{r}
+# fit the model
+m1 <- glm(art ~ ., data = articles, 
+          family = poisson)
+
+# get Pearson residuals
+pearson_resids <- resid(m1, "pearson")
+
+# estimate dispersion parameter
+phihat <- sum(pearson_resids^2)/(915 - 6)
+phihat
+```
+
+.question[
+What problems do you think it causes to assume the mean and variance are the same, when they are not?
+]
+]
+
+---
+
+### Exploring effects of overdispersion
+
+.large[
+Overdispersion can affect our ability to perform inference. For example, if we create a confidence interval using a Poisson regression model, but the variance is actually bigger than the mean, then our confidence interval will be too narrow.
+
+.question[
+How could we perform a simulation study to assess the impact of overdispersion on the coverage of Poisson regression confidence intervals? Discuss with a neighbor, then we will discuss as a group.
+]
+]
+
+---
+
+### Class activity
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_21.html](https://sta214-s23.github.io/class_activities/ca_lecture_21.html)
+]
+
+---
+
+### Class activity
+
+.large[
+Confidence interval coverage when underlying data is truly Poisson:
+]
+
+```{r}
+n <- 1000
+nsim <- 500
+contains_beta <- rep(0, nsim)
+for(i in 1:nsim){
+  x <- rnorm(n, sd = 0.5)
+  y1 <- rpois(n, lambda = exp(x))
+  
+  m1 <- glm(y1 ~ x, family = poisson)
+  
+  upper <- summary(m1)$coefficients[2,1] + 
+      1.96*summary(m1)$coefficients[2,2]
+  lower <- summary(m1)$coefficients[2,1] - 
+      1.96*summary(m1)$coefficients[2,2]
+  
+  contains_beta[i] <- upper > 1 && lower < 1
+}
+
+mean(contains_beta)
+```
+
+---
+
+### Class activity
+
+.large[
+Coverage when there is overdispersion:
+]
+
+```{r}
+n <- 1000
+nsim <- 500
+contains_beta <- rep(0, nsim)
+for(i in 1:nsim){
+  x <- rnorm(n, sd = 0.5)
+  y2 <- rnbinom(n, size=0.5, mu=exp(x))
+
+  m2 <- glm(y2 ~ x, family = poisson)
+  
+  upper <- summary(m2)$coefficients[2,1] + 
+      1.96*summary(m2)$coefficients[2,2]
+  lower <- summary(m2)$coefficients[2,1] - 
+      1.96*summary(m2)$coefficients[2,2]
+  
+  contains_beta[i] <- upper > 1 && lower < 1
+}
+
+mean(contains_beta)
+```
+
+---
+
+### Class activity
+
+.large[
+.question[
+How does coverage change as I decrease the amount of overdispersion in the data?
+]
+]
+
+---
+
+### Class activity
+
+```{r}
+n <- 1000
+nsim <- 500
+contains_beta <- rep(0, nsim)
+for(i in 1:nsim){
+  x <- rnorm(n, sd = 0.5)
+  y2 <- rnbinom(n, size=10, mu=exp(x))
+
+  m2 <- glm(y2 ~ x, family = poisson)
+  
+  upper <- summary(m2)$coefficients[2,1] + 
+      1.96*summary(m2)$coefficients[2,2]
+  lower <- summary(m2)$coefficients[2,1] - 
+      1.96*summary(m2)$coefficients[2,2]
+  
+  contains_beta[i] <- upper > 1 && lower < 1
+}
+
+mean(contains_beta)
+```
+
+---
+
+### Handling overdispersion
+
+.large[
+Overdispersion is a problem because our standard errors (for confidence intervals and hypothesis tests) are too low.
+
+.question[
+If we think there is overdispersion, what should we do?
+]
+]
+
+---
+
+### Adjusting the standard error
+
+.large[
+* In our data, $\widehat{\phi} = 1.83$
+* This means our variance is 1.83 times bigger than it should be
+* So our standard error is $\sqrt{1.83} = 1.35$ times bigger than it should be
+]
+
+---
+
+### Adjusting the standard error in R
+
+.large[
+```{r, message=F, warning=F}
+m2 <- glm(art ~ ., data = articles, 
+          family = quasipoisson)
+```
+]
+
+```{r echo=F, output.lines = 10:20}
+summary(m2)
+```
+
+.large[
+* Allowing $\phi$ to be different from 1 means we are using a *quasi-likelihood* (in this case, a *quasi-Poisson*)
+]
+
+---
+
+### Calculating a confidence interval
+
+```{r echo=F, output.lines = 11:16}
+summary(m2)
+```
+
+.large[
+New confidence interval for $\beta_4$:
+
+$0.0128 \pm t_{n-p}^* \cdot 0.0357$
+
+```{r}
+qt(0.025, df=909, lower.tail=F)
+```
+
+$0.0128 \pm 1.96 \cdot 0.0357 = (-0.0572, \ 0.0828)$
+]
+
+
+---
+
+### Adjusting the standard error in R
+
+.large[
+**Poisson:**
+
+```{r echo=F, output.lines = 10:14}
+m1 <- glm(art ~ ., data = articles, 
+          family = poisson)
+summary(m1)
+```
+
+**Quasi-Poisson:**
+
+```{r echo=F, output.lines = 10:14}
+summary(m2)
+```
+]
+
+---
+
+### Back to simulations
+
+```{r}
+n <- 1000
+nsim <- 500
+contains_beta <- rep(0, nsim)
+for(i in 1:nsim){
+  x <- rnorm(n, sd = 0.5)
+  y2 <- rnbinom(n, size=0.5, mu=exp(x))
+
+  m2 <- glm(y2 ~ x, family = poisson)
+  
+  upper <- summary(m2)$coefficients[2,1] + 
+      1.96*summary(m2)$coefficients[2,2]
+  lower <- summary(m2)$coefficients[2,1] - 
+      1.96*summary(m2)$coefficients[2,2]
+  
+  contains_beta[i] <- upper > 1 && lower < 1
+}
+
+mean(contains_beta)
+```
+
+---
+
+### Adjusting for overdispersion
+
+```{r}
+n <- 1000
+nsim <- 500
+contains_beta <- rep(0, nsim)
+for(i in 1:nsim){
+  x <- rnorm(n, sd = 0.5)
+  y2 <- rnbinom(n, size=0.5, mu=exp(x))
+
+  m2 <- glm(y2 ~ x, family = quasipoisson)
+  
+  upper <- summary(m2)$coefficients[2,1] + 
+      qt(0.025, n-2, lower.tail = F)*summary(m2)$coefficients[2,2]
+  lower <- summary(m2)$coefficients[2,1] - 
+      qt(0.025, n-2, lower.tail = F)*summary(m2)$coefficients[2,2]
+  
+  contains_beta[i] <- upper > 1 && lower < 1
+}
+
+mean(contains_beta)
+```

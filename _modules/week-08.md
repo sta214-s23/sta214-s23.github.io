@@ -21,5 +21,5 @@ March 3
 : Textbook 4.4.3 - 4.4.5
 
 : **Project 1, Part 3 released**{: .label .label-green }
-  : [Part 2](https://sta214-s23.github.io/projects/project_1_3.html)
+  : [Part 3](https://sta214-s23.github.io/projects/project_1_3.html)
 
