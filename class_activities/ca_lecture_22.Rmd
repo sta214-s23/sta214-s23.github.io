@@ -1,0 +1,57 @@
+---
+title: "Class Activity, March 15"
+output: 
+  tufte::tufte_html:
+    css: "lab.css"
+    tufte_variant: "envisioned"
+    highlight: pygments
+link-citations: yes
+---
+
+## Overdispersion
+
+In this class activity, we will work with data on crimes at 81 US colleges and universities. Our data includes the following variables:
+
+* `type`: college (C) or university (U)
+* `nv`: the number of crimes for that institution in the given year
+* `enroll1000`: the number of enrolled students, in thousands
+* `region`: region of the US C = Central, MW = Midwest, NE = Northeast, SE = Southeast, SW = Southwest, and W = West)
+
+We are interested in comparing the crime rates in different US regions. Our model is
+
+$$Crimes_i \sim Poisson(\lambda_i)$$
+
+$$\log(\lambda_i) = \beta_0 + \beta_1 MW_i + \beta_2 NE_i + \beta_3 SE_i + \beta_4 SW_i + \beta_5 W_i + \log(Enrollment_i)$$
+Below are the results of fitting the model with Poisson regression, and with the quasi-Poisson modification to account for overdispersion.
+
+```{r include=F}
+library(tidyverse)
+
+crimes <- read_csv("~/Documents/Teaching/sta279-s22.github.io/slides/c_data.csv")
+```
+
+```{r}
+m1 <- glm(nv ~ region, offset = log(enroll1000),
+          data = crimes, family = poisson)
+summary(m1)
+```
+
+<br/>
+
+<br/>
+
+```{r}
+m2 <- glm(nv ~ region, offset = log(enroll1000),
+          data = crimes, family = quasipoisson)
+summary(m2)
+```
+
+<br/>
+
+<br/>
+
+1. What is our estimated dispersion parameter, $\widehat{\phi}$? Do you think there is overdispersion in our data?
+
+2. Confirm that the standard errors for the quasi-Poisson fit are equal to $\sqrt{\widehat{\phi}}$ times the standard errors for the Poisson fit.
+
+3. We are interested in comparing crime rates for western and central schools. Calculate an appropriate confidence interval.

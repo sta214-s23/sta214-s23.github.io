@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Quasi-Poisson models</title>
+    <meta charset="utf-8" />
+    <script src="libs/header-attrs-2.16/header-attrs.js"></script>
+    <link rel="stylesheet" href="lab-slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# Quasi-Poisson models
+]
+
+---
+
+
+
+
+### Recap: Overdispersion
+
+.large[
+**Overdispersion** occurs when the response `\(Y\)` has higher variance than we would expect if `\(Y\)` followed a Poisson distribution.
+
+Formally, let
+
+`$$\phi = \dfrac{\text{Variance}}{\text{Mean}}$$`
+
+]
+
+---
+
+### Recap: Estimating overdispersion
+
+.large[
+The *Pearson residual* for observation `\(i\)` is defined as
+
+`$$e_{(P)i} = \dfrac{Y_i - \widehat{\lambda}_i}{\sqrt{\widehat{\lambda}_i}}$$`
+]
+
+&lt;/br&gt;
+
+.large[
+`$$\widehat{\phi} = \dfrac{\sum \limits_{i=1}^n e_{(P)i}^2}{n - p}$$`
+
+* `\(p =\)` number of parameters in model
+]
+
+---
+
+### Handling overdispersion
+
+.large[
+Overdispersion is a problem because our standard errors (for confidence intervals and hypothesis tests) are too low.
+
+.question[
+If we think there is overdispersion, what should we do?
+]
+]
+
+---
+
+### Adjusting the standard error
+
+.large[
+* In our data, `\(\widehat{\phi} = 1.83\)`
+* This means our variance is 1.83 times bigger than it should be
+* So our standard error is `\(\sqrt{1.83} = 1.35\)` times bigger than it should be
+]
+
+---
+
+### Adjusting the standard error in R
+
+.large[
+
+```r
+m2 &lt;- glm(art ~ ., data = articles, 
+          family = quasipoisson)
+```
+]
+
+
+```
+...
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  0.304617   0.139273   2.187 0.028983 *  
+## femWomen    -0.224594   0.073860  -3.041 0.002427 ** 
+## marMarried   0.155243   0.083003   1.870 0.061759 .  
+## kid5        -0.184883   0.054268  -3.407 0.000686 ***
+## phd          0.012823   0.035700   0.359 0.719544    
+## ment         0.025543   0.002713   9.415  &lt; 2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## (Dispersion parameter for quasipoisson family taken to be 1.829006)
+...
+```
+
+.large[
+* Allowing `\(\phi\)` to be different from 1 means we are using a *quasi-likelihood* (in this case, a *quasi-Poisson*)
+]
+
+---
+
+### t-distribution
+
+&lt;img src="lecture_22_files/figure-html/unnamed-chunk-4-1.png" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+### Calculating a confidence interval
+
+
+```
+...
+## (Intercept)  0.304617   0.139273   2.187 0.028983 *  
+## femWomen    -0.224594   0.073860  -3.041 0.002427 ** 
+## marMarried   0.155243   0.083003   1.870 0.061759 .  
+## kid5        -0.184883   0.054268  -3.407 0.000686 ***
+## phd          0.012823   0.035700   0.359 0.719544    
+## ment         0.025543   0.002713   9.415  &lt; 2e-16 ***
+...
+```
+
+.large[
+New confidence interval for `\(\beta_4\)`:
+
+`\(0.0128 \pm t_{n-p}^* \cdot 0.0357\)`
+
+
+```r
+qt(0.025, df=909, lower.tail=F)
+```
+
+```
+## [1] 1.962577
+```
+
+`\(0.0128 \pm 1.96 \cdot 0.0357 = (-0.0572, \ 0.0828)\)`
+]
+
+---
+
+### Adjusting the standard error in R
+
+.large[
+**Poisson:**
+
+
+```
+...
+##              Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)  0.304617   0.102981   2.958   0.0031 ** 
+## femWomen    -0.224594   0.054613  -4.112 3.92e-05 ***
+## marMarried   0.155243   0.061374   2.529   0.0114 *  
+## kid5        -0.184883   0.040127  -4.607 4.08e-06 ***
+...
+```
+
+**Quasi-Poisson:**
+
+
+```
+...
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  0.304617   0.139273   2.187 0.028983 *  
+## femWomen    -0.224594   0.073860  -3.041 0.002427 ** 
+## marMarried   0.155243   0.083003   1.870 0.061759 .  
+## kid5        -0.184883   0.054268  -3.407 0.000686 ***
+...
+```
+]
+
+---
+
+### Back to simulations
+
+
+```r
+n &lt;- 1000
+nsim &lt;- 500
+contains_beta &lt;- rep(0, nsim)
+for(i in 1:nsim){
+  x &lt;- rnorm(n, sd = 0.5)
+  y2 &lt;- rnbinom(n, size=0.5, mu=exp(x))
+
+  m2 &lt;- glm(y2 ~ x, family = poisson)
+  
+  upper &lt;- summary(m2)$coefficients[2,1] + 
+      1.96*summary(m2)$coefficients[2,2]
+  lower &lt;- summary(m2)$coefficients[2,1] - 
+      1.96*summary(m2)$coefficients[2,2]
+  
+  contains_beta[i] &lt;- upper &gt; 1 &amp;&amp; lower &lt; 1
+}
+
+mean(contains_beta)
+```
+
+```
+## [1] 0.642
+```
+
+---
+
+### Adjusting for overdispersion
+
+
+```r
+n &lt;- 1000
+nsim &lt;- 500
+contains_beta &lt;- rep(0, nsim)
+for(i in 1:nsim){
+  x &lt;- rnorm(n, sd = 0.5)
+  y2 &lt;- rnbinom(n, size=0.5, mu=exp(x))
+
+  m2 &lt;- glm(y2 ~ x, family = quasipoisson)
+  
+  upper &lt;- summary(m2)$coefficients[2,1] + 
+      qt(0.025, n-2, lower.tail = F)*summary(m2)$coefficients[2,2]
+  lower &lt;- summary(m2)$coefficients[2,1] - 
+      qt(0.025, n-2, lower.tail = F)*summary(m2)$coefficients[2,2]
+  
+  contains_beta[i] &lt;- upper &gt; 1 &amp;&amp; lower &lt; 1
+}
+
+mean(contains_beta)
+```
+
+```
+## [1] 0.926
+```
+
+---
+
+### Class activity
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_22.html](https://sta214-s23.github.io/class_activities/ca_lecture_22.html)
+]
+
+---
+
+### Class activity
+
+.large[
+
+```
+...
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) -1.30445    0.34161  -3.818 0.000274 ***
+## regionMW     0.09754    0.48893   0.199 0.842417    
+## regionNE     0.76268    0.42117   1.811 0.074167 .  
+## regionSE     0.87237    0.42175   2.068 0.042044 *  
+## regionSW     0.50708    0.50973   0.995 0.323027    
+## regionW      0.20934    0.51242   0.409 0.684055    
+...
+```
+
+.question[
+What confidence interval should I calculate to compare western and central schools?
+]
+]
+
+---
+
+### Class activity
+
+.large[
+
+```
+...
+## regionSE     0.87237    0.42175   2.068 0.042044 *  
+## regionSW     0.50708    0.50973   0.995 0.323027    
+## regionW      0.20934    0.51242   0.409 0.684055    
+...
+```
+
+
+```r
+qt(0.025, 75, lower.tail=F)
+```
+
+```
+## [1] 1.992102
+```
+
+95% confidence interval for `\(\beta_5\)`: 
+
+`\(0.209 \pm 1.99 \cdot 0.512 = (-0.81, \ 1.23)\)`
+
+95% confidence interval for `\(e^{\beta_5}\)`:
+
+`\((e^{-0.81}, e^{1.23}) = (0.44, \ 3.42)\)`
+]
+
+---
+
+### Comparing Poisson and quasi-Poisson
+
+.large[
+**Poisson:**
+
+* Mean = `\(\lambda_i\)`
+* Variance = `\(\lambda_i\)`
+
+**quasi-Poisson:**
+
+* Mean = `\(\lambda_i\)`
+* Variance = `\(\phi \lambda_i\)`
+* Variance is a linear function of the mean
+
+.question[
+What if we want variance to depend on the mean in a different way?
+]
+]
+
+---
+
+### Introducing the negative binomial
+
+.large[
+If `\(Y_i \sim NB(\theta, p)\)`, then `\(Y_i\)` takes values `\(y = 0, 1, 2, 3, ...\)` with probabilities
+
+`$$P(Y_i = y) = \dfrac{(y + \theta - 1)!}{y!(\theta - 1)!} (1 - p)^\theta p^y$$`
+
+* `\(\theta &gt; 0\)`, `\(\ \ \ p \in [0, 1]\)`
+* Mean = `\(\dfrac{p \theta}{1 - p} = \mu\)`
+* Variance = `\(\dfrac{p \theta}{(1 - p)^2} = \mu + \dfrac{\mu^2}{\theta}\)`
+* Variance is a *quadratic* function of the mean
+]
+
+---
+
+### Mean and variance for a negative binomial variable
+
+.large[
+If `\(Y_i \sim NB(\theta, p)\)`, then
+
+* Mean = `\(\dfrac{p \theta}{1 - p} = \mu\)`
+* Variance = `\(\dfrac{p \theta}{(1 - p)^2} = \mu + \dfrac{\mu^2}{\theta}\)`
+
+.question[
+How is `\(\theta\)` related to overdispersion?
+]
+]
+
+---
+
+### Negative binomial regression
+
+.large[
+`$$Y_i \sim NB(\theta, \ p_i)$$`
+
+`$$\log(\mu_i) = \beta_0 + \beta_1 X_i$$`
+
+* `\(\mu_i = \dfrac{p_i \theta}{1 - p_i}\)`
+* Note that `\(\theta\)` is the same for all `\(i\)`
+* Note that just like in Poisson regression, we model the average count
+  * Interpretation of `\(\beta\)`s is the same as in Poisson regression
+]
+
+---
+
+### Comparing Poisson, quasi-Poisson, negative binomial
+
+.large[
+**Poisson:**
+
+* Mean = `\(\lambda_i\)`
+* Variance = `\(\lambda_i\)`
+
+**quasi-Poisson:**
+
+* Mean = `\(\lambda_i\)`
+* Variance = `\(\phi \lambda_i\)`
+
+**negative binomial:**
+
+* Mean = `\(\mu_i\)`
+* Variance = `\(\mu_i + \dfrac{\mu_i^2}{\theta}\)`
+]
+
+---
+
+### In R
+
+.large[
+
+```r
+m3 &lt;- glm.nb(art ~ ., data = articles)
+```
+
+
+```
+...
+##              Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)  0.256144   0.137348   1.865 0.062191 .  
+## femWomen    -0.216418   0.072636  -2.979 0.002887 ** 
+## marMarried   0.150489   0.082097   1.833 0.066791 .  
+## kid5        -0.176415   0.052813  -3.340 0.000837 ***
+## phd          0.015271   0.035873   0.426 0.670326    
+## ment         0.029082   0.003214   9.048  &lt; 2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## (Dispersion parameter for Negative Binomial(2.2644) family taken to be 1)
+...
+```
+
+`\(\widehat{\theta} = 2.264\)`
+]
+
+---
+
+### In R
+
+.large[
+
+```
+...
+##              Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)  0.256144   0.137348   1.865 0.062191 .  
+## femWomen    -0.216418   0.072636  -2.979 0.002887 ** 
+## marMarried   0.150489   0.082097   1.833 0.066791 .  
+## kid5        -0.176415   0.052813  -3.340 0.000837 ***
+## phd          0.015271   0.035873   0.426 0.670326    
+## ment         0.029082   0.003214   9.048  &lt; 2e-16 ***
+...
+```
+
+.question[
+How do I interpret the estimated coefficient -0.176?
+]
+]
+
+
+---
+
+### quasi-Poisson vs. negative binomial
+
+.large[
+
+.pull-left[
+**quasi-Poisson:**
+
+* linear relationship between mean and variance
+* easy to interpret `\(\widehat{\phi}\)`
+* same as Poisson regression when `\(\phi = 1\)`
+* simple adjustment to estimated standard errors
+* estimated coefficients same as in Poisson regression
+]
+
+.pull-right[
+**negative binomial:**
+
+* quadratic relationship between mean and variance
+* we get to use a likelihood, rather than a quasi-likelihood
+* Same as Poisson regression when `\(\theta\)` is very large and `\(p\)` is very small
+]
+]
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

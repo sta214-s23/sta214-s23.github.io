@@ -9,9 +9,10 @@ March 13
 : Textbook 4.4.9, 4.8
 
 March 15
-: Goodness-of-fit and overdispersion
+: Quasi-Poisson models
+  : [Slides](https://sta214-s23.github.io/slides/lecture_22.pdf), [Class activity](https://sta214-s23.github.io/class_activities/ca_lecture_22.html)
 
-: Textbook 4.4.9
+: Textbook 4.4.9, 4.8
 
 March 17
 : Quasi-Poisson models

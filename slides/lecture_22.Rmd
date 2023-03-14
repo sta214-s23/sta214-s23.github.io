@@ -1,0 +1,418 @@
+---
+title: Quasi-Poisson models
+output:
+  xaringan::moon_reader:
+    css: "lab-slides.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r include=F}
+library(knitr)
+library(tidyverse)
+library(MASS)
+library(foreign)
+library(statmod)
+library(gridExtra)
+
+articles <- read.dta("http://www.stata-press.com/data/lf2/couart2.dta")
+
+hook_output <- knit_hooks$get("output")
+knit_hooks$set(output = function(x, options) {
+   lines <- options$output.lines
+   if (is.null(lines)) {
+     return(hook_output(x, options))  # pass to default hook
+   }
+   x <- unlist(strsplit(x, "\n"))
+   more <- "..."
+   if (length(lines)==1) {        # first n lines
+     if (length(x) > lines) {
+       # truncate the output, but add ....
+       x <- c(head(x, lines), more)
+     }
+   } else {
+     x <- c(more, x[lines], more)
+   }
+   # paste these lines together
+   x <- paste(c(x, ""), collapse = "\n")
+   hook_output(x, options)
+ })
+
+```
+
+### Recap: Overdispersion
+
+.large[
+**Overdispersion** occurs when the response $Y$ has higher variance than we would expect if $Y$ followed a Poisson distribution.
+
+Formally, let
+
+$$\phi = \dfrac{\text{Variance}}{\text{Mean}}$$
+
+]
+
+---
+
+### Recap: Estimating overdispersion
+
+.large[
+The *Pearson residual* for observation $i$ is defined as
+
+$$e_{(P)i} = \dfrac{Y_i - \widehat{\lambda}_i}{\sqrt{\widehat{\lambda}_i}}$$
+]
+
+</br>
+
+.large[
+$$\widehat{\phi} = \dfrac{\sum \limits_{i=1}^n e_{(P)i}^2}{n - p}$$
+
+* $p =$ number of parameters in model
+]
+
+---
+
+### Handling overdispersion
+
+.large[
+Overdispersion is a problem because our standard errors (for confidence intervals and hypothesis tests) are too low.
+
+.question[
+If we think there is overdispersion, what should we do?
+]
+]
+
+---
+
+### Adjusting the standard error
+
+.large[
+* In our data, $\widehat{\phi} = 1.83$
+* This means our variance is 1.83 times bigger than it should be
+* So our standard error is $\sqrt{1.83} = 1.35$ times bigger than it should be
+]
+
+---
+
+### Adjusting the standard error in R
+
+.large[
+```{r, message=F, warning=F}
+m2 <- glm(art ~ ., data = articles, 
+          family = quasipoisson)
+```
+]
+
+```{r echo=F, output.lines = 10:20}
+summary(m2)
+```
+
+.large[
+* Allowing $\phi$ to be different from 1 means we are using a *quasi-likelihood* (in this case, a *quasi-Poisson*)
+]
+
+---
+
+### t-distribution
+
+```{r, echo=F, message=F, warning=F, fig.align='center', fig.width=10, fig.height=6}
+x <- seq(-4, 4, 0.01)
+y <- c(dt(x, 1), dt(x, 2), dt(x, 5), dnorm(x))
+df <- rep(c("df = 1", "df=2", "df=5", "N(0, 1)"), each = length(x))
+data.frame(x = rep(x, 4), y, df) %>%
+  ggplot(aes(x = x, y = y, color = df)) +
+  geom_line(lwd = 1) +
+  labs(y = "Density", color="") +
+  theme_bw() +
+  theme(text = element_text(size = 20))
+```
+
+
+---
+
+### Calculating a confidence interval
+
+```{r echo=F, output.lines = 11:16}
+summary(m2)
+```
+
+.large[
+New confidence interval for $\beta_4$:
+
+$0.0128 \pm t_{n-p}^* \cdot 0.0357$
+
+```{r}
+qt(0.025, df=909, lower.tail=F)
+```
+
+$0.0128 \pm 1.96 \cdot 0.0357 = (-0.0572, \ 0.0828)$
+]
+
+---
+
+### Adjusting the standard error in R
+
+.large[
+**Poisson:**
+
+```{r echo=F, output.lines = 10:14}
+m1 <- glm(art ~ ., data = articles, 
+          family = poisson)
+summary(m1)
+```
+
+**Quasi-Poisson:**
+
+```{r echo=F, output.lines = 10:14}
+summary(m2)
+```
+]
+
+---
+
+### Back to simulations
+
+```{r}
+n <- 1000
+nsim <- 500
+contains_beta <- rep(0, nsim)
+for(i in 1:nsim){
+  x <- rnorm(n, sd = 0.5)
+  y2 <- rnbinom(n, size=0.5, mu=exp(x))
+
+  m2 <- glm(y2 ~ x, family = poisson)
+  
+  upper <- summary(m2)$coefficients[2,1] + 
+      1.96*summary(m2)$coefficients[2,2]
+  lower <- summary(m2)$coefficients[2,1] - 
+      1.96*summary(m2)$coefficients[2,2]
+  
+  contains_beta[i] <- upper > 1 && lower < 1
+}
+
+mean(contains_beta)
+```
+
+---
+
+### Adjusting for overdispersion
+
+```{r}
+n <- 1000
+nsim <- 500
+contains_beta <- rep(0, nsim)
+for(i in 1:nsim){
+  x <- rnorm(n, sd = 0.5)
+  y2 <- rnbinom(n, size=0.5, mu=exp(x))
+
+  m2 <- glm(y2 ~ x, family = quasipoisson)
+  
+  upper <- summary(m2)$coefficients[2,1] + 
+      qt(0.025, n-2, lower.tail = F)*summary(m2)$coefficients[2,2]
+  lower <- summary(m2)$coefficients[2,1] - 
+      qt(0.025, n-2, lower.tail = F)*summary(m2)$coefficients[2,2]
+  
+  contains_beta[i] <- upper > 1 && lower < 1
+}
+
+mean(contains_beta)
+```
+
+---
+
+### Class activity
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_22.html](https://sta214-s23.github.io/class_activities/ca_lecture_22.html)
+]
+
+---
+
+### Class activity
+
+.large[
+```{r echo=F, message=F, warning=F, output.lines=10:17}
+crimes <- read_csv("~/Documents/Teaching/sta279-s22.github.io/slides/c_data.csv")
+
+m2 <- glm(nv ~ region, offset = log(enroll1000),
+          data = crimes, family = quasipoisson)
+summary(m2)
+```
+
+.question[
+What confidence interval should I calculate to compare western and central schools?
+]
+]
+
+---
+
+### Class activity
+
+.large[
+```{r echo=F, message=F, warning=F, output.lines=15:17}
+crimes <- read_csv("~/Documents/Teaching/sta279-s22.github.io/slides/c_data.csv")
+
+m2 <- glm(nv ~ region, offset = log(enroll1000),
+          data = crimes, family = quasipoisson)
+summary(m2)
+```
+
+```{r}
+qt(0.025, 75, lower.tail=F)
+```
+
+95% confidence interval for $\beta_5$: 
+
+$0.209 \pm 1.99 \cdot 0.512 = (-0.81, \ 1.23)$
+
+95% confidence interval for $e^{\beta_5}$:
+
+$(e^{-0.81}, e^{1.23}) = (0.44, \ 3.42)$
+]
+
+---
+
+### Comparing Poisson and quasi-Poisson
+
+.large[
+**Poisson:**
+
+* Mean = $\lambda_i$
+* Variance = $\lambda_i$
+
+**quasi-Poisson:**
+
+* Mean = $\lambda_i$
+* Variance = $\phi \lambda_i$
+* Variance is a linear function of the mean
+
+.question[
+What if we want variance to depend on the mean in a different way?
+]
+]
+
+---
+
+### Introducing the negative binomial
+
+.large[
+If $Y_i \sim NB(\theta, p)$, then $Y_i$ takes values $y = 0, 1, 2, 3, ...$ with probabilities
+
+$$P(Y_i = y) = \dfrac{(y + \theta - 1)!}{y!(\theta - 1)!} (1 - p)^\theta p^y$$
+
+* $\theta > 0$, $\ \ \ p \in [0, 1]$
+* Mean = $\dfrac{p \theta}{1 - p} = \mu$
+* Variance = $\dfrac{p \theta}{(1 - p)^2} = \mu + \dfrac{\mu^2}{\theta}$
+* Variance is a *quadratic* function of the mean
+]
+
+---
+
+### Mean and variance for a negative binomial variable
+
+.large[
+If $Y_i \sim NB(\theta, p)$, then
+
+* Mean = $\dfrac{p \theta}{1 - p} = \mu$
+* Variance = $\dfrac{p \theta}{(1 - p)^2} = \mu + \dfrac{\mu^2}{\theta}$
+
+.question[
+How is $\theta$ related to overdispersion?
+]
+]
+
+---
+
+### Negative binomial regression
+
+.large[
+$$Y_i \sim NB(\theta, \ p_i)$$
+
+$$\log(\mu_i) = \beta_0 + \beta_1 X_i$$
+
+* $\mu_i = \dfrac{p_i \theta}{1 - p_i}$
+* Note that $\theta$ is the same for all $i$
+* Note that just like in Poisson regression, we model the average count
+  * Interpretation of $\beta$s is the same as in Poisson regression
+]
+
+---
+
+### Comparing Poisson, quasi-Poisson, negative binomial
+
+.large[
+**Poisson:**
+
+* Mean = $\lambda_i$
+* Variance = $\lambda_i$
+
+**quasi-Poisson:**
+
+* Mean = $\lambda_i$
+* Variance = $\phi \lambda_i$
+
+**negative binomial:**
+
+* Mean = $\mu_i$
+* Variance = $\mu_i + \dfrac{\mu_i^2}{\theta}$
+]
+
+---
+
+### In R
+
+.large[
+```{r message=F}
+m3 <- glm.nb(art ~ ., data = articles)
+```
+
+```{r echo=F, output.lines = 11:21}
+summary(m3)
+```
+
+$\widehat{\theta} = 2.264$
+]
+
+---
+
+### In R
+
+.large[
+```{r echo=F, output.lines = 11:17}
+summary(m3)
+```
+
+.question[
+How do I interpret the estimated coefficient -0.176?
+]
+]
+
+
+---
+
+### quasi-Poisson vs. negative binomial
+
+.large[
+
+.pull-left[
+**quasi-Poisson:**
+
+* linear relationship between mean and variance
+* easy to interpret $\widehat{\phi}$
+* same as Poisson regression when $\phi = 1$
+* simple adjustment to estimated standard errors
+* estimated coefficients same as in Poisson regression
+]
+
+.pull-right[
+**negative binomial:**
+
+* quadratic relationship between mean and variance
+* we get to use a likelihood, rather than a quasi-likelihood
+* Same as Poisson regression when $\theta$ is very large and $p$ is very small
+]
+]
