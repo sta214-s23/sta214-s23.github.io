@@ -15,8 +15,7 @@ March 15
 : Textbook 4.4.9, 4.8
 
 March 17
-: Quasi-Poisson models
+: Project work day
 
 : **HW 7 released**{: .label .label-yellow }
-
-: Textbook 4.8
+  : [HW 7](https://sta214-s23.github.io/homework/HW7.pdf)
