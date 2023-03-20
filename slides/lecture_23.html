@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Quasi-Poisson and negative binomial regression</title>
+    <meta charset="utf-8" />
+    <script src="libs/header-attrs-2.16/header-attrs.js"></script>
+    <link rel="stylesheet" href="lab-slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# Quasi-Poisson and negative binomial regression
+]
+
+---
+
+
+
+
+### Warm-up: Class activity, Part I
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_23.html](https://sta214-s23.github.io/class_activities/ca_lecture_23.html)
+]
+
+---
+
+### Class activity
+
+.large[
+
+```
+...
+##     Null deviance: 13471  on 2011  degrees of freedom
+## Residual deviance: 11540  on 2004  degrees of freedom
+...
+```
+
+**Goodness-of-fit test:**
+]
+
+---
+
+### Class activity
+
+
+```
+...
+## (Dispersion parameter for quasipoisson family taken to be 5.519388)
+## 
+##     Null deviance: 13471  on 2011  degrees of freedom
+## Residual deviance: 11540  on 2004  degrees of freedom
+## AIC: NA
+...
+```
+
+.large[
+.question[
+What is the estimated dispersion parameter `\(\widehat{\phi}\)`?
+]
+]
+
+---
+
+### Nested tests with quasi-Poisson models
+
+
+```
+...
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  2.837192   0.115099  24.650  &lt; 2e-16 ***
+## male         0.456170   0.026095  17.481  &lt; 2e-16 ***
+## age         -0.006806   0.001595  -4.267 2.07e-05 ***
+## education2   0.016463   0.029675   0.555    0.579    
+## education3   0.016427   0.037706   0.436    0.663    
+## education4  -0.015033   0.040477  -0.371    0.710    
+## diabetes    -0.025398   0.092606  -0.274    0.784    
+## BMI          0.005001   0.003304   1.513    0.130    
+...
+```
+
+.large[
+**Research question:** Is there a relationship between education level and the number of cigarettes smoked per day, after accounting for sex, age, diabetes, and BMI?
+
+.question[
+What are my null and alternative hypotheses for this research question?
+]
+]
+
+---
+
+### Nested tests with quasi-Poisson models
+
+.large[
+**Research question:** Is there a relationship between education level and the number of cigarettes smoked per day, after accounting for sex, age, diabetes, and BMI?
+
+* In Poisson regression, we would use a likelihood ratio test
+* However, the quasi-Poisson model includes the estimated dispersion, `\(\widehat{\phi}\)`. We need to use an **F-test** instead
+]
+
+---
+
+### Nested tests with quasi-Poisson models
+
+
+```r
+m1 &lt;- glm(cigsPerDay ~ male + age + education + 
+            diabetes + BMI,
+          data = smokers, family = quasipoisson)
+m2 &lt;- glm(cigsPerDay ~ male + age + diabetes + BMI,
+          data = smokers, family = quasipoisson)
+
+m1$deviance
+```
+
+```
+## [1] 11539.56
+```
+
+```r
+m2$deviance
+```
+
+```
+## [1] 11543.84
+```
+
+```r
+m1$df.residual
+```
+
+```
+## [1] 2004
+```
+
+```r
+m2$df.residual
+```
+
+```
+## [1] 2007
+```
+
+
+---
+
+### Nested tests with quasi-Poisson models
+
+.large[
+
+```r
+m1$deviance
+```
+
+```
+## [1] 11539.56
+```
+
+```r
+m2$deviance
+```
+
+```
+## [1] 11543.84
+```
+
+```r
+pf(0.258, 3, 2004, lower.tail=F)
+```
+
+```
+## [1] 0.8556648
+```
+]
+
+---
+
+### Alternative to quasi-Poisson: negative binomial
+
+.large[
+If `\(Y_i \sim NB(\theta, p)\)`, then `\(Y_i\)` takes values `\(y = 0, 1, 2, 3, ...\)` with probabilities
+
+`$$P(Y_i = y) = \dfrac{(y + \theta - 1)!}{y!(\theta - 1)!} (1 - p)^\theta p^y$$`
+
+* `\(\theta &gt; 0\)`, `\(\ \ \ p \in [0, 1]\)`
+* Mean = `\(\dfrac{p \theta}{1 - p} = \mu\)`
+* Variance = `\(\dfrac{p \theta}{(1 - p)^2} = \mu + \dfrac{\mu^2}{\theta}\)`
+* Variance is a *quadratic* function of the mean
+]
+
+---
+
+### Negative binomial regression
+
+.large[
+`$$Y_i \sim NB(\theta, \ p_i)$$`
+
+`$$\log(\mu_i) = \beta_0 + \beta_1 X_i$$`
+
+* `\(\mu_i = \dfrac{p_i \theta}{1 - p_i}\)`
+* Note that `\(\theta\)` is the same for all `\(i\)`
+* Note that just like in Poisson regression, we model the average count
+  * Interpretation of `\(\beta\)`s is the same as in Poisson regression
+]
+
+---
+
+### In R
+
+.large[
+
+```r
+library(MASS)
+m3 &lt;- glm.nb(cigsPerDay ~ male + age + education + 
+            diabetes + BMI, data = smokers)
+```
+]
+
+
+```
+...
+## Coefficients:
+##              Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)  2.877771   0.123477  23.306  &lt; 2e-16 ***
+## male         0.459148   0.027641  16.611  &lt; 2e-16 ***
+## age         -0.007010   0.001731  -4.050 5.12e-05 ***
+## education2   0.024518   0.032534   0.754    0.451    
+## education3   0.009252   0.040802   0.227    0.821    
+## education4  -0.027732   0.044825  -0.619    0.536    
+## diabetes    -0.010124   0.099126  -0.102    0.919    
+## BMI          0.003693   0.003573   1.033    0.301    
+## 
+## (Dispersion parameter for Negative Binomial(3.2981) family taken to be 1)
+...
+```
+
+---
+
+### Fitted model
+
+
+```
+...
+## Coefficients:
+##              Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)  2.877771   0.123477  23.306  &lt; 2e-16 ***
+## male         0.459148   0.027641  16.611  &lt; 2e-16 ***
+## age         -0.007010   0.001731  -4.050 5.12e-05 ***
+## education2   0.024518   0.032534   0.754    0.451    
+## education3   0.009252   0.040802   0.227    0.821    
+## education4  -0.027732   0.044825  -0.619    0.536    
+## diabetes    -0.010124   0.099126  -0.102    0.919    
+## BMI          0.003693   0.003573   1.033    0.301    
+## 
+## (Dispersion parameter for Negative Binomial(3.2981) family taken to be 1)
+...
+```
+
+.large[
+.question[
+How do I interpret the estimated coefficient -0.007?
+]
+]
+
+---
+
+### Hypothesis testing
+
+
+```
+...
+## Coefficients:
+##              Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)  2.877771   0.123477  23.306  &lt; 2e-16 ***
+## male         0.459148   0.027641  16.611  &lt; 2e-16 ***
+## age         -0.007010   0.001731  -4.050 5.12e-05 ***
+## education2   0.024518   0.032534   0.754    0.451    
+## education3   0.009252   0.040802   0.227    0.821    
+## education4  -0.027732   0.044825  -0.619    0.536    
+## diabetes    -0.010124   0.099126  -0.102    0.919    
+## BMI          0.003693   0.003573   1.033    0.301    
+## 
+## (Dispersion parameter for Negative Binomial(3.2981) family taken to be 1)
+...
+```
+
+.large[
+**Research question:** Is there a relationship between education level and the number of cigarettes smoked per day, after accounting for sex, age, diabetes, and BMI?
+]
+
+---
+
+### Likelihood ratio test
+
+.large[
+
+```r
+m3 &lt;- glm.nb(cigsPerDay ~ male + age + education + 
+               diabetes + BMI, data = smokers)
+m4 &lt;- glm.nb(cigsPerDay ~ male + age +
+               diabetes + BMI, data = smokers)
+m3$twologlik - m4$twologlik
+```
+
+```
+## [1] 1.423055
+```
+
+```r
+pchisq(1.423, df=3, lower.tail=F)
+```
+
+```
+## [1] 0.7001524
+```
+]
+
+---
+
+### Comparing Poisson, quasi-Poisson, negative binomial
+
+.large[
+**Poisson:**
+
+* Mean = `\(\lambda_i\)`
+* Variance = `\(\lambda_i\)`
+
+**quasi-Poisson:**
+
+* Mean = `\(\lambda_i\)`
+* Variance = `\(\phi \lambda_i\)`
+
+**negative binomial:**
+
+* Mean = `\(\mu_i\)`
+* Variance = `\(\mu_i + \dfrac{\mu_i^2}{\theta}\)`
+]
+
+---
+
+### Class activity, Part II
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_23.html](https://sta214-s23.github.io/class_activities/ca_lecture_23.html)
+]
+
+---
+
+### Class activity
+
+&lt;img src="lecture_23_files/figure-html/unnamed-chunk-12-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+### Choosing a count model with quantile residual plots
+
+.large[
+* If the residuals have **constant variance** and mostly fall between **-2 and 2**: Poisson is reasonable
+* If the residuals have **constant variance** but many residuals are `\(&gt; 2\)` or `\(&lt; -2\)`: use either quasi-Poisson or negative binomial
+* If the residuals have **non-constant variance**: use negative binomial
+]
+
+---
+
+### quasi-Poisson vs. negative binomial
+
+.large[
+
+.pull-left[
+**quasi-Poisson:**
+
+* linear relationship between mean and variance
+* easy to interpret `\(\widehat{\phi}\)`
+* same as Poisson regression when `\(\phi = 1\)`
+* simple adjustment to estimated standard errors
+* estimated coefficients same as in Poisson regression
+* `\(t\)`-tests and `\(F\)`-tests
+]
+
+.pull-right[
+**negative binomial:**
+
+* quadratic relationship between mean and variance
+* we get to use a likelihood, rather than a quasi-likelihood
+* Same as Poisson regression when `\(\theta\)` is very large and `\(p\)` is very small
+* Wald tests and likelihood ratio tests
+]
+]
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
