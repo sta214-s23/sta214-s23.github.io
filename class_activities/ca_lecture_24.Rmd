@@ -83,6 +83,7 @@ y <- rqpois(1000, mean = exp(x), dispersion = 3)
 5. Create quantile residual plots for the Poisson and negative binomial regression models. Do you see any violations in the regression assumptions?
 
 6. Calculate coverage of 95% confidence intervals for the Poisson, quasi-Poisson, and negative binomial models. How do the models perform? 
+
 ## Putting it all together
 
 7. Propose guidelines for choosing between Poisson, quasi-Poisson, and negative binomial models based on quantile residual plots.
