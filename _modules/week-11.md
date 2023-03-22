@@ -9,7 +9,8 @@ March 20
 : Textbook 4.8
 
 March 22
-: Negative binomial regression
+: Choosing count models
+  : [Slides](https://sta214-s23.github.io/slides/lecture_24.pdf), [Class activity](https://sta214-s23.github.io/class_activities/ca_lecture_24.html)
 
 : Textbook 4.8
 

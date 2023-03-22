@@ -1,0 +1,90 @@
+---
+title: "Class Activity, March 22"
+output: 
+  tufte::tufte_html:
+    css: "lab.css"
+    tufte_variant: "envisioned"
+    highlight: pygments
+link-citations: yes
+---
+
+# Choosing a count model
+
+So far, we have covered three different models for count data:
+
+* Poisson regression (variance = mean = $\lambda_i$)
+* quasi-Poisson regression (mean = $\lambda_i$, variance = $\phi \lambda_i$)
+* negative binomial regression (mean = $\mu_i$, variance = $\mu_i + \frac{\mu_i^2}{\theta}$)
+
+The goal of this class activity is to see how quantile residual plots can be used to choose between different regression models. At the end of the activity, you will be asked to suggest some simple rules for choosing between Poisson, quasi-Poisson, and negative binomial regression, based on the appearance of the quantile residual plots.
+
+Our strategy for the class activity is to use simulations to generate data under different assumptions, and compare performance of each model by comparing the coverage of confidence intervals for the slope. We will:
+
+* Generate data from a negative binomial distribution, and estimate the actual coverage of nominal 95% confidence intervals for each model
+* Explore how coverage changes for each model as we change the size parameter $\theta$ of the negative binomial distribution
+* Match confidence interval coverage with violations in the quantile residual plots
+* Repeat for quasi-Poisson data
+
+## Comparing performance for negative binomial data
+
+1. Use the code below to generate data from a negative binomial distribution with $\theta = 0.5$, and create quantile residual plots for the Poisson and negative binomial models. Which model is a better fit to the data?
+
+```{r, eval=F}
+library(statmod)
+library(MASS)
+library(tidyverse)
+
+theta <- 0.5
+x <- rnorm(1000, mean=0, sd=1.2)
+y <- rnbinom(1000, size=theta, mu=exp(x))
+
+m1 <- glm(y ~ x, family = poisson)
+m2 <- glm.nb(y ~ x)
+
+data.frame(x = x, resids = qresid(m1)) %>%
+  ggplot(aes(x = x, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "X", y = "Quantile residuals",
+       title = "Poisson regression") +
+  theme_bw()
+
+data.frame(x = x, resids = qresid(m2)) %>%
+  ggplot(aes(x = x, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "X", y = "Quantile residuals",
+       title = "Negative binomial regression") +
+  theme_bw()
+```
+
+2. Modify code from the class activity on March 13 to estimate coverage of 95% confidence intervals for $\beta_1$ using the Poisson, quasi-Poisson, and negative binomial models. (Make sure to use the $t$-distribution for the quasi-Poisson fit). 
+
+3. Now experiment with different values of $\theta$, and re-run the code from question 2. Does coverage for each model change as $\theta$ increases, and if so, how?
+
+4. How do the quantile residual plots change as $\theta$ increases?
+
+## Comparing performance for quasi-Poisson data
+
+In the previous section, you saw how each of our three regression models performed when the data came from a negative binomial distribution. Now let's investigate what happens when the quasi-Poisson assumption (variance is a linear function of the mean) is satisfied.
+
+Technically, there is no "quasi-Poisson distribution", so we will need to create our own function for simulating data which (approximately) satisfies the quasi-Poisson assumption. The code below will generate this for a given dispersion parameter $\phi = 3$:
+
+```{r, eval=F}
+# Function for simulating quasi-Poisson (overdispersed Poisson) data
+rqpois <- function(n, mean, dispersion){
+  return(rnbinom(n, mu = mean, size = mean/(dispersion - 1)))
+}
+
+x <- rnorm(1000, mean=0, sd=1.2)
+y <- rqpois(1000, mean = exp(x), dispersion = 3)
+```
+
+5. Create quantile residual plots for the Poisson and negative binomial regression models. Do you see any violations in the regression assumptions?
+
+6. Calculate coverage of 95% confidence intervals for the Poisson, quasi-Poisson, and negative binomial models. How do the models perform? 
+## Putting it all together
+
+7. Propose guidelines for choosing between Poisson, quasi-Poisson, and negative binomial models based on quantile residual plots.
+
+*If you finish early, turn your simulation results into plots, showing how coverage for each method changes as a function of $\theta$ or $\phi$*

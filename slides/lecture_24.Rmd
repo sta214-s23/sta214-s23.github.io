@@ -1,0 +1,478 @@
+---
+title: Choosing count models
+output:
+  xaringan::moon_reader:
+    css: "lab-slides.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r include=F}
+library(knitr)
+library(tidyverse)
+library(MASS)
+library(foreign)
+library(statmod)
+library(gridExtra)
+
+hook_output <- knit_hooks$get("output")
+knit_hooks$set(output = function(x, options) {
+   lines <- options$output.lines
+   if (is.null(lines)) {
+     return(hook_output(x, options))  # pass to default hook
+   }
+   x <- unlist(strsplit(x, "\n"))
+   more <- "..."
+   if (length(lines)==1) {        # first n lines
+     if (length(x) > lines) {
+       # truncate the output, but add ....
+       x <- c(head(x, lines), more)
+     }
+   } else {
+     x <- c(more, x[lines], more)
+   }
+   # paste these lines together
+   x <- paste(c(x, ""), collapse = "\n")
+   hook_output(x, options)
+ })
+```
+
+### Class activity
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_24.html](https://sta214-s23.github.io/class_activities/ca_lecture_24.html)
+
+**Goal:** How can we use quantile residual plots to determine whether to fit a Poisson, quasi-Poisson, or negative binomial model?
+
+**Instructions:** 
+
+* With a neighbor, work throught the class activity
+* You and your neighbor will then discuss the activity with another pair of students from the class
+* Finally, we will discuss the activity as a group
+]
+
+---
+
+### Proposed guidelines
+
+
+---
+
+### Class activity
+
+.large[
+Quantile residual plots for negative binomial data ( $\mu_i = \exp(X_i), \theta = 0.5$ ):
+]
+
+```{r, echo=F, message=F, warning=F, fig.width=10, fig.height=4,fig.align='center'}
+library(statmod)
+library(MASS)
+library(tidyverse)
+library(gridExtra)
+
+theta <- 0.5
+x <- rnorm(1000, mean=0, sd=1.2)
+y <- rnbinom(1000, size=theta, mu=exp(x))
+
+m1 <- glm(y ~ x, family = poisson)
+m2 <- glm.nb(y ~ x)
+
+p1 <- data.frame(x = x, resids = qresid(m1)) %>%
+  ggplot(aes(x = x, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "X", y = "Quantile residuals",
+       title = "Poisson regression") +
+  theme_bw()
+
+p2 <- data.frame(x = x, resids = qresid(m2)) %>%
+  ggplot(aes(x = x, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "X", y = "Quantile residuals",
+       title = "Negative binomial regression") +
+  theme_bw()
+
+grid.arrange(p1, p2, ncol=2)
+```
+
+---
+
+### Class activity
+
+.large[
+Data: negative binomial with $\mu_i = \exp(X_i), \theta = 0.5$
+
+.question[
+How does CI coverage compare for Poisson, quasi-Poisson, and negative binomial models?
+]
+]
+
+---
+
+### Class activity
+
+Data: negative binomial with $\mu_i = \exp(X_i), \theta = 0.5$
+
+Poisson coverage:
+
+```{r}
+n <- 1000
+nsim <- 500
+theta <- 0.5
+contains_beta_poisson <- rep(0, nsim)
+for(i in 1:nsim){
+  x <- rnorm(n, sd = 1.2)
+  y <- rnbinom(n, size=theta, mu=exp(x))
+  
+  m1 <- glm(y ~ x, family = poisson)
+  
+  upper <- summary(m1)$coefficients[2,1] + 
+    1.96*summary(m1)$coefficients[2,2]
+  lower <- summary(m1)$coefficients[2,1] - 
+    1.96*summary(m1)$coefficients[2,2]
+  
+  contains_beta_poisson[i] <- upper > 1 && lower < 1
+}
+mean(contains_beta_poisson)
+```
+
+---
+
+### Class activity
+
+Data: negative binomial with $\mu_i = \exp(X_i), \theta = 0.5$
+
+quasi-Poisson coverage:
+
+```{r}
+contains_beta_quasipoisson <- rep(0, nsim)
+for(i in 1:nsim){
+  x <- rnorm(n, sd = 1.2)
+  y <- rnbinom(n, size=theta, mu=exp(x))
+  
+  m2 <- glm(y ~ x, family = quasipoisson)
+  
+  upper <- summary(m2)$coefficients[2,1] + 
+    qt(0.025, n-2, lower.tail=F)*summary(m2)$coefficients[2,2]
+  lower <- summary(m2)$coefficients[2,1] - 
+    qt(0.025, n-2, lower.tail=F)*summary(m2)$coefficients[2,2]
+  
+  contains_beta_quasipoisson[i] <- upper > 1 && lower < 1
+}
+mean(contains_beta_quasipoisson)
+```
+
+---
+
+### Class activity
+
+Data: negative binomial with $\mu_i = \exp(X_i), \theta = 0.5$
+
+negative binomial coverage:
+
+```{r}
+contains_beta_nb <- rep(0, nsim)
+for(i in 1:nsim){
+  x <- rnorm(n, sd = 1.2)
+  y <- rnbinom(n, size=theta, mu=exp(x))
+  
+  m3 <- glm.nb(y ~ x)
+  
+  upper <- summary(m3)$coefficients[2,1] + 
+    1.96*summary(m3)$coefficients[2,2]
+  lower <- summary(m3)$coefficients[2,1] - 
+    1.96*summary(m3)$coefficients[2,2]
+  
+  contains_beta_nb[i] <- upper > 1 && lower < 1
+}
+mean(contains_beta_nb)
+```
+
+---
+
+### Class activity
+
+.large[
+.question[
+What happens to quantile residual plots as I increase $\theta$? What about coverage?
+]
+]
+
+---
+
+### Class activity
+
+.large[
+Quantile residual plots for negative binomial data ( $\mu_i = \exp(X_i), \theta = 2$ ):
+]
+
+```{r, echo=F, message=F, warning=F, fig.width=10, fig.height=4,fig.align='center'}
+
+theta <- 2
+x <- rnorm(1000, mean=0, sd=1.2)
+y <- rnbinom(1000, size=theta, mu=exp(x))
+
+m1 <- glm(y ~ x, family = poisson)
+m2 <- glm.nb(y ~ x)
+
+p1 <- data.frame(x = x, resids = qresid(m1)) %>%
+  ggplot(aes(x = x, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "X", y = "Quantile residuals",
+       title = "Poisson regression") +
+  theme_bw()
+
+p2 <- data.frame(x = x, resids = qresid(m2)) %>%
+  ggplot(aes(x = x, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "X", y = "Quantile residuals",
+       title = "Negative binomial regression") +
+  theme_bw()
+
+grid.arrange(p1, p2, ncol=2)
+```
+
+---
+
+### Class activity
+
+Data: negative binomial with $\mu_i = \exp(X_i), \theta = 2$
+
+Poisson coverage:
+
+```{r}
+n <- 1000
+nsim <- 500
+theta <- 2
+contains_beta_poisson <- rep(0, nsim)
+for(i in 1:nsim){
+  x <- rnorm(n, sd = 1.2)
+  y <- rnbinom(n, size=theta, mu=exp(x))
+  
+  m1 <- glm(y ~ x, family = poisson)
+  
+  upper <- summary(m1)$coefficients[2,1] + 
+    1.96*summary(m1)$coefficients[2,2]
+  lower <- summary(m1)$coefficients[2,1] - 
+    1.96*summary(m1)$coefficients[2,2]
+  
+  contains_beta_poisson[i] <- upper > 1 && lower < 1
+}
+mean(contains_beta_poisson)
+```
+
+---
+
+### Class activity
+
+Data: negative binomial with $\mu_i = \exp(X_i), \theta = 2$
+
+quasi-Poisson coverage:
+
+```{r}
+contains_beta_quasipoisson <- rep(0, nsim)
+for(i in 1:nsim){
+  x <- rnorm(n, sd = 1.2)
+  y <- rnbinom(n, size=theta, mu=exp(x))
+  
+  m2 <- glm(y ~ x, family = quasipoisson)
+  
+  upper <- summary(m2)$coefficients[2,1] + 
+    qt(0.025, n-2, lower.tail=F)*summary(m2)$coefficients[2,2]
+  lower <- summary(m2)$coefficients[2,1] - 
+    qt(0.025, n-2, lower.tail=F)*summary(m2)$coefficients[2,2]
+  
+  contains_beta_quasipoisson[i] <- upper > 1 && lower < 1
+}
+mean(contains_beta_quasipoisson)
+```
+
+---
+
+### Class activity
+
+Data: negative binomial with $\mu_i = \exp(X_i), \theta = 2$
+
+negative binomial coverage:
+
+```{r}
+contains_beta_nb <- rep(0, nsim)
+for(i in 1:nsim){
+  x <- rnorm(n, sd = 1.2)
+  y <- rnbinom(n, size=theta, mu=exp(x))
+  
+  m3 <- glm.nb(y ~ x)
+  
+  upper <- summary(m3)$coefficients[2,1] + 
+    1.96*summary(m3)$coefficients[2,2]
+  lower <- summary(m3)$coefficients[2,1] - 
+    1.96*summary(m3)$coefficients[2,2]
+  
+  contains_beta_nb[i] <- upper > 1 && lower < 1
+}
+mean(contains_beta_nb)
+```
+
+---
+
+### Class activity
+
+.large[
+Now let's simulate quasi-Poisson data with $\phi = 3$:
+]
+
+```{r echo=F, message=F, warning=F, fig.width=10, fig.height=4,fig.align='center'}
+rqpois <- function(n, mean, dispersion){
+  return(rnbinom(n, mu = mean, size = mean/(dispersion - 1)))
+}
+
+x <- rnorm(1000, mean=0, sd=1.2)
+y <- rqpois(1000, mean = exp(x), dispersion = 3)
+
+m1 <- glm(y ~ x, family = poisson)
+m2 <- glm.nb(y ~ x)
+
+p1 <- data.frame(x = x, resids = qresid(m1)) %>%
+  ggplot(aes(x = x, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "X", y = "Quantile residuals",
+       title = "Poisson regression") +
+  theme_bw()
+
+p2 <- data.frame(x = x, resids = qresid(m2)) %>%
+  ggplot(aes(x = x, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "X", y = "Quantile residuals",
+       title = "Negative binomial regression") +
+  theme_bw()
+
+grid.arrange(p1, p2, ncol=2)
+```
+
+---
+
+### Class activity
+
+Data: quasi-Poisson with $\phi = 3$
+
+Poisson coverage:
+
+```{r}
+n <- 1000
+nsim <- 500
+phi <- 3
+contains_beta_poisson <- rep(0, nsim)
+for(i in 1:nsim){
+  x <- rnorm(n, sd = 1.2)
+  y <- rqpois(n, mean = exp(x), dispersion = phi)
+  
+  m1 <- glm(y ~ x, family = poisson)
+  
+  upper <- summary(m1)$coefficients[2,1] + 
+    1.96*summary(m1)$coefficients[2,2]
+  lower <- summary(m1)$coefficients[2,1] - 
+    1.96*summary(m1)$coefficients[2,2]
+  
+  contains_beta_poisson[i] <- upper > 1 && lower < 1
+}
+mean(contains_beta_poisson)
+```
+
+---
+
+### Class activity
+
+Data: quasi-Poisson with $\phi = 3$
+
+quasi-Poisson coverage:
+
+```{r}
+contains_beta_quasipoisson <- rep(0, nsim)
+for(i in 1:nsim){
+  x <- rnorm(n, sd = 1.2)
+  y <- y <- rqpois(n, mean = exp(x), dispersion = phi)
+  
+  m2 <- glm(y ~ x, family = quasipoisson)
+  
+  upper <- summary(m2)$coefficients[2,1] + 
+    qt(0.025, n-2, lower.tail=F)*summary(m2)$coefficients[2,2]
+  lower <- summary(m2)$coefficients[2,1] - 
+    qt(0.025, n-2, lower.tail=F)*summary(m2)$coefficients[2,2]
+  
+  contains_beta_quasipoisson[i] <- upper > 1 && lower < 1
+}
+mean(contains_beta_quasipoisson)
+```
+
+---
+
+### Class activity
+
+Data: quasi-Poisson with $\phi = 3$
+
+negative binomial coverage:
+
+```{r}
+contains_beta_nb <- rep(0, nsim)
+for(i in 1:nsim){
+  x <- rnorm(n, sd = 1.2)
+  y <- y <- rqpois(n, mean = exp(x), dispersion = phi)
+  
+  m3 <- glm.nb(y ~ x)
+  
+  upper <- summary(m3)$coefficients[2,1] + 
+    1.96*summary(m3)$coefficients[2,2]
+  lower <- summary(m3)$coefficients[2,1] - 
+    1.96*summary(m3)$coefficients[2,2]
+  
+  contains_beta_nb[i] <- upper > 1 && lower < 1
+}
+mean(contains_beta_nb)
+```
+
+---
+
+### Choosing a count model with quantile residual plots
+
+.large[
+* If the residuals have **constant variance** and mostly fall between **-2 and 2**: Poisson is reasonable
+* If the residuals have **constant variance** but many residuals are $> 2$ or $< -2$: use either quasi-Poisson or negative binomial
+* If the residuals have **non-constant variance**: use negative binomial
+]
+
+---
+
+### quasi-Poisson vs. negative binomial
+
+.large[
+
+.pull-left[
+**quasi-Poisson:**
+
+* linear relationship between mean and variance
+* easy to interpret $\widehat{\phi}$
+* same as Poisson regression when $\phi = 1$
+* simple adjustment to estimated standard errors
+* estimated coefficients same as in Poisson regression
+* $t$-tests and $F$-tests
+]
+
+.pull-right[
+**negative binomial:**
+
+* quadratic relationship between mean and variance
+* we get to use a likelihood, rather than a quasi-likelihood
+* Same as Poisson regression when $\theta$ is very large and $p$ is very small
+* Wald tests and likelihood ratio tests
+]
+]
