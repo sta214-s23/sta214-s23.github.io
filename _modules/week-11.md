@@ -15,6 +15,9 @@ March 22
 : Textbook 4.8
 
 March 24
-: Negative binomial vs. quasi-Poisson
+: ZIP models
+  : [Slides](https://sta214-s23.github.io/slides/lecture_25.pdf), [Class activity](https://sta214-s23.github.io/class_activities/ca_lecture_25.html)
+  
+: Textbook 4.10
 
 : **HW 8 released**{: .label .label-yellow }

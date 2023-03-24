@@ -1,0 +1,218 @@
+---
+title: "HW 7 Solutions"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(gamair)
+library(statmod)
+data("chicago")
+```
+
+
+## Question 1
+
+### (a) (2 pts)
+
+```{r, message=F}
+chicago %>%
+  ggplot(aes(x = death)) +
+  geom_histogram() +
+  labs(x = "Number of deaths") +
+  theme_bw()
+```
+
+The number of deaths appears unimodal and slightly right skewed, with a few potential outliers above 200. A Poisson distribution seems like it could be a reasonable choice.
+
+### (b) (2 pts)
+
+```{r}
+mean(chicago$death)
+var(chicago$death)
+```
+
+The variance is more than twice the mean, so we may be worried about overdispersion.
+
+### (c) (3 pts)
+
+```{r include=F}
+logmean_plot <- function(data, num_bins, bin_method,
+                         x, y, grouping = NULL, reg_formula = y ~ x){
+  
+  if(is.null(grouping)){
+    dat <- data.frame(x = data[,x], 
+                      y = data[,y],
+                      group = 1)
+  } else {
+    dat <- data.frame(x = data[,x], 
+                      y = data[,y],
+                      group = data[,grouping])
+  }
+  
+  if(bin_method == "equal_size"){
+    log_table <- dat %>%
+      drop_na() %>%
+      arrange(group, x) %>%
+      group_by(group) %>%
+      mutate(obs = y,
+             bin = rep(1:num_bins,
+                       each=ceiling(n()/num_bins))[1:n()]) %>%
+      group_by(bin, group) %>%
+      summarize(mean_x = mean(x),
+                mean_y = mean(obs),
+                num_obs = n()) %>%
+      ungroup() %>%
+      mutate(log_mean = log(mean_y))
+  } else {
+    log_table <- dat %>%
+      drop_na() %>%
+      group_by(group) %>%
+      mutate(obs = y,
+             bin = cut(x, 
+                       breaks = num_bins,
+                       labels = F)) %>%
+      group_by(bin, group) %>%
+      summarize(mean_x = mean(x),
+                mean_y = mean(obs),
+                num_obs = n()) %>%
+      ungroup() %>%
+      mutate(log_mean = log(mean_y))
+  }
+  
+  if(is.null(grouping)){
+    log_table %>%
+      ggplot(aes(x = mean_x,
+                 y = log_mean)) +
+      geom_point(size=2.5) +
+      geom_smooth(se=F, method="lm", formula = reg_formula) +
+      theme_bw() +
+      labs(x = x,
+           y = "Empirical log mean count") +
+      theme(text = element_text(size=25))
+  } else {
+    log_table %>%
+      ggplot(aes(x = mean_x,
+                 y = log_mean,
+                 color = group,
+                 shape = group)) +
+      geom_point(size=2.5) +
+      geom_smooth(se=F, method="lm", formula = reg_formula) +
+      theme_bw() +
+      labs(x = x,
+           y = "Empirical log mean count",
+           color = grouping,
+           shape = grouping) +
+      theme(text = element_text(size=25))
+  }
+  
+}
+
+```
+
+```{r}
+logmean_plot(chicago, 20, "equal_size", x = "tmpd",
+             y = "death")
+```
+
+There may be a bit of nonlinearity in the relationship between temperature and the log mean number of deaths. I think a linear relationship is probably good enough for now, but we could use a polynomial model instead.
+
+**Grading:** Either a linear relationship or a transformation is fine here, as long as they explain their reasoning. However, a transformation will be more difficult to interpret later in the assignment.
+
+
+## Question 2
+
+### (a) (2 pts)
+
+We use an offset when counts come from different time periods, or from groups of different sizes. In this case, each number of deaths comes from a 24 hour period, so we do not need an offset to account for different lengths of time (note that `time` should *not* be used for an offset here). However, the study ranges from 1987 to 2000, and the population of Chicago probably changed during that time. So, if we had the daily population of Chicago for each day in the data, log(population) would make a good offset. But this information isn't available in the data.
+
+**Grading:** Lose 1 pt if they say `time` should be an offset. Lose 1 pt if they suggest population as an offset, but don't realize it isn't in the data.
+
+### (b) (2 pts)
+
+$$Deaths_i \sim Poisson(\lambda_i)$$
+
+$$\log(\lambda_i) = \beta_0 + \beta_1 Temperature_i$$
+
+**Grading:** Lose 1 pt for incorrect notation. They can use a transformation on Temperature if they selected a transformation previously.
+
+
+### (c) (3 pts)
+
+```{r}
+m1 <- glm(death ~ tmpd, data = chicago, family=poisson)
+summary(m1)
+```
+
+$\log(\widehat{\lambda}_i) = 4.873 - 0.0025 \ Temperature_i$
+
+We estimate that an increase of 1 degree in temperature is associated with a decrease in the average number of deaths by a factor of $e^{-0.0025} = 0.9975$.
+
+**Grading:** Lose 1 pt if they interpret on the log scale and don't exponentiate. Note: if they chose a polynomial transformation, they can't really interpret the slope here. An acceptable answer would be "with a polynomial transformation, we can't interpret the slope." If they use a polynomial transformation and still try to interpret the slope, leave a note that this doesn't make sense.
+
+## Question 3
+
+### (a) (3 pts)
+
+The residual deviance is 8471.8, with 5112 degrees of freedom. If the model were a good fit to the data, the residual deviance would come from a $\chi^2_{5112}$ distribution. The corresponding p-value is
+
+```{r}
+pchisq(8471.8, df=5112, lower.tail=F)
+```
+
+which is approximately 0, so the model is not a good fit to the data. (This could occur because of overdispersion, or because we need to add more variables to the model)
+
+**Grading:** 1 pt for test statistic (residual deviance), 1 pt for degrees of freedom, 1 pt for p-value. Note that answers may vary if they transformed temperature.
+
+### (b) (3 pts)
+
+```{r}
+chicago %>%
+  mutate(resids = qresid(m1)) %>%
+  ggplot(aes(x = tmpd, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "Deaths", y = "Quantile residuals") +
+  theme_bw()
+```
+
+There is a bit of curvature in the residuals, matching what we saw in the empirical log means plot. I think I still prefer to use a linear function of temperature rather than a more complicated transformation like a polynomial, because it is easier to interpret, but I can understand if students want to use a polynomial.
+
+## Question 4
+
+### (a) (3 pts)
+
+```{r}
+m2 <- glm(death ~ tmpd, data = chicago, family=quasipoisson)
+summary(m2)
+```
+
+$\widehat{\phi} = 1.77$
+
+The standard errors for the quasi-Poisson model are about $\sqrt{1.77} = 1.33$ times larger than the standard errors for the Poisson fit.
+
+
+**Grading:** 1 pt for quasipoisson, 1 pt for $\widehat{\phi}$, 1 pt for relationship between standard errors
+
+### (b) (2 pts)
+
+The estimated coefficients are identical (only the standard errors change).
+
+### (c) (3 pts)
+
+```{r}
+m3 <- glm(death ~ tmpd + pm10median, 
+          data = chicago, family=quasipoisson)
+summary(m3)
+
+qt(0.025, df=4860, lower.tail=F)
+```
+
+$t^* = 1.96$
+
+95% confidence interval for $\beta_1$: $-0.0028 \pm 1.96(0.0001) = (-0.003, -0.0026)$
+
+95% confidence interval for $e^{\beta_1}$: $(0.997, 0.9974)$
+
+**Grading:** Answer may vary, and they may include pollution in the model in different ways. 1 pt for including pollution, 1 pt for t distribution, 1 pt for exponentiating endpoints of the interval.

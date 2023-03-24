@@ -1,0 +1,38 @@
+---
+title: "Class Activity, March 24"
+output: 
+  tufte::tufte_html:
+    css: "lab.css"
+    tufte_variant: "envisioned"
+    highlight: pygments
+link-citations: yes
+---
+
+# Zero-Inflated Poisson (ZIP) models
+
+In this class activity, we work with survey data from 77 college students on a dry campus (i.e., alcohol is prohibited) in the US. The survey asks students "How many alcoholic drinks did you consume last weekend?" The data includes the following variables:
+
+* `drinks`: the number of drinks the student reports consuming
+* `sex`: an indicator for whether the student identifies as male (1 = male)
+* `OffCampus`: an indicator for whether the student lives off campus (1 = off campus, 0 = on campus)
+* `FirstYear`: an indicator for whether the student is a first-year student (1 = first year, 0 = not first year)
+
+## The model
+
+To account for excess zeros in the data, we fit a *zero-inflated Poisson* (ZIP) model. Here is the probability function for our model:
+
+$$P(Y_i = y) = \begin{cases} e^{-\lambda_i}(1 - \alpha_i) + \alpha_i & y = 0 \\ \dfrac{e^{-\lambda_i} \lambda_i^y}{y!}(1 - \alpha_i) & y > 0 \end{cases}$$
+
+The fitted model estimates $\alpha_i$ with a logistic regression component, and $\lambda_i$ with a Poisson regression component. The fitted model is
+
+$\log \left( \dfrac{\widehat{\alpha}_i}{1 - \widehat{\alpha}_i} \right) = -0.60 + 1.14 FirstYear_i$
+
+$\log(\widehat{\lambda}_i) = 0.75 + 0.42 \ OffCampus_i + 1.02 \ Male_i$
+
+## Questions
+
+1. What is the estimated probability that a first year student never drinks?
+
+2. What is the estimated average number of drinks for a male student who lives off campus and sometimes drinks?
+
+3. What is the estimated probability that a male first year student who lives off campus had at least one drink last weekend?
