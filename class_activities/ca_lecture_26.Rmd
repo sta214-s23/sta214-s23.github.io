@@ -1,0 +1,117 @@
+---
+title: "Class Activity, March 27"
+output: 
+  tufte::tufte_html:
+    css: "lab.css"
+    tufte_variant: "envisioned"
+    highlight: pygments
+link-citations: yes
+---
+
+# Part I: Zero-Inflated Poisson (ZIP) models
+
+In the first part of this class activity, we work with the Framingham heart study data. This data includes the following variables (among others):
+
+* `cigsPerDay`: The number of cigarettes smoked per day during the study period.
+* `education`: 1 = High School, 2 = Some College, 3 = College Degree, 4 = Advanced Degree.
+* `male`: 1 = Male, 0 = Female.
+* `age`: The age of the individual in years.
+* `diabetes`: 1 if the individual has diabetes, 0 otherwise.
+
+We are interested in modeling the number of cigarettes smoked per day (`cigsPerDay`).
+
+## The model
+
+Researchers suspect that whether or not someone smokes depends on their age, and that if they do smoke, the number of cigarettes smoked is related to their education level and whether they have diabetes. The researchers therefore fit the following ZIP model:
+
+$$P(Y_i = y) = \begin{cases} e^{-\lambda_i}(1 - \alpha_i) + \alpha_i & y = 0 \\ \dfrac{e^{-\lambda_i} \lambda_i^y}{y!}(1 - \alpha_i) & y > 0 \end{cases}$$
+
+$\log \left( \dfrac{\alpha_i}{1 - \alpha_i} \right) = \gamma_0 + \gamma_1 Age_i$
+
+$\log(\lambda_i) = \beta_0 + \beta_1 EducationSome_i + \beta_2 EducationCollege_i + \beta_3 EducationAdv_i + \beta_4 Diabetes_i$
+
+The R output below shows their fitted model.
+
+```{r, include=F}
+library(tidyverse)
+heart_data <- read.csv("~/Documents/Teaching/sta214-f22.github.io/class_activities/framingham.csv")
+
+heart_data <- heart_data %>%
+  drop_na(male, age, education, diabetes, cigsPerDay) %>%
+  mutate(education = as.factor(education))
+```
+
+```{r, message=F, warning=F}
+library(pscl)
+m1 <- zeroinfl(cigsPerDay ~ education + diabetes | age, 
+               data = heart_data)
+summary(m1)
+```
+
+## Questions
+
+1. Interpret the coefficient -0.046 in the fitted model.
+
+2. What is the estimated probability that a 50 year old does not smoke?
+
+3. What is the expected number of cigarettes smoked per day, for a smoker with diabetes and some college education?
+
+4. What is the probability that a 45 year old college graduate without diabetes smokes one cigarette per day?
+
+
+# Part II: Diagnostics for ZIP models
+
+In the second part of this class activity, we will create quantile residual plots to check the shape assumption for ZIP models
+
+## Questions
+
+1. Run the code below to generate ZIP data for which the shape assumptions are satisfied for both the logistic and the Poisson components.
+
+```{r, eval=F}
+x <- rnorm(1000)
+alpha <- exp(x)/(1 + exp(x))
+lambda <- exp(1 + x)
+z <- rbinom(1000, 1, prob=alpha)
+y <- 0*z + rpois(1000, lambda)*(1 - z)
+```
+
+2. Now use the code below to fit a ZIP model, and create a quantile residual plot for your fitted model. Are the fitted regression coefficients close to the true parameters?
+
+```{r, eval=F}
+library(pscl)
+library(tidyverse)
+
+## randomized quantile residuals for a ZIP model
+## zip_m = fitted ZIP model from pscl
+qresid_zeroinfl <- function(zip_m){
+  y <- zip_m$y
+  pred_probs <- predict(zip_m, type="prob")
+  resids <- c()
+  for(i in 1:length(y)){
+    cdf_b <- sum(pred_probs[i,1:(y[i]+1)])
+    if(y[i] == 0){
+      cdf_a <- 0
+    } else {
+      cdf_a <- sum(pred_probs[i,1:y[i]])
+    }
+    
+    resids[i] <- qnorm(runif(1, cdf_a, cdf_b))
+  }
+  return(resids)
+}
+
+
+m <- zeroinfl(y ~ x | x)
+summary(m)
+
+data.frame(x = x, resids = qresid_zeroinfl(m)) %>%
+  ggplot(aes(x = x, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  theme_bw()
+```
+
+3. Now generate data so that the Poisson or logistic shape assumption is violated. Re-fit the ZIP model, and make a quantile residual plot for the new model. Can you detect the shape violations in the residual plot?
+
+4. If you see a violation in the quantile residual plot, will you be able to tell whether the violation is in the Poisson component or in the logistic component?
+

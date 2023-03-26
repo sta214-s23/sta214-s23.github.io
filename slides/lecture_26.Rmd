@@ -1,0 +1,384 @@
+---
+title: Zero inflated models
+output:
+  xaringan::moon_reader:
+    css: "lab-slides.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r include=F}
+library(tidyverse)
+library(knitr)
+library(pscl)
+hook_output <- knit_hooks$get("output")
+knit_hooks$set(output = function(x, options) {
+   lines <- options$output.lines
+   if (is.null(lines)) {
+     return(hook_output(x, options))  # pass to default hook
+   }
+   x <- unlist(strsplit(x, "\n"))
+   more <- "..."
+   if (length(lines)==1) {        # first n lines
+     if (length(x) > lines) {
+       # truncate the output, but add ....
+       x <- c(head(x, lines), more)
+     }
+   } else {
+     x <- c(more, x[lines], more)
+   }
+   # paste these lines together
+   x <- paste(c(x, ""), collapse = "\n")
+   hook_output(x, options)
+ })
+
+wdrinks <- read.csv("~/Documents/Teaching/sta279-s22.github.io/slides/weekendDrinks.csv")
+
+FirstYear <- ifelse( wdrinks$dorm %in% c("mohn","kittlesby", "kildahl"), "TRUE", "FALSE")
+OffCampus <- ifelse( wdrinks$dorm == "off campus", "TRUE", "FALSE")
+
+wdrinks <- cbind(wdrinks, FirstYear, OffCampus)
+```
+
+
+### Data: Framingham heart study
+
+.large[
+Data collected on residents of Framingham, MA over a long period of time, to study variables related to heart health. We will work with a subset of the data, containing
+
+* `cigsPerDay`: The number of cigarettes smoked per day during the study period.
+* `education`: 1 = High School, 2 = Some College, 3 = College Degree, 4 = Advanced Degree.
+* `male`: 1 = Male, 0 = Female.
+* `age`: The age of the individual in years.
+* `diabetes`: 1 if the individual has diabetes, 0 otherwise.
+
+.question[
+Why might we see zero inflation in the number of cigarettes smoked per day?
+]
+
+]
+
+---
+
+### EDA: number of cigarettes smoked
+
+```{r, echo=F, warning=F, message=F, fig.align='center', fig.height=5, fig.width=7}
+heart_data <- read.csv("~/Documents/Teaching/sta214-f22.github.io/class_activities/framingham.csv")
+
+heart_data <- heart_data %>%
+  drop_na(male, age, education, diabetes, cigsPerDay) %>%
+  mutate(education = as.factor(education))
+
+heart_data %>%
+  ggplot(aes(x = cigsPerDay)) +
+  geom_histogram(bins = 20) +
+  theme_bw() +
+  labs(x = "Number of cigarettes smoked per day") +
+  theme(text = element_text(size = 20))
+```
+
+---
+
+### Class activity, Part I
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_26.html](https://sta214-s23.github.io/class_activities/ca_lecture_26.html)
+]
+
+---
+
+### Class activity
+
+$$P(Y_i = y) = \begin{cases} e^{-\lambda_i}(1 - \alpha_i) + \alpha_i & y = 0 \\ \dfrac{e^{-\lambda_i} \lambda_i^y}{y!}(1 - \alpha_i) & y > 0 \end{cases}$$
+
+$$\log \left( \dfrac{\widehat{\alpha}_i}{1 - \widehat{\alpha}_i} \right) = -2.51 + 0.051 Age_i$$
+
+$$\log(\widehat{\lambda}_i) = 2.93 -0.022 EducationSome_i -0.067 EducationCollege_i + \\ 0.009 EducationAdv_i - 0.046 Diabetes_i$$
+
+.large[
+.question[
+How do we interpret the coefficient -0.046 in the fitted model?
+]
+]
+
+---
+
+### Class activity
+
+$$P(Y_i = y) = \begin{cases} e^{-\lambda_i}(1 - \alpha_i) + \alpha_i & y = 0 \\ \dfrac{e^{-\lambda_i} \lambda_i^y}{y!}(1 - \alpha_i) & y > 0 \end{cases}$$
+
+$$\log \left( \dfrac{\widehat{\alpha}_i}{1 - \widehat{\alpha}_i} \right) = -2.51 + 0.051 Age_i$$
+
+$$\log(\widehat{\lambda}_i) = 2.93 -0.022 EducationSome_i -0.067 EducationCollege_i + \\ 0.009 EducationAdv_i - 0.046 Diabetes_i$$
+
+.large[
+.question[
+What is the estimated probability that a 50 year old does not smoke?
+]
+]
+
+---
+
+### Class activity
+
+$$P(Y_i = y) = \begin{cases} e^{-\lambda_i}(1 - \alpha_i) + \alpha_i & y = 0 \\ \dfrac{e^{-\lambda_i} \lambda_i^y}{y!}(1 - \alpha_i) & y > 0 \end{cases}$$
+
+$$\log \left( \dfrac{\widehat{\alpha}_i}{1 - \widehat{\alpha}_i} \right) = -2.51 + 0.051 Age_i$$
+
+$$\log(\widehat{\lambda}_i) = 2.93 -0.022 EducationSome_i -0.067 EducationCollege_i + \\ 0.009 EducationAdv_i - 0.046 Diabetes_i$$
+
+.large[
+.question[
+What is the expected number of cigarettes smoked per day, for a smoker with diabetes and some college education?
+]
+]
+
+---
+
+### Class activity
+
+$$P(Y_i = y) = \begin{cases} e^{-\lambda_i}(1 - \alpha_i) + \alpha_i & y = 0 \\ \dfrac{e^{-\lambda_i} \lambda_i^y}{y!}(1 - \alpha_i) & y > 0 \end{cases}$$
+
+$$\log \left( \dfrac{\widehat{\alpha}_i}{1 - \widehat{\alpha}_i} \right) = -2.51 + 0.051 Age_i$$
+
+$$\log(\widehat{\lambda}_i) = 2.93 -0.022 EducationSome_i -0.067 EducationCollege_i + \\ 0.009 EducationAdv_i - 0.046 Diabetes_i$$
+
+.large[
+.question[
+What is the probability that a 45 year old college graduate without diabetes smokes one cigarette per day?
+]
+]
+
+---
+
+### Making predictions
+
+$$P(Y_i = y) = \begin{cases} e^{-\lambda_i}(1 - \alpha_i) + \alpha_i & y = 0 \\ \dfrac{e^{-\lambda_i} \lambda_i^y}{y!}(1 - \alpha_i) & y > 0 \end{cases}$$
+
+$$\log \left( \dfrac{\widehat{\alpha}_i}{1 - \widehat{\alpha}_i} \right) = -2.51 + 0.051 Age_i$$
+
+$$\log(\widehat{\lambda}_i) = 2.93 -0.022 EducationSome_i -0.067 EducationCollege_i + \\ 0.009 EducationAdv_i - 0.046 Diabetes_i$$
+
+.large[
+.question[
+How would I estimate the expected number of cigarettes smoked per day, by a college graduate without diabetes?
+]
+]
+
+---
+
+### A new question
+
+$$P(Y_i = y) = \begin{cases} e^{-\lambda_i}(1 - \alpha_i) + \alpha_i & y = 0 \\ \dfrac{e^{-\lambda_i} \lambda_i^y}{y!}(1 - \alpha_i) & y > 0 \end{cases}$$
+
+$$\log \left( \dfrac{\alpha_i}{1 - \alpha_i} \right) = \gamma_0 + \gamma_1 Age_i$$
+
+$$\log(\lambda_i) = \beta_0 + \beta_1 EducationSome_i + \beta_2 EducationCollege_i + \\ \beta_3 EducationAdv_i + \beta_4 Diabetes_i$$
+.large[
+.question[
+New research question: for smokers, does the number of cigarettes smoked per day depend on age?
+
+How would we answer this research question?
+]
+]
+
+---
+
+### Wald test
+
+.large[
+```{r, output.lines = 10:16}
+m2 <- zeroinfl(cigsPerDay ~ education + 
+                 diabetes + age | age, 
+               data = heart_data)
+summary(m2)
+```
+]
+
+---
+
+### Likelihood ratio test
+
+.large[
+
+```{r}
+m2 <- zeroinfl(cigsPerDay ~ education + 
+                 diabetes + age | age, 
+               data = heart_data)
+m2$loglik
+```
+
+```{r}
+m1 <- zeroinfl(cigsPerDay ~ education + 
+                 diabetes | age, 
+               data = heart_data)
+m1$loglik
+```
+]
+
+---
+
+### Class activity, Part II
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_26.html](https://sta214-s23.github.io/class_activities/ca_lecture_26.html)
+]
+
+---
+
+### Assessing the shape assumption
+
+```{r, echo=F, message=F, warning=F, fig.align='center', fig.width=10, fig.height=7}
+library(pscl)
+library(tidyverse)
+library(statmod)
+library(gridExtra)
+
+glm.pospois <- function(poisson_glm){
+  x_mat <- model.matrix(poisson_glm)
+  y <- poisson_glm$y
+  
+  y_pos <- y[y > 0]
+  x_mat_pos <- x_mat[y > 0,]
+  beta0 <- poisson_glm$coefficients
+  
+  U <- function(beta){
+    l <- exp(c(x_mat_pos %*% beta))
+    c(t(x_mat_pos) %*% (y_pos - l/(1 - exp(-l))))
+  }
+  
+  I <- function(beta){
+    l <- exp(c(x_mat_pos %*% beta))
+    D <- diag(l * (1 - exp(-l)*(1 + l))/((1 - exp(-l))^2))
+    t(x_mat_pos) %*% D %*% x_mat_pos
+  }
+  
+  beta_old <- beta0
+  for(i in 1:10){
+    beta_new <- beta_old + solve(I(beta_old)) %*% U(beta_old)
+    beta_old <- beta_new
+  }
+  
+  output <- list("coefficients" = beta_new,
+                 "y" = y_pos,
+                 "x" = x_mat_pos)
+  return(output)
+  
+}
+
+
+## functions for quantile residual plots
+
+## randomized quantile residuals for positive poisson data
+## m = fitted positive poisson regression model
+qresid_positive_poisson <- function(m){
+  y <- m$y
+  lambdas <- exp(m$x %*% m$coefficients)
+  
+  resids <- c()
+  for(i in 1:length(y)){
+    cdf_b <- (ppois(y[i], lambdas[i]) - ppois(0, lambdas[i]))/(1 - ppois(0, lambdas[i]))
+    cdf_a <- (ppois((y[i]-1), lambdas[i]) - ppois(0, lambdas[i]))/(1 - ppois(0, lambdas[i]))
+    resids[i] <- qnorm(runif(1, cdf_a, cdf_b))
+  }
+  return(resids)
+}
+
+
+## randomized quantile residuals for a ZIP model
+## zip_m = fitted ZIP model from pscl
+qresid_zeroinfl <- function(zip_m){
+  y <- zip_m$y
+  pred_probs <- predict(zip_m, type="prob")
+  resids <- c()
+  for(i in 1:length(y)){
+    cdf_b <- sum(pred_probs[i,1:(y[i]+1)])
+    if(y[i] == 0){
+      cdf_a <- 0
+    } else {
+      cdf_a <- sum(pred_probs[i,1:y[i]])
+    }
+    
+    resids[i] <- qnorm(runif(1, cdf_a, cdf_b))
+  }
+  return(resids)
+}
+
+
+# Now let's see how to do diagnostics for ZIP models
+
+## Simulate some data where both the Poisson and logistic assumptions
+## are met
+
+x <- rnorm(1000)
+alpha <- exp(x)/(1 + exp(x))
+lambda <- exp(1 + x)
+z <- rbinom(1000, 1, prob=alpha)
+y <- 0*z + rpois(1000, lambda)*(1 - z)
+
+## Fit a ZIP model and make a quantile residual plot
+## Estimated coefficients are close to the true parameters
+## The plot looks good
+
+m <- zeroinfl(y ~ x | x)
+# summary(m)
+
+p1 <- data.frame(x = x, resids = qresid_zeroinfl(m)) %>%
+  ggplot(aes(x = x, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  theme_bw() +
+  labs(title = "All assumptions satisfied")
+
+
+
+
+## Now simulate data where the Poisson assumption is violated
+
+x <- rnorm(1000)
+alpha <- exp(x)/(1 + exp(x))
+lambda <- exp(1 + x + 0.5*x^2)
+z <- rbinom(1000, 1, prob=alpha)
+y <- 0*z + rpois(1000, lambda)*(1 - z)
+
+## Fit a ZIP model and make a quantile residual plot
+## Estimated coefficients are wrong
+## The plot looks bad
+
+m <- zeroinfl(y ~ x | x)
+# summary(m)
+
+p2 <- data.frame(x = x, resids = qresid_zeroinfl(m)) %>%
+  ggplot(aes(x = x, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  theme_bw() +
+  labs(title = "Poisson shape assumption violated")
+
+
+## Finally, simulate data where the logistic assumption is violated
+## Quantile residual plot doesn't look right!
+
+x <- rnorm(1000)
+alpha <- exp(-2*x^2)/(1 + exp(-2*x^2))
+lambda <- exp(1 + x)
+z <- rbinom(1000, 1, prob=alpha)
+y <- 0*z + rpois(1000, lambda)*(1 - z)
+
+m <- zeroinfl(y ~ x | x)
+# summary(m)
+
+p3 <- data.frame(x = x, resids = qresid_zeroinfl(m)) %>%
+  ggplot(aes(x = x, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  theme_bw() +
+  labs(title = "Logistic shape assumption violated")
+
+grid.arrange(p1, p2, p3, ncol=2)
+```

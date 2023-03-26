@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Zero inflated models</title>
+    <meta charset="utf-8" />
+    <script src="libs/header-attrs-2.16/header-attrs.js"></script>
+    <link rel="stylesheet" href="lab-slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# Zero inflated models
+]
+
+---
+
+
+
+
+
+### Data: Framingham heart study
+
+.large[
+Data collected on residents of Framingham, MA over a long period of time, to study variables related to heart health. We will work with a subset of the data, containing
+
+* `cigsPerDay`: The number of cigarettes smoked per day during the study period.
+* `education`: 1 = High School, 2 = Some College, 3 = College Degree, 4 = Advanced Degree.
+* `male`: 1 = Male, 0 = Female.
+* `age`: The age of the individual in years.
+* `diabetes`: 1 if the individual has diabetes, 0 otherwise.
+
+.question[
+Why might we see zero inflation in the number of cigarettes smoked per day?
+]
+
+]
+
+---
+
+### EDA: number of cigarettes smoked
+
+&lt;img src="lecture_26_files/figure-html/unnamed-chunk-2-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+### Class activity, Part I
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_26.html](https://sta214-s23.github.io/class_activities/ca_lecture_26.html)
+]
+
+---
+
+### Class activity
+
+`$$P(Y_i = y) = \begin{cases} e^{-\lambda_i}(1 - \alpha_i) + \alpha_i &amp; y = 0 \\ \dfrac{e^{-\lambda_i} \lambda_i^y}{y!}(1 - \alpha_i) &amp; y &gt; 0 \end{cases}$$`
+
+`$$\log \left( \dfrac{\widehat{\alpha}_i}{1 - \widehat{\alpha}_i} \right) = -2.51 + 0.051 Age_i$$`
+
+`$$\log(\widehat{\lambda}_i) = 2.93 -0.022 EducationSome_i -0.067 EducationCollege_i + \\ 0.009 EducationAdv_i - 0.046 Diabetes_i$$`
+
+.large[
+.question[
+How do we interpret the coefficient -0.046 in the fitted model?
+]
+]
+
+---
+
+### Class activity
+
+`$$P(Y_i = y) = \begin{cases} e^{-\lambda_i}(1 - \alpha_i) + \alpha_i &amp; y = 0 \\ \dfrac{e^{-\lambda_i} \lambda_i^y}{y!}(1 - \alpha_i) &amp; y &gt; 0 \end{cases}$$`
+
+`$$\log \left( \dfrac{\widehat{\alpha}_i}{1 - \widehat{\alpha}_i} \right) = -2.51 + 0.051 Age_i$$`
+
+`$$\log(\widehat{\lambda}_i) = 2.93 -0.022 EducationSome_i -0.067 EducationCollege_i + \\ 0.009 EducationAdv_i - 0.046 Diabetes_i$$`
+
+.large[
+.question[
+What is the estimated probability that a 50 year old does not smoke?
+]
+]
+
+---
+
+### Class activity
+
+`$$P(Y_i = y) = \begin{cases} e^{-\lambda_i}(1 - \alpha_i) + \alpha_i &amp; y = 0 \\ \dfrac{e^{-\lambda_i} \lambda_i^y}{y!}(1 - \alpha_i) &amp; y &gt; 0 \end{cases}$$`
+
+`$$\log \left( \dfrac{\widehat{\alpha}_i}{1 - \widehat{\alpha}_i} \right) = -2.51 + 0.051 Age_i$$`
+
+`$$\log(\widehat{\lambda}_i) = 2.93 -0.022 EducationSome_i -0.067 EducationCollege_i + \\ 0.009 EducationAdv_i - 0.046 Diabetes_i$$`
+
+.large[
+.question[
+What is the expected number of cigarettes smoked per day, for a smoker with diabetes and some college education?
+]
+]
+
+---
+
+### Class activity
+
+`$$P(Y_i = y) = \begin{cases} e^{-\lambda_i}(1 - \alpha_i) + \alpha_i &amp; y = 0 \\ \dfrac{e^{-\lambda_i} \lambda_i^y}{y!}(1 - \alpha_i) &amp; y &gt; 0 \end{cases}$$`
+
+`$$\log \left( \dfrac{\widehat{\alpha}_i}{1 - \widehat{\alpha}_i} \right) = -2.51 + 0.051 Age_i$$`
+
+`$$\log(\widehat{\lambda}_i) = 2.93 -0.022 EducationSome_i -0.067 EducationCollege_i + \\ 0.009 EducationAdv_i - 0.046 Diabetes_i$$`
+
+.large[
+.question[
+What is the probability that a 45 year old college graduate without diabetes smokes one cigarette per day?
+]
+]
+
+---
+
+### Making predictions
+
+`$$P(Y_i = y) = \begin{cases} e^{-\lambda_i}(1 - \alpha_i) + \alpha_i &amp; y = 0 \\ \dfrac{e^{-\lambda_i} \lambda_i^y}{y!}(1 - \alpha_i) &amp; y &gt; 0 \end{cases}$$`
+
+`$$\log \left( \dfrac{\widehat{\alpha}_i}{1 - \widehat{\alpha}_i} \right) = -2.51 + 0.051 Age_i$$`
+
+`$$\log(\widehat{\lambda}_i) = 2.93 -0.022 EducationSome_i -0.067 EducationCollege_i + \\ 0.009 EducationAdv_i - 0.046 Diabetes_i$$`
+
+.large[
+.question[
+How would I estimate the expected number of cigarettes smoked per day, by a college graduate without diabetes?
+]
+]
+
+---
+
+### A new question
+
+`$$P(Y_i = y) = \begin{cases} e^{-\lambda_i}(1 - \alpha_i) + \alpha_i &amp; y = 0 \\ \dfrac{e^{-\lambda_i} \lambda_i^y}{y!}(1 - \alpha_i) &amp; y &gt; 0 \end{cases}$$`
+
+`$$\log \left( \dfrac{\alpha_i}{1 - \alpha_i} \right) = \gamma_0 + \gamma_1 Age_i$$`
+
+`$$\log(\lambda_i) = \beta_0 + \beta_1 EducationSome_i + \beta_2 EducationCollege_i + \\ \beta_3 EducationAdv_i + \beta_4 Diabetes_i$$`
+.large[
+.question[
+New research question: for smokers, does the number of cigarettes smoked per day depend on age?
+
+How would we answer this research question?
+]
+]
+
+---
+
+### Wald test
+
+.large[
+
+```r
+m2 &lt;- zeroinfl(cigsPerDay ~ education + 
+                 diabetes + age | age, 
+               data = heart_data)
+summary(m2)
+```
+
+```
+...
+##               Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)  3.2063437  0.0342290  93.673  &lt; 2e-16 ***
+## education2  -0.0441195  0.0124809  -3.535 0.000408 ***
+## education3  -0.0820388  0.0158604  -5.173 2.31e-07 ***
+## education4  -0.0062453  0.0171640  -0.364 0.715965    
+## diabetes    -0.0241419  0.0386336  -0.625 0.532042    
+## age         -0.0056183  0.0006738  -8.338  &lt; 2e-16 ***
+...
+```
+]
+
+---
+
+### Likelihood ratio test
+
+.large[
+
+
+```r
+m2 &lt;- zeroinfl(cigsPerDay ~ education + 
+                 diabetes + age | age, 
+               data = heart_data)
+m2$loglik
+```
+
+```
+## [1] -14023.42
+```
+
+
+```r
+m1 &lt;- zeroinfl(cigsPerDay ~ education + 
+                 diabetes | age, 
+               data = heart_data)
+m1$loglik
+```
+
+```
+## [1] -14058.41
+```
+]
+
+---
+
+### Class activity, Part II
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_26.html](https://sta214-s23.github.io/class_activities/ca_lecture_26.html)
+]
+
+---
+
+### Assessing the shape assumption
+
+&lt;img src="lecture_26_files/figure-html/unnamed-chunk-6-1.png" style="display: block; margin: auto;" /&gt;
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
