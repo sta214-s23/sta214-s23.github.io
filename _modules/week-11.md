@@ -21,3 +21,4 @@ March 24
 : Textbook 4.10
 
 : **HW 8 released**{: .label .label-yellow }
+  : [HW 8](https://sta214-s23.github.io/homework/HW8.pdf)

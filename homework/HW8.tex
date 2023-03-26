@@ -1,0 +1,90 @@
+\documentclass[11pt]{article}
+\usepackage{url}
+\usepackage{alltt}
+\usepackage{bm}
+\linespread{1}
+\textwidth 6.5in
+\oddsidemargin 0.in
+\addtolength{\topmargin}{-1in}
+\addtolength{\textheight}{2in}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{hyperref}
+
+\begin{document}
+
+
+\begin{center}
+\Large
+STA 214 Homework 8\\
+\normalsize
+\vspace{5mm}
+\end{center}
+
+\noindent \textbf{Due:} Friday, March 31, 12:00pm (noon) on Canvas.\\ 
+
+\noindent \textbf{Instructions:} In this assignment, you will use count regression to model book purchases from Amazon.\\
+
+\noindent \textbf{Getting started:} Begin by downloading the HW8 template from the course website:\\
+
+\url{https://sta214-s23.github.io/homework/hw_08_template.Rmd}\\
+
+\noindent Save this template file to your computer, then open it in RStudio. As you complete the assignment, you will write down your answers to all questions in the R Markdown file, and include all R code in code chunks. \textit{If a question requires code, you will not receive credit if no code is provided.} Refer to the R Markdown instructions on the course website (\url{https://sta214-s23.github.io/resources/rmarkdown_instructions/}) if you have issues getting started.\\
+
+\noindent \textbf{Submission:} When you have completed the assignment, knit your homework to HTML and submit on Canvas. 
+
+\section*{Data Analysis}
+
+In this assignment, you will model the number of purchases of different kinds of books on Amazon. We have a random sample of data from a particular book seller on how many books were purchase from their Amazon store in the last 30 days. Your report will be given to this (imaginary) bookseller who wants you to tell them what kinds of books they might want to stock, or not stock, in their Amazon store for next month. What characteristics might be related to a book that sells a lot of copies? One that sells very few? And so on.\\
+
+\noindent Note: You may assume there are no season buying patterns we need to be aware of (no holiday spending or extraordinary sales). In other words, you can assume there is nothing special about the month of data you have, nor the month you are predicting for, that would impact book buying habits.
+
+Your variables include:
+\begin{itemize}
+\item title: The title of the Book
+\item author: The author of the book
+\item rating: An average score the book has received on Amazon.
+\item purchases: The number of copies of the book purchased in the last 30 days.
+\item price: The price of the book in US. Dollars.
+\item publisher: The company that published the book.
+\item page\_count: The number of pages in the book.
+\item ISBN: a unique numeric identifier for the book.
+\item published\_date: The date the book was published.
+\item Year: the year in which the book was published
+\item genre: the book's genre (Fiction, Fantasy, Mystery, Business, General Interest, Comics and Graphic Novels, or Other.
+\end{itemize}
+
+\noindent You can load the data into R by
+\begin{verbatim}
+books <- read.csv("https://sta712-f22.github.io/homework/books.csv")
+\end{verbatim}
+
+\begin{enumerate}
+
+\item Let's begin with some EDA.
+\begin{enumerate}
+\item Create a plot showing the distribution of the number of copies purchased in the last 30 days. Summarize the shape of the distribution, and calculate the mean and variance.
+
+\item Create empirical log means plots to explore the relationships between quantitative explanatory variables and the number of purchases. Do you think any transformations are necessary?
+
+\item Do you think we need to include an offset in our model? If so, what would the offset be?
+
+\item Using your exploratory data analysis, write down an equation for the \textit{systematic} component of a count regression model to predict the number of copies purchased (we will choose a random component in the next question). Include any explanatory variables that you think will be helpful for your client (the bookseller who wants to know which books to stock), and use any transformations you deemed necessary from the empirical log means plots.
+\end{enumerate}
+
+\item Next, we need to choose an appropriate model for our response variable (\texttt{purchases}). Use a goodness-of-fit test for Poisson data and quantile residual plots to decide between Poisson, quasi-Poisson, and negative binomial models. Use the systematic component from 1(c) for each model.
+
+\item Using your chosen model from question 2, complete model diagnostics for the fitted model:
+\begin{itemize}
+\item Calculate Cook's distance to check for any influential points (use a threshold of 0.5 or 1 to identify influential points)
+\item Calculate variance inflation factors to check for multicollinearity (see the \verb;vif; function in the \verb;car; package, and use a threshold of 5 or 10 to identify high multicollinearity)
+\end{itemize}
+If there are any violations, modify your model to address the violations and report your final fitted model.
+
+\item Using your final fitted model, write a paragraph to your client explaining which factors can help them choose which books to stock. Which characteristics are related to books that sell many copies, and which characteristics are related to books that sell very few?
+
+\end{enumerate}
+
+
+\end{document}
