@@ -9,7 +9,7 @@ March 27
 : Textbook 4.10
 
 March 29
-: ZIP models
+: ZIP models, work time
   : [Slides](https://sta214-s23.github.io/slides/lecture_27.pdf), [Class activity](https://sta214-s23.github.io/class_activities/ca_lecture_27.html)
 
 : Textbook 4.10
