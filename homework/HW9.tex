@@ -1,0 +1,158 @@
+\documentclass[11pt]{article}
+\usepackage{url}
+\usepackage{alltt}
+\usepackage{bm}
+\linespread{1}
+\textwidth 6.5in
+\oddsidemargin 0.in
+\addtolength{\topmargin}{-1in}
+\addtolength{\textheight}{2in}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{hyperref}
+
+\begin{document}
+
+
+\begin{center}
+\Large
+STA 214 Homework 9\\
+\normalsize
+\vspace{5mm}
+\end{center}
+
+\noindent \textbf{Due:} Friday, April 7, 12:00pm (noon) on Canvas.\\ 
+
+\noindent \textbf{Instructions:} There are two parts to this assignment. In the first part, you will use ZIP models to model the number of fish caught by groups of campers in a state park. In the second part, you will conduct a small simulation study to compare the performance of ZIP models with regular Poisson models when there is zero-inflation in the data.\\
+
+\noindent \textbf{Getting started:} Begin by downloading the HW9 template from the course website:\\
+
+\url{https://sta214-s23.github.io/homework/hw_09_template.Rmd}\\
+
+\noindent Save this template file to your computer, then open it in RStudio. As you complete the assignment, you will write down your answers to all questions in the R Markdown file, and include all R code in code chunks. \textit{If a question requires code, you will not receive credit if no code is provided.} Refer to the R Markdown instructions on the course website (\url{https://sta214-s23.github.io/resources/rmarkdown_instructions/}) if you have issues getting started.\\
+
+\noindent \textbf{Submission:} When you have completed the assignment, knit your homework to HTML and submit on Canvas. 
+
+\section*{Data Analysis}
+
+In the first part of this assignment, you will model the number of fish caught by campers in a state park. We have a sample of 250 groups of park guests who visited the state park. For each group, we record:
+
+\begin{itemize}
+\item \texttt{count}: the number of fish caught by the group during their stay
+\item \texttt{camper}: whether the group brought a camper van into the park (0 = no, 1 = yes)
+\item \texttt{child}: the number of children in the group
+\item \texttt{persons}: the total number of people in the group (including children)
+\item \texttt{LOS}: length of stay (in days)
+\end{itemize}
+
+\noindent You can load the data into R by
+\begin{verbatim}
+books <- read.csv("https://sta214-s23.github.io/homework/fish2.csv")
+\end{verbatim}
+
+\begin{enumerate}
+
+\item Let's begin by thinking about the variables available in the data.
+\begin{enumerate}
+\item Create a plot showing the distribution of the number of fish caught.
+
+
+\item Using the plot, explain why a zero-inflated Poisson model will be helpful for modeling this variable. What would the latent variable represent in this data? (Recall that in the campus drinking data, the latent variable indicated whether the student ever drank; in the Framingham heart data, the latent variable indicated whether the participant was a smoker or non-smoker).
+
+\item Explain why $\log(LOS)$ should be used as an offset term when modeling the number of fish caught.
+\end{enumerate}
+
+\item Park rangers at the state park wonder whether groups with many children tend to catch fewer fish. They ask you to fit a model to investigate their hypothesis, and they want you to account for the total number of visitors in the group and whether the group brought a camper van (they suspect that camper vans make noise that scares away the fish).
+
+\begin{enumerate}
+\item Write down a ZIP model that allows you to investigate the researchers' hypothesis.
+\begin{itemize}
+\item Write down the probability function, and the logistic and Poisson components
+\item Without further information, we generally include the same explanatory variables in both the logistic and Poisson components of the ZIP model
+\item Include the offset term from question 1(c). Offset terms are included \textit{only} in the Poisson component.
+\end{itemize}
+
+\item Use the \texttt{zeroinfl} function from the \texttt{pscl} package to fit the model in R:
+
+\begin{verbatim}
+m1 <- zeroinfl(count ~ ... | ...,
+               offset = ...,
+               data = fish2)
+\end{verbatim}
+
+\item Interpret the fitted coefficients for \texttt{child} in the logistic and Poisson components of the model.
+
+\item Construct confidence intervals for the two coefficients in (c).
+\end{enumerate}
+
+\item Now let's make some predictions.
+
+\begin{enumerate}
+\item What is the predicted probability that a 3-person group with 0 children and no camper van, who stayed for 3 days, caught \textit{at least one} fish during their stay?
+
+\item What is the estimated number of fish caught by a 5-person group with 3 children in a camper van, who stayed for 7 days?
+\end{enumerate}
+
+\item Finally, let's use hypothesis testing to answer the research question. The park rangers want to know whether groups with more children catch fewer fish.
+
+\begin{enumerate}
+\item Are groups with more children less likely to go fishing? Carry out a hypothesis test: state the null and alternative hypotheses, report the test statistic, and make a conclusion in context.
+
+\item D groups with more children, who \textit{do} go fishing, catch fewer fish per day? Carry out a hypothesis test: state the null and alternative hypotheses, report the test statistic, and make a conclusion in context.
+\end{enumerate}
+
+\end{enumerate}
+
+\newpage
+
+\section*{Simulation study}
+
+We introduced ZIP models as a method to handle zero-inflation in count data. But what happens if we just ignore the zero-inflation, and fit a simpler count model (e.g., a Poisson model) instead? The goal of this section is to use simulations to explore what happens when we ignore possible zero-inflation.\\
+
+\noindent The code below generates data $(X_1, Y_1),...,(X_n, Y_n)$ from the model
+$$X_i \sim N(0, 1)$$
+$$P(Y_i = y) = \begin{cases} e^{-\lambda_i}(1 - \alpha_i) + \alpha_i & y = 0 \\ \dfrac{e^{-\lambda_i} \lambda_i^y}{y!}(1 - \alpha_i) & y > 0 \end{cases}$$
+$$\log \left( \dfrac{\alpha_i}{1 - \alpha_i} \right) = \gamma_0$$
+$$\log(\lambda_i) = \beta_0 + \beta_1 X_i$$
+and then fits two models: a Poisson model, and a ZIP model.\\
+
+\noindent \textbf{Code:}
+\begin{verbatim}
+# simulate data
+n <- 1000
+x <- rnorm(n)
+gamma0 <- 0
+beta0 <- 1
+beta1 <- 1
+alpha <- exp(gamma0)/(1 + exp(gamma0))
+lambda <- exp(beta0 + beta1*x)
+z <- rbinom(n, 1, prob=alpha)
+y <- 0*z + rpois(n, lambda)*(1 - z)
+
+# fit Poisson and ZIP models
+m_pois <- glm(y ~ x, family = poisson)
+m_zip <- zeroinfl(y ~ x | x)
+\end{verbatim}
+
+\begin{enumerate}
+\item[5.] 
+\begin{enumerate}
+\item Run the provided code, and report the estimated coefficients for the Poisson and ZIP models. Which estimates of $\widehat{\beta}_0$ and $\widehat{\beta}_1$ are closer to the truth -- the Poisson estimates or the ZIP estimates?
+\item Calculate a 95\% confidence interval for $\beta_1$ using the Poisson model. Does your interval contain $\beta_1$?
+\item Calculate a 95\% confidence interval for $\beta_1$ using the ZIP model. Does your interval contain $\beta_1$?
+\end{enumerate}
+
+\item[6.] Repeat question 5 many times. What fraction of your confidence intervals contain $\beta_1$ for the Poisson model? For the ZIP model?
+
+\item[7.] In the simple ZIP model above, $\gamma_0$ controls the amount of zero-inflation. When $\gamma_0 = 0$, 50\% of the data will be excess 0s. Smaller (more negative) values of $\gamma_0$ result in less zero-inflation, while larger values of $\gamma_0$ result in more zero-inflation.
+
+\begin{enumerate}
+\item Repeat question 6 for different values of $\gamma_0$, and make a plot showing the coverage of Poisson and ZIP confidence intervals for different values of $\gamma_0$.
+
+\item At what value of $\gamma_0$ do we see a noticeable difference in coverage for the Poisson and ZIP model intervals?
+\end{enumerate}
+\end{enumerate}
+
+
+\end{document}

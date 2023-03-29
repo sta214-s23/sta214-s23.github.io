@@ -1,9 +1,9 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2021) (preloaded format=pdflatex 2021.8.13)  28 MAR 2023 15:00
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2021) (preloaded format=pdflatex 2021.8.13)  29 MAR 2023 10:37
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**HW8.tex
-(./HW8.tex
+**HW9.tex
+(./HW9.tex
 LaTeX2e <2020-10-01> patch level 4
 L3 programming layer <2021-02-18>
 (/usr/local/texlive/2021/texmf-dist/tex/latex/base/article.cls
@@ -247,8 +247,8 @@ File: l3backend-pdftex.def 2021-03-18 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count275
 \l__pdf_internal_box=\box49
 )
-(./HW8.aux)
-\openout1 = `HW8.aux'.
+(./HW9.aux)
+\openout1 = `HW9.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 15.
 LaTeX Font Info:    ... okay on input line 15.
@@ -284,9 +284,9 @@ Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
 LaTeX Info: Redefining \ref on input line 15.
 LaTeX Info: Redefining \pageref on input line 15.
 LaTeX Info: Redefining \nameref on input line 15.
- (./HW8.out) (./HW8.out)
+ (./HW9.out) (./HW9.out)
 \@outlinefile=\write3
-\openout3 = `HW8.out'.
+\openout3 = `HW9.out'.
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 25--26
@@ -323,38 +323,50 @@ Underfull \hbox (badness 10000) in paragraph at lines 33--34
 
  []
 
-
-Underfull \hbox (badness 10000) in paragraph at lines 39--40
-
- []
-
 [1
 
 {/usr/local/texlive/2021/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
-[2] (./HW8.aux)
-Package rerunfilecheck Info: File `HW8.out' has not changed.
+[2]
+Underfull \hbox (badness 10000) in paragraph at lines 111--112
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 117--119
+
+ []
+
+[3] [4] (./HW9.aux)
+Package rerunfilecheck Info: File `HW9.out' has not changed.
 (rerunfilecheck)             Checksum: D41D8CD98F00B204E9800998ECF8427E;0.
  ) 
 Here is how much of TeX's memory you used:
- 8190 strings out of 478994
- 118175 string characters out of 5858184
- 417029 words of memory out of 5000000
- 25570 multiletter control sequences out of 15000+600000
+ 8204 strings out of 478994
+ 118262 string characters out of 5858184
+ 419029 words of memory out of 5000000
+ 25569 multiletter control sequences out of 15000+600000
  412308 words of font info for 59 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 71i,4n,74p,542b,387s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 71i,9n,74p,517b,469s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc
 }</usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb>
 </usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb><
-/usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></u
-sr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr
-/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/
-local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/l
-ocal/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
-Output written on HW8.pdf (2 pages, 93647 bytes).
+/usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></
+usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></u
+sr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr
+/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/l
+ocal/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/loc
+al/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local
+/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/te
+xlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/tex
+live/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texli
+ve/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texliv
+e/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive
+/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
+Output written on HW9.pdf (4 pages, 157104 bytes).
 PDF statistics:
- 60 PDF objects out of 1000 (max. 8388607)
- 48 compressed objects within 1 object stream
- 12 named destinations out of 1000 (max. 500000)
+ 112 PDF objects out of 1000 (max. 8388607)
+ 91 compressed objects within 1 object stream
+ 27 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 
