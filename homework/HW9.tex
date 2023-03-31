@@ -48,7 +48,7 @@ In the first part of this assignment, you will model the number of fish caught b
 
 \noindent You can load the data into R by
 \begin{verbatim}
-books <- read.csv("https://sta214-s23.github.io/homework/fish2.csv")
+fish <- read.csv("https://sta214-s23.github.io/homework/fish2.csv")
 \end{verbatim}
 
 \begin{enumerate}
@@ -78,7 +78,7 @@ books <- read.csv("https://sta214-s23.github.io/homework/fish2.csv")
 \begin{verbatim}
 m1 <- zeroinfl(count ~ ... | ...,
                offset = ...,
-               data = fish2)
+               data = fish)
 \end{verbatim}
 
 \item Interpret the fitted coefficients for \texttt{child} in the logistic and Poisson components of the model.
