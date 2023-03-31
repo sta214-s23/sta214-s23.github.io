@@ -756,6 +756,493 @@ titanic %>%
 Looks a bit better!
 
 
+# Poisson regression (and variants)
+
+In this section, we will work with the PhD `articles` data from class on March 3. Our data contains information on 915 biochemistry PhD students, with variables
+
+* `art`: articles published in last three years of Ph.D.
+* `fem`: gender (recorded as male or female)
+* `mar`: marital status (recorded as married or single)
+* `kid5`: number of children under age six
+* `phd`: prestige of Ph.D. program
+* `ment`: articles published by their mentor in last three years
+
+The data can be loaded by:
+
+```{r message=F, warning=F}
+library(foreign)
+articles <- read.dta("http://www.stata-press.com/data/lf2/couart2.dta")
+```
+
+## Count variables and the Poisson distribution
+
+Suppose we want to model the number of articles published by each student. This is a *count* variable: it takes values 0, 1, 2, 3, etc. (non-negative integers). Here is a histogram showing the distribution of the number of articles published in the `articles` data:
+
+```{r}
+articles %>%
+  ggplot(aes(x = art)) +
+  geom_histogram(bins = 15) +
+  theme_bw() +
+  labs(x = "Number of articles published")
+```
+
+We can see that this is a unimodal, right-skewed count distribution. How should we model such a variable? One option is the *Poisson* distribution: we say that $Y \sim Poisson(\lambda)$ if 
+$$P(Y = y) = \frac{e^{-\lambda}\lambda^y}{y!}$$
+The value of $\lambda$ changes the Poisson distribution: $\lambda$ is both the mean and variance of the distribution, so as $\lambda$ increases, the distribution shifts right and becomes more spread out. Here are some plots showing samples from Poisson distributions with different values of $\lambda$:
+
+```{r echo=F, message=FALSE, warning=F, fig.align='center', fig.width=8, fig.height=6}
+library(gridExtra)
+
+set.seed(3)
+
+x1 <- rpois(1000, 15)
+x2 <- rpois(1000, 4)
+x3 <- rpois(1000, 2)
+x4 <- rpois(1000, 7)
+
+p1 <- data.frame(Count = x1) %>%
+  ggplot(aes(x = Count)) +
+  geom_bar() +
+  labs(title = "lambda = 15") +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  scale_x_continuous(limits=c(0, 25))
+
+p2 <- data.frame(Count = x2) %>%
+  ggplot(aes(x = Count)) +
+  geom_bar() +
+  labs(title = "lambda = 4") +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  scale_x_continuous(limits=c(0, 25))
+
+p3 <- data.frame(Count = x3) %>%
+  ggplot(aes(x = Count)) +
+  geom_bar() +
+  labs(title = "lambda = 2") +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  scale_x_continuous(limits=c(0, 25))
+
+p4 <- data.frame(Count = x4) %>%
+  ggplot(aes(x = Count)) +
+  geom_bar() +
+  labs(title = "lambda = 7") +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  scale_x_continuous(limits=c(0, 25))
+
+grid.arrange(p1, p2, p3, p4, ncol=2)
+```
+
+## Fitting a Poisson regression model
+
+Suppose that we want to model the number of articles published, using the number of articles published by the a student's mentor and the prestige of their PhD program as the explanatory variables. Our population model is
+
+$$Articles_i \sim Poisson(\lambda_i)$$
+
+$$\log(\lambda_i) = \beta_0 + \beta_1 Prestige_i + \beta_2 Mentor_i$$
+The *random component* specifies that we are using a Poisson distribution for the response, with parameter $\lambda_i$. Our systematic component tells us that $\lambda_i$ depends on prestige and the number of mentor articles. We use $\log(\lambda_i)$ as our link function, because $\lambda_i \in (0, \infty)$ and so $\log(\lambda_i) \in (-\infty, \infty)$.
+
+To fit this model in R, we use the `glm` function, and specify `family=poisson`:
+
+```{r}
+m_art <- glm(art ~ phd + ment, family = poisson, data = articles)
+summary(m_art)
+```
+
+## Interpreting coefficients
+
+The coefficients of a Poisson regression model can be interpret on the *log* scale, or on the original scale of the data. For example, in the model above, $\widehat{\beta}_1 = 0.012$. This means that a one-unit increase in PhD prestige is associated with an increase of 0.012 in the log-mean number of articles published by PhD students, after accounting for the number of articles published by their mentor. Or, a one-unit increase in PhD prestige is associated with an increase in the *mean* number of articles published by a PhD student by a *factor* of $\exp{0.012} = 1.012$, after accounting for the number of articles published by their mentor.
+
+## Assumptions and diagnostics
+
+The Poisson regression model makes several assumptions:
+
+* Shape: the log mean is a linear function of the explanatory variables (we can use transformed explanatory variables if needed)
+* Distribution: the Poisson distribution is a reasonable distribution for the response variable
+* Independence: the observed data are independent (needed for maximum likelihood estimation)
+
+To generally assess whether the proposed model is a good fit to the data, we can use a goodness-of-fit test. To explore the shape assumption, we can use empirical log means plots and quantile residual plots. To explore the distribution assumption, we can use a quantile residual plot.
+
+### Goodness-of-fit
+
+The goodness-of-fit test tests the hypotheses
+
+$$H_0: \text{ the model is a good fit to the data}$$
+$$H_A: \text{ the model is not a good fit to the data}$$
+
+**For a Poisson regression model**, if the model is a good fit, then the *residual deviance* should follow a $\chi^2_{n-p}$ distribution, where $n$ is the number of observations in the data and $p$ is the number of parameters in the model (including the intercept).
+
+In the model above, the residual deviance is 1669.4 and $n - p = 912$. Our p-value for the goodness-of-fit test is therefore
+
+```{r}
+pchisq(1669.4, 912, lower.tail=F)
+```
+
+Our p-value is very close to 0, so perhaps our model is not a good fit to the data. This could occur if we need to include more variables in the model, if our shape assumption is violated, or if the Poisson distribution was the wrong choice.
+
+**Important note:** The goodness-of-fit test cannot be used with binary logistic regression, quasi-Poisson models, or negative binomial models. In this course, only the Poisson model allows the goodness-of-fit test
+
+### Empirical log means plots
+
+The following R function can be used to create empirical log means plots:
+
+```{r}
+logmean_plot <- function(data, num_bins, bin_method,
+                         x, y, grouping = NULL, reg_formula = y ~ x){
+  
+  if(is.null(grouping)){
+    dat <- data.frame(x = data[,x], 
+                      y = data[,y],
+                      group = 1)
+  } else {
+    dat <- data.frame(x = data[,x], 
+                      y = data[,y],
+                      group = data[,grouping])
+  }
+  
+  if(bin_method == "equal_size"){
+    log_table <- dat %>%
+      drop_na() %>%
+      arrange(group, x) %>%
+      group_by(group) %>%
+      mutate(obs = y,
+             bin = rep(1:num_bins,
+                       each=ceiling(n()/num_bins))[1:n()]) %>%
+      group_by(bin, group) %>%
+      summarize(mean_x = mean(x),
+                mean_y = mean(obs),
+                num_obs = n()) %>%
+      ungroup() %>%
+      mutate(log_mean = log(mean_y))
+  } else {
+    log_table <- dat %>%
+      drop_na() %>%
+      group_by(group) %>%
+      mutate(obs = y,
+             bin = cut(x, 
+                       breaks = num_bins,
+                       labels = F)) %>%
+      group_by(bin, group) %>%
+      summarize(mean_x = mean(x),
+                mean_y = mean(obs),
+                num_obs = n()) %>%
+      ungroup() %>%
+      mutate(log_mean = log(mean_y))
+  }
+  
+  if(is.null(grouping)){
+    log_table %>%
+      ggplot(aes(x = mean_x,
+                 y = log_mean)) +
+      geom_point() +
+      geom_smooth(se=F, method="lm", formula = reg_formula) +
+      theme_bw() +
+      labs(x = x,
+           y = "Empirical log mean count")
+  } else {
+    log_table %>%
+      ggplot(aes(x = mean_x,
+                 y = log_mean,
+                 color = group,
+                 shape = group)) +
+      geom_point() +
+      geom_smooth(se=F, method="lm", formula = reg_formula) +
+      theme_bw() +
+      labs(x = x,
+           y = "Empirical log mean count",
+           color = grouping,
+           shape = grouping)
+  }
+  
+}
+```
+
+**Arguments:**
+
+* `data`: the dataset of interest (e.g., `titanic`)
+* `num_bins`: the number of bins to use
+  * The number of bins should be chosen based on the size of the data. For example, with `bin_method = "equal_size"`, we probably want at least 15 observations per bin, so `num_bins` < (number of observations)/15
+* `bin_method`: whether to choose bins with the same number of observations (`"equal_size"`) or the same width (`"equal_width"`)
+* `x`: the name of the column containing the explanatory variable (e.g., `"phd"`). The quotation marks are needed
+* `y`: the name of the column containing the response (e.g., `"art"`). The quotation marks are needed
+* `grouping`: the name of a categorical variable in the data; fit a separate line for each level of the categorical variable
+* `reg_formula`: This is the shape of the relationship you want to plot. If you want a line, this is y ~ x (the default). Some other examples:
+  * `y ~ log(x)` : a log transformation of x
+  * `y ~ sqrt(x)` : a square root transformation of x
+  * `y ~ poly(x, 2)` : a second-order polynomial
+  * `y ~ poly(x, 3)` : a third-order polynomial
+  
+**Examples:**
+
+```{r, message=F}
+logmean_plot(articles, 20, "equal_size", x="phd", y = "art")
+```
+
+We can see that the assumption that the log mean number of articles is a linear function of PhD prestige is reasonable. There is a fair bit of variability in the points, but that does not indicate a violation of the shape assumption.
+
+### Quantile residual plots
+
+As with logistic regression, quantile residual plots can be used for assessing the shape assumption:
+
+```{r}
+articles %>%
+  mutate(residuals = qresid(m_art)) %>%
+  ggplot(aes(x = phd, y = residuals)) +
+  geom_point() +
+  geom_smooth() +
+  theme_bw()
+```
+
+For count data, we are looking for three things in our quantile residual plots:
+
+* Is there a pattern to the residuals? (i.e., does the trend line look sufficiently different from a horizontal line?) If so, we may have a violation of the shape assumption. On the other hand, if the residuals are randomly scattered above and below 0, then the shape assumption is reasonable.
+* Are the residuals mostly between -2 and 2? If not, we may have *overdispersion* in our data. Overdispersion in a Poisson regression model suggests we may need a quasi-Poisson or negative binomial model instead
+* Is the variance of the residuals constant for each value of the explanatory variable? If not, then we may have the wrong mean-variance relationship. Non-constant variance in the quantile residual plot for a Poisson regression model suggests we may need a negative binomial model instead
+
+### Overdispersion and quasi-Poisson models
+
+The Poisson distribution has the same mean and variance ( $\lambda$ ), so when we fit a Poisson model we are assuming the mean and variance of the response are the same. Sometimes, however, the variance is larger than the mean, which causes problems with hypothesis tests and confidence intervals.
+
+The *dispersion parameter* is $\phi = \dfrac{\text{Variance}}{\text{Mean}}$. The Poisson distribution assumes that $\phi = 1$. Overdispersion occurs when $\phi > 1$.
+
+To allow for $\phi \neq 1$, we can fit a **quasi-Poisson** model:
+
+```{r}
+m_art_qp <- glm(art ~ phd + ment, family = quasipoisson, data = articles)
+summary(m_art_qp)
+```
+
+The estimated dispersion parameter for this quasi-Poisson model is $\widehat{\phi} - 1.89$, which means that the variance of our response is approximately 1.89 times the mean of our response.
+
+### Negative binomial models
+
+An alternative to the quasi-Poisson is the **negative binomial**. If $Y \sim NB(\theta, p)$, then $Y$ takes values $y = 0, 1, 2, 3, ...$ with probabilities
+
+$$P(Y = y) = \dfrac{(y + \theta - 1)!}{y!(\theta - 1)!} (1 - p)^\theta p^y$$
+
+* $\theta > 0$, $\ \ \ p \in [0, 1]$
+* Mean = $\dfrac{p \theta}{1 - p} = \mu$
+* Variance = $\dfrac{p \theta}{(1 - p)^2} = \mu + \dfrac{\mu^2}{\theta}$
+* Variance is a *quadratic* function of the mean
+
+An example of a negative binomial regression model for the articles data would be
+
+$$Articles_i \sim NB(\theta, p_i)$$
+
+$$\log(\mu_i) = \beta_0 + \beta_1 Prestige_i + \beta_2 Mentor_i$$
+
+Note that we have changed the distribution of the response, but the systematic component is the same: we assume the log-mean number of articles is a linear function of the explanatory variables.
+
+### Fitting and interpreting negative binomial models
+
+We can fit negative binomial models using the `glm.nb` function from the `MASS` package:
+
+```{r}
+library(MASS)
+m_art_nb <- glm.nb(art ~ phd + ment, data = articles)
+summary(m_art_nb)
+```
+
+Notice that we do not need to specify a family, because the `glm.nb` function is specific to negative binomial models. Interpretation is very similar to a Poisson; for example, here $\widehat{\beta}_1 = 0.013$, so a one-unit increase in PhD prestige is associated with an increase of 0.013 in the log-mean number of articles published by PhD students, after accounting for the number of articles published by their mentor. Or, a one-unit increase in PhD prestige is associated with an increase in the *mean* number of articles published by a PhD student by a *factor* of $\exp{0.013} = 1.013$, after accounting for the number of articles published by their mentor.
+
+### Poisson vs. quasi-Poisson vs. negative binomial
+
+**Poisson:**
+
+* Mean = $\lambda_i$
+* Variance = $\lambda_i$ (mean and variance are the same)
+
+**quasi-Poisson:**
+
+* Mean = $\lambda_i$
+* Variance = $\phi \lambda_i$ (variance is linear function of the mean)
+
+**negative binomial:**
+
+* Mean = $\mu_i$
+* Variance = $\mu_i + \dfrac{\mu_i^2}{\theta}$ (variance is a quadratic function of the mean)
+
+A natural question is, **how do we choose which of these models to use?** Quantile residual plots can be helpful here. Below are four quantile residual plots: 
+
+```{r, echo=F, message=F, warning=F}
+rqpois <- function(n, mean, dispersion){
+  return(rnbinom(n, mu = mean, size = mean/(dispersion - 1)))
+}
+
+r <- 1
+x <- rnorm(1000, mean=0, sd=1.2)
+y1 <- rpois(1000, lambda = exp(x))
+y2 <- rnbinom(1000, size=r, mu=exp(x))
+y3 <- rqpois(1000, mean = exp(x), dispersion = 3)
+
+sim_m1 <- glm(y1 ~ x, family = poisson)
+sim_m2 <- glm.nb(y1 ~ x)
+sim_m3 <- glm(y3 ~ x, family = poisson)
+
+p1 <- data.frame(x = x, resids = qresid(sim_m1)) %>%
+  ggplot(aes(x = x, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "X", y = "Quantile residuals",
+       title = "(a) Poisson regression on Poisson data") +
+  theme_bw()
+
+p2 <- data.frame(x = x, resids = qresid(sim_m3)) %>%
+  ggplot(aes(x = x, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "X", y = "Quantile residuals",
+       title = "(b) Poisson regression on overdispersed data") +
+  theme_bw()
+
+sim_m1 <- glm(y2 ~ x, family = poisson)
+sim_m2 <- glm.nb(y2 ~ x)
+
+p3 <- data.frame(x = x, resids = qresid(sim_m1)) %>%
+  ggplot(aes(x = x, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "X", y = "Quantile residuals",
+       title = "(c) Poisson regression on negative binomial data") +
+  theme_bw()
+
+p4 <- data.frame(x = x, resids = qresid(sim_m2)) %>%
+  ggplot(aes(x = x, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "X", y = "Quantile residuals",
+       title = "(d) Negative binomial regression on negative binomial data") +
+  theme_bw()
+
+grid.arrange(p1, p2, p3, p4, ncol=2)
+```
+
+* (a): data come from a Poisson distribution, and we fit a Poisson regression model. Most quantile residuals are between -2 and 2, and the variance of the quantile residuals appears constant, so a Poisson regression model is appropriate.
+* (b): here we have overdispersed data (variance is too large for a Poisson), but we fit a Poisson model anyway. Variance is constant, but the spread of the quantile residuals is too large (many residuals above 3), so either a quasi-Poisson or negative binomial model could be used
+* (c): Here we have data from a negative binomial distribution, but we fit a Poisson model anyway. There is clear non-constant variance, and the spread of the residuals is too large. A negative binomial model should be used.
+* (d): Same data as in (c), but now we fit the (correct) negative binomial model. The plot looks much better!
+
+**Steps for choosing a count model:**
+
+* First, fit a Poisson model and look at the quantile residual plots. Address any violations of the shape assumption before proceeding
+* For the Poisson quantile residual plots, look at the spread of the residuals.
+* If the residuals have constant variance and are mostly between -2 and 2 (and almost all between -3 and 3), then a Poisson distribution is reasonable!
+* If the residuals have constant variance but the spread is too large, choose either a quasi-Poisson or negative binomial
+* If the residuals have non-constant variance, choose a quasi-Poisson
+
+# Zero-inflated Poisson (ZIP) models
+
+In this section, we will consider the campus drinking data from class. We have survey data from 77 college students on a dry campus (i.e., alcohol is prohibited) in the US. Survey asks students "How many alcoholic drinks did you consume last weekend?"
+
+* `drinks`: the number of drinks the student reports consuming
+* `sex`: an indicator for whether the student identifies as male
+* `OffCampus`: an indicator for whether the student lives off campus
+* `FirstYear`: an indicator for whether the student is a first-year student
+
+Suppose we want to model the number of drinks students consume. This is still a count variable, but let's look at a histogram:
+
+```{r echo=F, message=F, warning=F, fig.align='center', fig.width=7, fig.height=5}
+wdrinks <- read.csv("~/Documents/Teaching/sta279-s22.github.io/slides/weekendDrinks.csv")
+
+FirstYear <- ifelse( wdrinks$dorm %in% c("mohn","kittlesby", "kildahl"), "TRUE", "FALSE")
+OffCampus <- ifelse( wdrinks$dorm == "off campus", "TRUE", "FALSE")
+
+wdrinks <- cbind(wdrinks, FirstYear, OffCampus)
+
+wdrinks %>%
+  ggplot(aes(x = drinks)) +
+  geom_bar() +
+  theme_bw()
+```
+
+There is a *big* spike in the data near 0, because many of the students reported consuming 0 drinks. This is too many zeros for a Poisson distribution, and suggests we have *zero-inflated* data.
+
+Zero-inflation often occurs when we have different sources of 0s. In this example, students may report 0 drinks because they simply chose not to drink last weekend (but do sometimes drink), or because they *never* drink. To model the number of drinks consumed, we need a mixture of the drinkers and the non-drinkers.
+
+## The ZIP model
+
+Here is a ZIP model for the number of drinks consumed, where the logistic component includes whether or not the student was a first year, and the Poisson component includes whether the student lives off campus, and whether they identify as male:
+
+$$P(Y_i = y) = \begin{cases} e^{-\lambda_i}(1 - \alpha_i) + \alpha_i & y = 0 \\ \dfrac{e^{-\lambda_i} \lambda_i^y}{y!}(1 - \alpha_i) & y > 0 \end{cases}$$
+
+$\log \left( \dfrac{\alpha_i}{1 - \alpha_i} \right) = \gamma_0 + \gamma_1 FirstYear_i$
+
+$\log(\lambda_i) = \beta_0 + \beta_1 OffCampus_i + \beta_2 Male_i$
+
+**Parameters:**
+
+* $\alpha_i = P(Z_i = 1)$, where $Z_i$ is our latent variable. In this example, $Z_i = 1$ denotes that the student *never* drinks, so $\alpha_i$ is the probability a student is a non-drinker
+* $\lambda_i = \mathbb{E}[Y_i|Z_i = 0]$ (the mean of $Y_i$ for the group $Z_i = 0$). In this example, $\lambda_i$ is the mean number of drinks consumed by students who sometimes drink.
+* The $\gamma$s are the coefficients relating $\alpha_i$ to the explanatory variables
+* The $\beta$s are the coefficients relating $\lambda_i$ to the explanatory variables
+
+## Fitting and interpreting the model
+
+To fit the model, we use the `zeroinfl` function from the `pscl` package:
+
+```{r message=F}
+library(pscl)
+m_zip <- zeroinfl(drinks ~ OffCampus + sex | FirstYear,
+                  data = wdrinks)
+summary(m_zip)
+```
+
+We interpret the coefficients separately for the logistic and Poisson components. For example, $\widehat{\gamma}_1 = 1.14$, so the odds of being a non-drinker are higher by a factor of $\exp\{1.14\} = 3.13$ for first-year students. And $\widehat{\beta}_1 = 0.42$, so among students who *do* drink, the average number of drinks consumed is higher by a factor of $\exp\{0.42\} = 1.52$ for students who live off-campus, holding sex fixed.
+
+## Diagnostics for the ZIP model
+
+We can use quantile residual plots to assess the shape assumptions for the ZIP model, though when violations occur, it is challenging to identify which component of the model (logistic or Poisson) is violated. The `qresid` function in the `statmod` package does not support ZIP models, so I have provided my own:
+
+```{r}
+qresid_zeroinfl <- function(zip_m){
+  y <- zip_m$y
+  pred_probs <- predict(zip_m, type="prob")
+  resids <- c()
+  for(i in 1:length(y)){
+    cdf_b <- sum(pred_probs[i,1:(y[i]+1)])
+    if(y[i] == 0){
+      cdf_a <- 0
+    } else {
+      cdf_a <- sum(pred_probs[i,1:y[i]])
+    }
+    
+    resids[i] <- qnorm(runif(1, cdf_a, cdf_b))
+  }
+  return(resids)
+}
+```
+
+
+### Example
+
+```{r, include=F}
+heart_data <- read.csv("~/Documents/Teaching/sta214-f22.github.io/class_activities/framingham.csv")
+
+heart_data <- heart_data %>%
+  drop_na(male, age, education, diabetes, cigsPerDay) %>%
+  mutate(education = as.factor(education))
+```
+
+Here is an example of a quantile residual plot for the Framingham heart data from class:
+
+```{r message=F, warning=F}
+m_zip <- zeroinfl(cigsPerDay ~ age + education + diabetes | 
+                    age + education + diabetes, 
+               data = heart_data)
+
+heart_data %>%
+  mutate(resids = qresid_zeroinfl(m_zip)) %>%
+  ggplot(aes(x = age, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "Age", y = "Quantile residuals") +
+  theme_bw()
+```
+
+The shape assumption looks good here! Unfortunately there is a bit more variance in the quantile residuals than we would like, which suggests a Poisson distribution may not be the best choice. We could use a zero-inflated negative binomial instead...
+
 # R structures, loops, and simulation
 
 ## vectors
@@ -945,8 +1432,9 @@ Here are some examples of writing math, which you can adapt:
 | $\beta_0 + \beta_1 X_i$ | `$\beta_0 + \beta_1 X_i$` |
 | $\sum \limits_{i=1}^n$ | `$\sum \limits_{i=1}^n$` |
 | $\prod \limits_{i=1}^n$ | `$\prod \limits_{i=1}^n$` |
+| $\begin{cases} e^{-\lambda_i}(1 - \alpha_i) + \alpha_i & y = 0 \\ \dfrac{e^{-\lambda_i} \lambda_i^y}{y!}(1 - \alpha_i) & y > 0 \end{cases}$ | `$\begin{cases} e^{-\lambda_i}(1 - \alpha_i) + \alpha_i & y = 0 \\ \dfrac{e^{-\lambda_i} \lambda_i^y}{y!}(1 - \alpha_i) & y > 0 \end{cases}$` |
 
 
 <div id="license">
-<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc/4.0/88x31.png" /></a><br />This work was created by Ciaran Evans and is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">Creative Commons Attribution-NonCommercial 4.0 International License</a>. Last updated 2022 March 25.
+<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc/4.0/88x31.png" /></a><br />This work was created by Ciaran Evans and is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">Creative Commons Attribution-NonCommercial 4.0 International License</a>. Last updated 2023 March 31.
 </div>
