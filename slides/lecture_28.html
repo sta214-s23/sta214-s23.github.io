@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Beginning linear mixed effects models</title>
+    <meta charset="utf-8" />
+    <script src="libs/header-attrs-2.16/header-attrs.js"></script>
+    <link rel="stylesheet" href="lab-slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# Beginning linear mixed effects models
+]
+
+---
+
+
+### Data: flipped classrooms?
+
+.large[
+* A *flipped classroom* involves students watching lectures at home, and doing activities during class time
+* There is debate about the pros and cons of this teaching method
+* Here we will look at simulated data from an experiment with flipped classrooms
+]
+
+---
+
+### Data: flipped classrooms?
+
+.large[
+* 15 classes of introductory statistics
+* 25 students in each class (so 375 students total)
+* Each class taught by a different professor
+* Each professor randomly assigned a teaching style: No flip, Some flip, and Fully flipped
+* At the end of the semester, we give all the students in all the classes the same exam, and compare their results
+]
+
+---
+
+### Data: flipped classrooms?
+
+.large[
+Data set has 375 rows (one per student), and the following variables:
+
+* `professor`: which professor taught the class (1 -- 15)
+* `style`: which teaching style the professor used (no flip, some flip, fully flipped)
+* `score`: the student's score on the final exam
+]
+
+---
+
+### Considering results
+
+&lt;img src="lecture_28_files/figure-html/unnamed-chunk-1-1.png" style="display: block; margin: auto;" /&gt;
+
+.large[
+.question[
+What do you notice about the scores?
+]
+]
+
+---
+
+### Considering results
+
+&lt;img src="lecture_28_files/figure-html/unnamed-chunk-2-1.png" style="display: block; margin: auto;" /&gt;
+
+.large[
+* There may be some differences between styles
+* There may be some differences between professors
+]
+
+---
+
+### Considering results
+
+.large[
+.question[
+Suppose we notice that, on average, students in the “Some Flipped” classes have higher scores than students in the “Fully Flipped” classes. What might explain this difference?
+]
+]
+
+---
+
+### Considering results
+
+.large[
+.question[
+Suppose we notice that, on average, students in the “Some Flipped” classes have higher scores than students in the “Fully Flipped” classes. What might explain this difference?
+]
+]
+
+.large[
+* The "Some Flipped" method may lead to higher test results.
+* The professors assigned to teach "Some Flipped" may teach in such a way that their scores are higher than those in the "Fully Flipped" group (more experience, etc.).
+* The students in the "Some Flipped" classes may have been stronger than those in the "Fully Flipped" group.
+]
+
+---
+
+### Different effects
+
+.large[
+* *Effect of interest* (*treatment effect*): The "Some Flipped" method may lead to higher test results; *the treatment imposed by the researchers has an effect on the outcome.*
+]
+
+---
+
+### Different effects
+
+.large[
+* *Effect of interest* (*treatment effect*): The "Some Flipped" method may lead to higher test results; *the treatment imposed by the researchers has an effect on the outcome.*
+]
+
+.large[
+* *Group effect*: The professors assigned to teach "Some Flipped" may have had an impact on the test scores; *the group the students are in has an effect on the outcome.*
+]
+
+---
+
+### Different effects
+
+.large[
+* *Effect of interest* (*treatment effect*): The "Some Flipped" method may lead to higher test results; *the treatment imposed by the researchers has an effect on the outcome.*
+]
+
+.large[
+* *Group effect*: The professors assigned to teach "Some Flipped" may have had an impact on the test scores; *the group the students are in has an effect on the outcome.*
+]
+
+.large[
+* *Individual effect*: The students in the "Some Flipped" classes may have been stronger than those in the "Fully Flipped" group; *the individuals’ characteristics or abilities have an effect on the outcome.*
+]
+
+---
+
+### Writing down a model
+
+.large[
+*Score* is a continuous response, so we can go back to linear models:
+
+`$$Score_i = \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + \varepsilon_i$$`
+`\(\varepsilon_i \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)\)`
+]
+
+.large[
+.question[
+Which effects does this model capture?
+]
+]
+
+---
+
+### Writing down a model
+
+.large[
+*Score* is a continuous response, so we can go back to linear models:
+
+`$$Score_i = \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + \varepsilon_i$$`
+`\(\varepsilon_i \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)\)`
+]
+
+.large[
+.question[
+Which effects does this model capture?
+]
+]
+
+.large[
+* Treatment effect ( `\(\beta_0\)` is the average score in the no flip group, and `\(\beta_1\)` and `\(\beta_2\)` tell us how the score changes in the other groups)
+* Individual effect ( `\(\varepsilon_i\)` is the difference from the mean for student `\(i\)` )
+]
+
+---
+
+### Assumptions
+
+.large[
+
+`$$Score_i = \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + \varepsilon_i$$`
+`\(\varepsilon_i \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)\)`
+]
+
+.large[
+.question[
+What does this model assume about group effects (differences between professors)?
+]
+]
+
+---
+
+### Assumptions
+
+.large[
+
+`$$Score_i = \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + \varepsilon_i$$`
+`\(\varepsilon_i \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)\)`
+]
+
+.large[
+.question[
+What does this model assume about group effects (differences between professors)?
+]
+]
+
+.large[
+That there are no systematic differences between professors (i.e., no group effects)
+]
+
+---
+
+### Assumptions
+
+.large[
+
+`$$Score_i = \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + \varepsilon_i$$`
+`\(\varepsilon_i \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)\)`
+]
+
+.large[
+.question[
+What does this model assume about correlation within a class?
+]
+]
+
+---
+
+### Assumptions
+
+.large[
+
+`$$Score_i = \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + \varepsilon_i$$`
+`\(\varepsilon_i \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)\)`
+]
+
+.large[
+.question[
+What does this model assume about correlation within a class?
+]
+]
+
+.large[
+That there is no correlation between student scores within the same class
+
+.question[
+Is this a good assumption?
+]
+]
+
+---
+
+### Writing down a model
+
+.large[
+
+`$$Score_i = \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + \varepsilon_i$$`
+`\(\varepsilon_i \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)\)`
+]
+
+.large[
+.question[
+How can I incorporate systematic differences between classes?
+]
+]
+
+---
+
+### Writing down a model
+
+.large[
+
+`$$Score_i = \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + \varepsilon_i$$`
+`\(\varepsilon_i \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)\)`
+]
+
+.large[
+.question[
+How can I incorporate systematic differences between classes?
+]
+]
+
+.large[
+Add a variable for the different professors:
+
+`\begin{align}
+Score_i &amp;= \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + \\
+&amp; \hspace{1cm} \beta_3 \text{Class2}_i + \cdots + \beta_{16} \text{Class15}_i + \varepsilon_i
+\end{align}`
+
+`\(\varepsilon_i \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)\)`
+]
+
+---
+
+### Writing down a model
+
+.large[
+`\begin{align}
+Score_i &amp;= \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + \\
+&amp; \hspace{1cm} \beta_3 \text{Class2}_i + \cdots + \beta_{16} \text{Class15}_i + \varepsilon_i
+\end{align}`
+
+`\(\varepsilon_i \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)\)`
+]
+
+.large[
+.question[
+How many parameters did we add to the model to capture class differences?
+]
+]
+
+---
+
+### Writing down a model
+
+.large[
+`\begin{align}
+Score_i &amp;= \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + \\
+&amp; \hspace{1cm} \beta_3 \text{Class2}_i + \cdots + \beta_{16} \text{Class15}_i + \varepsilon_i
+\end{align}`
+
+`\(\varepsilon_i \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)\)`
+]
+
+.large[
+.question[
+How many parameters did we add to the model to capture class differences?
+]
+]
+
+.large[
+14 ( `\(\beta_3\)`,..., `\(\beta_{16}\)` )
+]
+
+---
+
+### Writing down a model
+
+.large[
+`\begin{align}
+Score_i &amp;= \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + \\
+&amp; \hspace{1cm} \beta_3 \text{Class2}_i + \cdots + \beta_{16} \text{Class15}_i + \varepsilon_i
+\end{align}`
+
+`\(\varepsilon_i \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)\)`
+]
+
+.large[
+.question[
+Do we want to do inference on `\(\beta_3\)`,..., `\(\beta_{16}\)` ?
+]
+]
+
+---
+
+### Writing down a model
+
+.large[
+`\begin{align}
+Score_i &amp;= \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + \\
+&amp; \hspace{1cm} \beta_3 \text{Class2}_i + \cdots + \beta_{16} \text{Class15}_i + \varepsilon_i
+\end{align}`
+
+`\(\varepsilon_i \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)\)`
+]
+
+.large[
+.question[
+Do we want to do inference on `\(\beta_3\)`,..., `\(\beta_{16}\)` ?
+]
+]
+
+.large[
+No -- we only care about inference for the treatment effect parameters ( `\(\beta_1\)` and `\(\beta_2\)` )
+
+.question[
+Can we do something *different* to capture group effects?
+]
+]
+
+---
+
+### Our first mixed effects model
+
+.large[
+**Linear model:**
+
+`\begin{align}
+Score_i &amp;= \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + \\
+&amp; \hspace{1cm} \beta_3 \text{Class2}_i + \cdots + \beta_{16} \text{Class15}_i + \varepsilon_i
+\end{align}`
+
+`\(\varepsilon_i \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)\)`
+]
+
+.large[
+**Linear mixed effects model:** Let `\(Score_{ij}\)` be the score of student `\(j\)` in class `\(i\)`
+
+`\begin{align}
+Score_{ij} &amp;= \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + u_i + \varepsilon_{ij}
+\end{align}`
+
+`\(\varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2) \hspace{1cm} u_i \overset{iid}{\sim} N(0, \sigma_u^2)\)`
+]
+
+---
+
+### Anatomy of the mixed effects model
+
+.large[
+**Linear mixed effects model:** Let `\(Score_{ij}\)` be the score of student `\(j\)` in class `\(i\)`
+
+`\begin{align}
+Score_{ij} &amp;= \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + u_i + \varepsilon_{ij}
+\end{align}`
+
+`\(\varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2) \hspace{1cm} u_i \overset{iid}{\sim} N(0, \sigma_u^2)\)`
+]
+
+.large[
+* `\(\beta_0\)`, `\(\beta_1\)`, `\(\beta_2\)` : **fixed effect** terms (representing treatment effect)
+* `\(u_i\)` : **random effect** terms (representing group effects)
+* `\(\varepsilon_{ij}\)` : **noise** terms (representing individual effects)
+]
+
+---
+
+### Anatomy of the mixed effects model
+
+.large[
+`\begin{align}
+Score_{ij} &amp;= \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + u_i + \varepsilon_{ij}
+\end{align}`
+
+`\(\varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2) \hspace{1cm} u_i \overset{iid}{\sim} N(0, \sigma_u^2)\)`
+
+**Part 1:** Fixed effects (treatment effects)
+]
+
+&lt;img src="lecture_28_files/figure-html/unnamed-chunk-3-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+### Anatomy of the mixed effects model
+
+.large[
+`\begin{align}
+Score_{ij} &amp;= \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + u_i + \varepsilon_{ij}
+\end{align}`
+
+`\(\varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2) \hspace{1cm} u_i \overset{iid}{\sim} N(0, \sigma_u^2)\)`
+
+**Part 2:** Random effects (group effects)
+]
+
+&lt;img src="lecture_28_files/figure-html/unnamed-chunk-4-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+### Anatomy of the mixed effects model
+
+.large[
+`\begin{align}
+Score_{ij} &amp;= \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + u_i + \varepsilon_{ij}
+\end{align}`
+
+`\(\varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2) \hspace{1cm} u_i \overset{iid}{\sim} N(0, \sigma_u^2)\)`
+
+**Part 3:** Noise (individual effects)
+]
+
+&lt;img src="lecture_28_files/figure-html/unnamed-chunk-5-1.png" style="display: block; margin: auto;" /&gt;
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

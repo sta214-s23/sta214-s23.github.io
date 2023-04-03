@@ -4,6 +4,7 @@ title: Beginning mixed effects models
 
 April 3
 : Intro to mixed effects
+  : [Slides](https://sta214-s23.github.io/slides/lecture_28.pdf)
 
 : Textbook 8.1 - 8.5
 
