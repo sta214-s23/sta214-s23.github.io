@@ -10,6 +10,7 @@ April 3
 
 April 5
 : Intro to mixed effects
+  : [Slides](https://sta214-s23.github.io/slides/lecture_29.pdf), [Class activity](https://sta214-s23.github.io/class_activities/ca_lecture_29.html)
 
 : Textbook 8.5 - 8.6
 

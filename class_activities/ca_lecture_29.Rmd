@@ -1,0 +1,86 @@
+---
+title: "Class Activity, April 5"
+output: 
+  tufte::tufte_html:
+    css: "lab.css"
+    tufte_variant: "envisioned"
+    highlight: pygments
+link-citations: yes
+---
+
+# Part I
+
+Last class, we wrote some code to simulate data from a mixed effects model, and make boxplots showing the distribution::
+
+```r
+library(tidyverse)
+
+# simulate flipped classroom data
+# 15 classrooms (professors), 5 from each teaching style,
+# with 25 students per class
+flipped_data <- data.frame(professor = rep(1:15, each=25),
+           style = factor(rep(c("no flip", "some flip", "full flip"),
+                              each=125),
+                          levels = c("no flip", "some flip", "full flip")))
+
+# true parameters for the underlying mixed effects model                          
+beta0 <- 80
+beta1 <- 5
+beta2 <- 3
+sigma2 <- 2
+sigma2_u <- 1
+
+# simulate the random effect terms
+# there is one random effect per group (class)
+random_effects <- rnorm(15, sd = sqrt(sigma2_u))
+
+# create simulated test scores
+flipped_data$test_scores <- beta0 + beta1*(flipped_data$style == "some flip") +
+  beta2*(flipped_data$style == "full flip") + 
+  rnorm(nrow(flipped_data), sd = sqrt(sigma2)) +
+  random_effects[flipped_data$professor]
+
+# plot scores for each class (professor), colored by teaching style
+flipped_data %>%
+  ggplot(aes(x = as.factor(professor), y = test_scores,
+             color = style)) +
+  geom_boxplot(lwd=1) +
+  labs(x = "Professor", y = "Score") +
+  theme_classic()
+```
+
+Run the code, and experiment with changing the parameters. What happens when you increase/decrease $\sigma_u^2$ (`sigma2_u` in the code)? What about when you change $\sigma_\varepsilon^2$ (`sigma2` in the code)? What about $\beta_1$ and $\beta_2$?
+
+# Part II
+
+We have data on prices and other information for 1561 Airbnb rentals in Chicago, Illinois. Our goal is to model the relationship between price and overall satisfaction score. The information comes from 43 neighborhoods, and we have information on between 25 to 50 rentals per neighborhood. The variables we will be using are as follows:
+
+* `price`: The price in US dollars of a one night rental
+* `overallSatisfaction`: an average satisfaction score, given as numbers between 2.5 and 5
+* `neighborhood`: the neighborhood in which the rental is located
+
+1. Why is a mixed effects model useful for modeling the relationship between price and overall satisfaction in this data?
+
+2. Write down the population linear mixed effects model for the relationship between price (the response) and overall satisfaction (the predictor), accounting for neighborhood with a random effect. *Note that satisfaction is a quantitative predictor, not a categorical predictor*.
+
+3. Identify the effect of interest, the group effect, and the individual effect.
+
+# Part III
+
+You can load the Airbnb data into R with 
+
+```{r eval=F}
+bnb <- read.csv("https://raw.githubusercontent.com/proback/BYSH/master/data/airbnb.csv")
+```
+
+4. Run the following code to fit the mixed effects model from part I. Note that you will probably have to install the `lme4` package first:
+
+```{r eval=F}
+library(lme4)
+m1 <- lmer(price ~ overall_satisfaction + (1 | neighborhood), data = bnb)
+summary(m1)
+```
+
+5. Interpret the estimate fixed effect coefficients $\widehat{\beta}_0$ and $\widehat{\beta}_1$.
+
+6. Calculate and interpret the estimated intra-class correlation.

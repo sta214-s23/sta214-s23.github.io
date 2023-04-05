@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Beginning linear mixed effects models</title>
+    <meta charset="utf-8" />
+    <script src="libs/header-attrs-2.16/header-attrs.js"></script>
+    <link rel="stylesheet" href="lab-slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# Beginning linear mixed effects models
+]
+
+---
+
+
+### Data: flipped classrooms?
+
+.large[
+Data set has 375 rows (one per student), and the following variables:
+
+* `professor`: which professor taught the class (1 -- 15)
+* `style`: which teaching style the professor used (no flip, some flip, fully flipped)
+* `score`: the student's score on the final exam
+]
+
+---
+
+### Visualizing the data
+
+&lt;img src="lecture_29_files/figure-html/unnamed-chunk-1-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+### Mixed effects model
+
+.large[
+**Linear mixed effects model:** Let `\(Score_{ij}\)` be the score of student `\(j\)` in class `\(i\)`
+
+`\begin{align}
+Score_{ij} &amp;= \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + u_i + \varepsilon_{ij}
+\end{align}`
+
+`\(\varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2) \hspace{1cm} u_i \overset{iid}{\sim} N(0, \sigma_u^2)\)`
+]
+
+.large[
+.question[
+Which terms are the fixed effects?
+]
+]
+
+---
+
+### Mixed effects model
+
+.large[
+**Linear mixed effects model:** Let `\(Score_{ij}\)` be the score of student `\(j\)` in class `\(i\)`
+
+`\begin{align}
+Score_{ij} &amp;= \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + u_i + \varepsilon_{ij}
+\end{align}`
+
+`\(\varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2) \hspace{1cm} u_i \overset{iid}{\sim} N(0, \sigma_u^2)\)`
+]
+
+.large[
+.question[
+Which term is the random effect?
+]
+]
+
+---
+
+### Mixed effects model
+
+.large[
+**Linear mixed effects model:** Let `\(Score_{ij}\)` be the score of student `\(j\)` in class `\(i\)`
+
+`\begin{align}
+Score_{ij} &amp;= \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + u_i + \varepsilon_{ij}
+\end{align}`
+
+`\(\varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2) \hspace{1cm} u_i \overset{iid}{\sim} N(0, \sigma_u^2)\)`
+]
+
+.large[
+.question[
+Which term captures variability between students?
+]
+]
+
+---
+
+### Class activity, Part I
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_29.html](https://sta214-s23.github.io/class_activities/ca_lecture_29.html)
+]
+
+---
+
+### Class activity
+
+&lt;img src="lecture_29_files/figure-html/unnamed-chunk-2-1.png" style="display: block; margin: auto;" /&gt;
+
+.large[
+.question[
+How does the plot change if I increase `\(\sigma_u^2\)`?
+]
+]
+
+---
+
+### Class activity
+
+&lt;img src="lecture_29_files/figure-html/unnamed-chunk-3-1.png" style="display: block; margin: auto;" /&gt;
+
+.large[
+.question[
+How does the plot change if I increase `\(\sigma_\varepsilon^2\)`?
+]
+]
+
+---
+
+### Class activity
+
+&lt;img src="lecture_29_files/figure-html/unnamed-chunk-4-1.png" style="display: block; margin: auto;" /&gt;
+
+.large[
+.question[
+How does the plot change if I increase `\(\beta_1\)`?
+]
+]
+
+---
+
+### Class activity
+
+&lt;img src="lecture_29_files/figure-html/unnamed-chunk-5-1.png" style="display: block; margin: auto;" /&gt;
+
+
+---
+
+### Class activity, Part II
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_29.html](https://sta214-s23.github.io/class_activities/ca_lecture_29.html)
+]
+
+---
+
+### Class activity
+
+.large[
+.question[
+Why is a mixed effect model useful for this data?
+]
+]
+
+---
+
+### Class activity
+
+.large[
+.question[
+What is the population model?
+]
+]
+
+---
+
+### Class activity
+
+.large[
+.question[
+What is the population model?
+]
+]
+
+.large[
+`$$Price_{ij} = \beta_0 + \beta_1 Satisfaction_{ij} + u_i + \varepsilon_{ij}$$`
+`\(u_i \overset{iid}{\sim} N(0, \sigma_u^2) \hspace{1cm} \varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)\)`
+
+where `\(Price_{ij}\)` is the price of rental `\(j\)` in neighborhood `\(i\)`
+
+* `\(u_i\)` is a *random intercept*
+* We use subscripts `\(i\)` and `\(j\)` for `\(Price_{ij}\)`, `\(Satisfaction_{ij}\)`, and `\(\varepsilon_{ij}\)` because they are different for every observation in the data
+* We only need a subscript `\(i\)` (neighborhood) for `\(u_i\)`, because there is one random intercept per neighborhood
+]
+
+---
+
+### Class activity
+
+.large[
+`$$Price_{ij} = \beta_0 + \beta_1 Satisfaction_{ij} + u_i + \varepsilon_{ij}$$`
+`\(u_i \overset{iid}{\sim} N(0, \sigma_u^2) \hspace{1cm} \varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)\)`
+
+where `\(Price_{ij}\)` is the price of rental `\(j\)` in neighborhood `\(i\)`
+]
+
+.large[
+.question[
+What are the effect of interest, group effect, and individual effect?
+]
+]
+
+---
+
+### Class activity
+
+.large[
+`$$Price_{ij} = \beta_0 + \beta_1 Satisfaction_{ij} + u_i + \varepsilon_{ij}$$`
+`\(u_i \overset{iid}{\sim} N(0, \sigma_u^2) \hspace{1cm} \varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)\)`
+
+where `\(Price_{ij}\)` is the price of rental `\(j\)` in neighborhood `\(i\)`
+]
+
+.large[
+.question[
+What are the effect of interest, group effect, and individual effect?
+]
+]
+
+.large[
+* effect of interest: `\(\beta_1\)` (slope for relationship between satisfaction and price)
+* group effect: `\(u_i\)` (random effect for neighborhood)
+* individual effect: `\(\varepsilon_{ij}\)` (variation between rentals in a neighborhood)
+]
+
+---
+
+### Fitting mixed effects models
+
+.large[
+
+```r
+library(lme4)
+m1 &lt;- lmer(score ~ style + (1|professor), 
+           data = teaching)
+summary(m1)
+```
+
+* `lme4` is the R package we will use to fit mixed effects models
+* `lmer` is like the `lm` function, but for mixed effects
+* `style` is the teaching style (fixed effects)
+* `(1|professor)` indicates we have a random intercept (the `1` indicates the intercept) for `professor` (indicated by `|professor` )
+]
+
+---
+
+### Fitting mixed effects models
+
+.large[
+
+
+
+```r
+library(lme4)
+```
+
+
+```r
+m1 &lt;- lmer(score ~ style + (1|professor), 
+           data = teaching)
+summary(m1)
+```
+
+```
+...
+## Random effects:
+##  Groups    Name        Variance Std.Dev.
+##  professor (Intercept) 21.365   4.622   
+##  Residual               4.252   2.062   
+...
+```
+
+* `\(\widehat{\sigma}_\varepsilon^2 = 4.25\)`
+* `\(\widehat{\sigma}_u^2 = 21.37\)`
+]
+
+---
+
+### Fitting mixed effects models
+
+.large[
+
+
+```r
+m1 &lt;- lmer(score ~ style + (1|professor), 
+           data = teaching)
+summary(m1)
+```
+
+```
+...
+## Fixed effects:
+##                Estimate Std. Error t value
+## (Intercept)      77.657      2.075  37.419
+## stylesome flip   11.073      2.935   3.773
+## stylefull flip    2.805      2.935   0.956
+...
+```
+
+* `\(\widehat{\beta}_0 = 77.66\)`
+* `\(\widehat{\beta}_1 = 11.07\)`
+* `\(\widehat{\beta}_2 = 2.81\)`
+]
+
+---
+
+### Interpretation
+
+.large[
+`\begin{align}
+Score_{ij} &amp;= \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + u_i + \varepsilon_{ij}
+\end{align}`
+
+`\(\varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2) \hspace{1cm} u_i \overset{iid}{\sim} N(0, \sigma_u^2)\)`
+]
+
+.large[
+* `\(\widehat{\beta}_0 = 77.66\)`, `\(\hspace{1cm} \widehat{\beta}_1 = 11.07\)`, `\(\hspace{1cm} \widehat{\beta}_2 = 2.81\)`
+* `\(\widehat{\sigma}_\varepsilon^2 = 4.25\)`, `\(\hspace{1cm} \widehat{\sigma}_u^2 = 21.37\)`
+
+.question[
+How do I interpret `\(\widehat{\beta}_0 = 77.66\)`?
+]
+]
+
+---
+
+### Interpretation
+
+.large[
+`\begin{align}
+Score_{ij} &amp;= \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + u_i + \varepsilon_{ij}
+\end{align}`
+
+`\(\varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2) \hspace{1cm} u_i \overset{iid}{\sim} N(0, \sigma_u^2)\)`
+]
+
+.large[
+* `\(\widehat{\beta}_0 = 77.66\)`, `\(\hspace{1cm} \widehat{\beta}_1 = 11.07\)`, `\(\hspace{1cm} \widehat{\beta}_2 = 2.81\)`
+* `\(\widehat{\sigma}_\varepsilon^2 = 4.25\)`, `\(\hspace{1cm} \widehat{\sigma}_u^2 = 21.37\)`
+
+.question[
+How do I interpret `\(\widehat{\beta}_1 = 11.07\)` and `\(\widehat{\beta}_2 = 2.81\)`?
+]
+]
+
+---
+
+### Interpretation
+
+.large[
+`\begin{align}
+Score_{ij} &amp;= \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + u_i + \varepsilon_{ij}
+\end{align}`
+
+`\(\varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2) \hspace{1cm} u_i \overset{iid}{\sim} N(0, \sigma_u^2)\)`
+]
+
+.large[
+* `\(\widehat{\beta}_0 = 77.66\)`, `\(\hspace{1cm} \widehat{\beta}_1 = 11.07\)`, `\(\hspace{1cm} \widehat{\beta}_2 = 2.81\)`
+* `\(\widehat{\sigma}_\varepsilon^2 = 4.25\)`, `\(\hspace{1cm} \widehat{\sigma}_u^2 = 21.37\)`
+
+.question[
+How do I interpret `\(\widehat{\beta}_1 = 11.07\)` and `\(\widehat{\beta}_2 = 2.81\)`?
+]
+]
+
+.large[
+We expect that, on average, scores in some-flipped classes are 11.07 points higher than for no-flipped classes.
+
+We expect that, on average, scores in fully-flipped classes are 2.81 points higher than for no-flipped classes.
+]
+
+---
+
+### Interpretation
+
+.large[
+`\begin{align}
+Score_{ij} &amp;= \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + u_i + \varepsilon_{ij}
+\end{align}`
+
+`\(\varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2) \hspace{1cm} u_i \overset{iid}{\sim} N(0, \sigma_u^2)\)`
+]
+
+.large[
+* `\(\widehat{\beta}_0 = 77.66\)`, `\(\hspace{1cm} \widehat{\beta}_1 = 11.07\)`, `\(\hspace{1cm} \widehat{\beta}_2 = 2.81\)`
+* `\(\widehat{\sigma}_\varepsilon^2 = 4.25\)`, `\(\hspace{1cm} \widehat{\sigma}_u^2 = 21.37\)`
+
+.question[
+How do I interpret `\(\hspace{1cm} \widehat{\sigma}_u^2 = 21.37\)`?
+]
+]
+
+---
+
+### Interpretation
+
+.large[
+`\begin{align}
+Score_{ij} &amp;= \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + u_i + \varepsilon_{ij}
+\end{align}`
+
+`\(\varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2) \hspace{1cm} u_i \overset{iid}{\sim} N(0, \sigma_u^2)\)`
+]
+
+.large[
+* `\(\widehat{\beta}_0 = 77.66\)`, `\(\hspace{1cm} \widehat{\beta}_1 = 11.07\)`, `\(\hspace{1cm} \widehat{\beta}_2 = 2.81\)`
+* `\(\widehat{\sigma}_\varepsilon^2 = 4.25\)`, `\(\hspace{1cm} \widehat{\sigma}_u^2 = 21.37\)`
+
+.question[
+How do I interpret `\(\hspace{1cm} \widehat{\sigma}_u^2 = 21.37\)`?
+]
+]
+
+.large[
+The average score varies from professor to professor by about 4.62 ( `\(= \sqrt{21.37}\)` ) points
+]
+
+---
+
+### Interpretation
+
+.large[
+`\begin{align}
+Score_{ij} &amp;= \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + u_i + \varepsilon_{ij}
+\end{align}`
+
+`\(\varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2) \hspace{1cm} u_i \overset{iid}{\sim} N(0, \sigma_u^2)\)`
+]
+
+.large[
+* `\(\widehat{\beta}_0 = 77.66\)`, `\(\hspace{1cm} \widehat{\beta}_1 = 11.07\)`, `\(\hspace{1cm} \widehat{\beta}_2 = 2.81\)`
+* `\(\widehat{\sigma}_\varepsilon^2 = 4.25\)`, `\(\hspace{1cm} \widehat{\sigma}_u^2 = 21.37\)`
+
+.question[
+How do I interpret `\(\widehat{\sigma}_\varepsilon^2 = 4.25\)`?
+]
+]
+
+---
+
+### Interpretation
+
+.large[
+`\begin{align}
+Score_{ij} &amp;= \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + u_i + \varepsilon_{ij}
+\end{align}`
+
+`\(\varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2) \hspace{1cm} u_i \overset{iid}{\sim} N(0, \sigma_u^2)\)`
+]
+
+.large[
+* `\(\widehat{\beta}_0 = 77.66\)`, `\(\hspace{1cm} \widehat{\beta}_1 = 11.07\)`, `\(\hspace{1cm} \widehat{\beta}_2 = 2.81\)`
+* `\(\widehat{\sigma}_\varepsilon^2 = 4.25\)`, `\(\hspace{1cm} \widehat{\sigma}_u^2 = 21.37\)`
+
+.question[
+How do I interpret `\(\widehat{\sigma}_\varepsilon^2 = 4.25\)`?
+]
+]
+
+.large[
+Within a class, students' scores vary by about  2.06 ( `\(= \sqrt{4.25}\)` ) points
+]
+
+---
+
+### Intra-class correlation
+
+.pull-left[
+&lt;img src="lecture_29_files/figure-html/unnamed-chunk-11-1.png" style="display: block; margin: auto;" /&gt;
+
+.large[
+`\(\sigma_\varepsilon^2\)` is large relative to `\(\sigma_u^2\)`
+]
+]
+
+.pull-right[
+&lt;img src="lecture_29_files/figure-html/unnamed-chunk-12-1.png" style="display: block; margin: auto;" /&gt;
+
+.large[
+`\(\sigma_\varepsilon^2\)` is small relative to `\(\sigma_u^2\)`
+]
+]
+
+.large[
+* Observations within a group are *more correlated* when `\(\sigma_\varepsilon^2\)` is small relative to `\(\sigma_u^2\)`
+* **Intra-class correlation:** `\(\rho_{group} = \dfrac{\sigma_u^2}{\sigma_u^2 + \sigma_\varepsilon^2} = \dfrac{\text{between group variance}}{\text{total variance}}\)`
+]
+
+---
+
+### Intra-class correlation
+
+.large[
+`\begin{align}
+Score_{ij} &amp;= \beta_0 + \beta_1 \text{SomeFlipped}_i + \beta_2 \text{FullyFlipped}_i + u_i + \varepsilon_{ij}
+\end{align}`
+
+`\(\varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2) \hspace{1cm} u_i \overset{iid}{\sim} N(0, \sigma_u^2)\)`
+]
+
+.large[
+* `\(\widehat{\beta}_0 = 77.66\)`, `\(\hspace{1cm} \widehat{\beta}_1 = 11.07\)`, `\(\hspace{1cm} \widehat{\beta}_2 = 2.81\)`
+* `\(\widehat{\sigma}_\varepsilon^2 = 4.25\)`, `\(\hspace{1cm} \widehat{\sigma}_u^2 = 21.37\)`
+
+`$$\widehat{\rho}_{group} = \dfrac{21.37}{21.37 + 4.25} = 0.83$$`
+]
+
+.large[
+So 83% of the variation in student's scores can be explained by differences in average scores from class to class (after accounting for teaching style). That's huge!
+]
+
+---
+
+### Class activity, Part III
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_29.html](https://sta214-s23.github.io/class_activities/ca_lecture_29.html)
+]
+
+---
+
+### Class activity
+
+.large[
+.question[
+Interpret the estimate fixed effect coefficients `\(\widehat{\beta}_0\)` and `\(\widehat{\beta}_1\)`.
+]
+]
+
+---
+
+### Class activity
+
+.large[
+.question[
+Interpret the estimate fixed effect coefficients `\(\widehat{\beta}_0\)` and `\(\widehat{\beta}_1\)`.
+]
+]
+
+.large[
+On average (across neighborhoods), we expect that the price of rental with 0 overall satisfaction is $27.28.
+
+For a fixed neighborhood, an increase of 1 point in overall satisfaction is associated with an increase of $14.81 in rental price.
+]
+
+---
+
+### Class activity
+
+.large[
+.question[
+Calculate and interpret the estimated intra-class correlation.
+]
+]
+
+---
+
+### Class activity
+
+.large[
+.question[
+Calculate and interpret the estimated intra-class correlation.
+]
+]
+
+.large[
+`\(\widehat{\rho}_{group} = \dfrac{1048}{1048 + 6762} = 0.134\)`
+
+About 13% of the variability in price can be explained by differences in the average price between neighborhoods (after accounting for overall satisfaction).
+]
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

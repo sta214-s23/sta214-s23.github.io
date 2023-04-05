@@ -85,7 +85,7 @@ logmean_plot <- function(data, num_bins, bin_method,
 
 ## Question 1
 
-### (a)
+### (a) (3 pts)
 
 ```{r}
 books %>%
@@ -100,7 +100,9 @@ var(books$purchases)
 
 Purchases is a unimodal, right-skewed count variable with several potential outliers above 3000. The variance is much, much larger than the mean (which suggests we may have some issues using a Poisson distribution to model this variable).
 
-### (b)
+**Grading:** 1 pt for plot, 1 pt for mean and variance, 1 pt for summary.
+
+### (b) (3 pts)
 
 ```{r}
 logmean_plot(books, 20, "equal_size", x = "rating",
@@ -112,16 +114,21 @@ logmean_plot(books, 20, "equal_size", x = "price",
 
 A linear relationship between the log-mean purchases and the quantitative explanatory variables seems reasonable, though some students may prefer transformations. If students use page count as an explanatory variable, they need to recognize that there is an outlier in page count (about 9.78 trillion pages) that needs to be removed from the data.
 
-### (c)
+**Grading:** Should look at at least two quantitative explanatory variables. 2 pts for plots, 1 pt for interpretation.
+
+### (c) (2 pts)
 
 No offset is necessary here. If purchases were recorded over different lengths of time, then an offset for time would be helpful, but all purchases are recorded over the last 30 days.
 
-### (d)
+### (d) (3 pts)
 
 Models may vary, and students can choose which variables to include (however, variables like title, author, publisher, and ISBN should NOT be included in the model). I will use rating, price, and genre here.
 
 $$\log(\lambda_i) = \beta_0 + \beta_1 Rating_i + \beta_2 Price_i + \beta_3 Comics_i + \beta_4 Fantasy_i + \beta_5 Fiction_i + \\ \beta_6 General_i + \beta_7 Mystery_i + \beta_8 Other_i$$
-## Question 2
+**Grading:** Link function should be log (either $\log(\lambda_i)$ or $\log(\mu_i)$ is acceptable). Lose 1 pt if variables like ISBN or publisher are included. Lose 1 pt if they don't use indicator variables for genre. Lose 1 pt for missing subscripts.
+
+
+## Question 2 (8 pts)
 
 First, let's fit a Poisson regression model and perform a goodness-of-fit test:
 
@@ -158,7 +165,9 @@ books %>%
 
 Other than one potential outlier for Price, the plot here looks pretty good, so I will use a negative binomial going forward (it is ok for the students to choose a quasi-Poisson instead).
 
-## Question 3
+**Grading:** 2 pts for goodness of fit test, 2 pts for Poisson quantile residual plots, 2 pts for negative binomial quantile residual plots, 2 pts for discussion and interpretation.
+
+## Question 3 (4 pts)
 
 ```{r}
 max(cooks.distance(m2))
@@ -167,10 +176,14 @@ car::vif(m2)
 
 The largest Cook's distance is below 0.5, and the VIFs are all small, so diagnostics look good!
 
-## Question 4
+**Grading:** 1 pt for Cook's distance, 1 pt for VIFs, 2 pts for interpretation.
+
+## Question 4 (5 pts)
 
 ```{r}
 summary(m2)
 ```
 
 Accounting for price and genre, there appears to a negative relationship between rating and purchases. This is somewhat surprising. One explanation is that some books may have very high ratings because they are only rated by a few users. For example, if only two users buy a book, and both give it 5/5, then the book will have a perfect rating on Amazon, but very few purchases. There appears to be a positive relationship between price and purchases, after accounting for ratings and genre. Perhaps very cheap books are discounted for a reason. For books of the same rating and price, fantasy, comics, business, and fiction tend to sell better than general, mystery, and other.
+
+**Grading:** Answers may vary. Just want the students to say someting reasonable about the model they chose.
