@@ -15,10 +15,10 @@ April 5
 : Textbook 8.5 - 8.6
 
 April 7
-: Inference with mixed effects
+: Intro to mixed effects
   : [Slides](https://sta214-s23.github.io/slides/lecture_30.pdf), [Class activity](https://sta214-s23.github.io/class_activities/ca_lecture_30.html), [Exam 2 review](https://sta214-s23.github.io/class_activities/exam_2_review.html)
 
 : **Project 2 released**{: .label .label-green }
 
-: Textbook 8.8
+: Textbook 8.5 - 8.6
 
