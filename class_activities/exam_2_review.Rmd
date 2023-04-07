@@ -1,0 +1,122 @@
+---
+title: "Exam 2 review activity"
+output: 
+  tufte::tufte_html:
+    css: "lab.css"
+    tufte_variant: "envisioned"
+    highlight: pygments
+link-citations: yes
+---
+
+# Overview
+
+In this activity, you will work with data from the 1977-1978 Australian Health Survey. The `DoctorVisits` data contains information on 5190 respondents, and the researchers analyzing the data are interested in the number of times each respondent visited the doctor in the past 2 weeks. The variables include:
+
+* `visits`: Number of doctor visits in past 2 weeks.
+* `gender`: Factor indicating gender.
+* `age`: Age in years divided by 100.
+* `income`: Annual income in tens of thousands of dollars.
+* `insurance`: type of health insurance. Possible types are None, Private, Free (poor), and Free (repat). Free (poor) indicates free health insurance due to low income, while Free (repat) indicates free health insurance due to old age, disability, or veteran status.
+
+## Questions
+
+### Initial Poisson model
+
+The researchers are interested in modeling the number of doctor visits in the past 2 weeks. Since the number of doctor visits is a count variable, they propose using a Poisson regression model. Below is the output of their fitted model:
+
+```{r, echo=F, message=F, warning=F}
+library(tidyverse)
+library(pscl)
+library(AER)
+library(MASS)
+library(gridExtra)
+library(statmod)
+
+data("DoctorVisits")
+
+DoctorVisits <- DoctorVisits %>%
+  mutate(insurance = ifelse(private == "yes", "private", 
+                                          ifelse(freepoor == "yes", "freepoor",
+                                                 ifelse(freerepat == "yes", "freerepat", "none")))) %>%
+  mutate(insurance = factor(insurance, levels = c("none", "private", "freepoor", "freerepat")))
+
+m1 <- glm(visits ~ gender + age + income + insurance, 
+          family = poisson,
+          data = DoctorVisits)
+summary(m1)
+```
+
+1. Write down the population Poisson model corresponding to the fitted model shown in the R output above.
+
+2. Interpret the estimated slope $\widehat{\beta}_2$ in terms of the number of doctor visits in the past 2 weeks.
+
+3. An offset was not used in this model. Describe a situation in which we might want to use an offset when modeling the number of doctor visits.
+
+4. After accounting for the other variables in the model, is there a relationship between income and the number of doctor visits in the past 2 weeks? Use a hypothesis test to answer this question; you should be able to calculate your test statistic from the output above.
+
+5. What is the estimated number of doctor visits in the past 2 weeks for a male participant, aged 20, with no health insurance, who makes $5000 annually?
+
+### Model diagnostics
+
+The Poisson model assumes that the Poisson distribution is a good choice for the response. What if it isn't? To choose between a Poisson, quasi-Poisson, and negative binomial model, the researchers produce the following output in R:
+
+```{r, echo=F, message=F, warning=F}
+m2 <- glm(visits ~ gender + age + income + insurance, 
+          family = quasipoisson,
+          data = DoctorVisits)
+summary(m2)
+
+m3 <- glm.nb(visits ~ gender + age + income + insurance, 
+          data = DoctorVisits)
+summary(m3)
+```
+
+```{r, echo=F, message=F, warning=F, fig.align='center', fig.width=10, fig.height=4}
+p1 <- DoctorVisits %>%
+  mutate(resids = qresid(m1)) %>%
+  ggplot(aes(x = income, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "Income", y = "Quantile residuals",
+       title = "Poisson model") +
+  theme_bw()
+
+p2 <- DoctorVisits %>%
+  mutate(resids = qresid(m3)) %>%
+  ggplot(aes(x = income, y = resids)) +
+  geom_point() +
+  geom_smooth() +
+  labs(x = "Income", y = "Quantile residuals",
+       title = "Negative binomial model") +
+  theme_bw()
+
+grid.arrange(p1, p2, ncol=2)
+```
+
+6. Using the R output above, explain which model you would use: the Poisson, quasi-Poisson, or negative binomial. It is possible that more than one model may be suitable for the data.
+
+7. Sketch a quantile residual plot for a Poisson regression fit, which suggests that a negative binomial model is needed.
+
+8. Compare and contrast the quasi-Poisson model with the Poisson model. Which parts of the fitted model are the same? Which parts are different?
+
+9. Using your chosen model from question 6, create a confidence interval for $\beta_2$ (the coefficient on income).
+
+### ZIP models
+
+Concerned about the possibility of zero-inflation, the researchers decide to fit a ZIP model instead:
+
+```{r, echo=F, message=F, warning=F}
+m4 <- zeroinfl(visits ~ gender + age + income + insurance, 
+          data = DoctorVisits)
+summary(m4)
+```
+
+10. What is a potential latent variable which could cause excess 0s in this data?
+
+11. Write down the population ZIP model corresponding to the fitted ZIP model above. Make sure to include the random component!
+
+12. What is the estimated number of doctor visits in the past 2 weeks for a male participant, aged 20, with no health insurance, who makes $5000 annually?
+
+13. What is the estimated probability that a male participant, aged 20, with no health insurance, who makes $5000 annually, did not go to the doctor in the past 2 weeks?
+
+14. What does the logistic component of the ZIP model estimate? (i.e., the component that R calls the `zero-inflation model`, in contrast to the `count model`).

@@ -1,0 +1,35 @@
+---
+title: "Class Activity, April 7"
+output: 
+  tufte::tufte_html:
+    css: "lab.css"
+    tufte_variant: "envisioned"
+    highlight: pygments
+link-citations: yes
+---
+
+# Airbnb data
+
+We have data on prices and other information for 1561 Airbnb rentals in Chicago, Illinois. Our goal is to model the relationship between price and overall satisfaction score. The information comes from 43 neighborhoods, and we have information on between 25 to 50 rentals per neighborhood. The variables we will be using are as follows:
+
+* `price`: The price in US dollars of a one night rental
+* `overallSatisfaction`: an average satisfaction score, given as numbers between 2.5 and 5
+* `neighborhood`: the neighborhood in which the rental is located
+
+You can load the Airbnb data into R with 
+
+```{r eval=F}
+bnb <- read.csv("https://raw.githubusercontent.com/proback/BYSH/master/data/airbnb.csv")
+```
+
+1. Run the following code to fit the mixed effects model from the previous class activity. Note that you will probably have to install the `lme4` package first:
+
+```{r eval=F}
+library(lme4)
+m1 <- lmer(price ~ overall_satisfaction + (1 | neighborhood), data = bnb)
+summary(m1)
+```
+
+2. Interpret the estimate fixed effect coefficients $\widehat{\beta}_0$ and $\widehat{\beta}_1$.
+
+3. Calculate and interpret the estimated intra-class correlation.

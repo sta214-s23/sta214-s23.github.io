@@ -1,0 +1,288 @@
+---
+title: "HW 9 Solutions"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
+library(tidyverse)
+library(pscl)
+
+fish <- read.csv("https://sta214-s23.github.io/homework/fish2.csv")
+```
+
+## Question 1
+
+### (a)
+
+```{r}
+fish %>%
+  ggplot(aes(x = count)) +
+  geom_histogram() +
+  theme_bw() +
+  labs(x = "Fish caught")
+```
+
+### (b)
+
+The number of fish caught is right skewed, with a large peak at 0 (indeed, over 50% of the groups caught 0 fish). With so many 0s in the data, a Poisson distribution will be a poor fit, and a zero-inflated model will be needed to handle the excess 0s. Here the latent variable would indicate whether the group ever fished during their stay ($Z_i = 0$ if they fished, and $Z_i = 1$ if they never went fishing).
+
+### (c)
+
+Offsets are used to account for different exposures, i.e. different amounts of opportunity to observe the response. In this case, groups who stay longer have more time to catch fish, and comparing the raw number of fish caught between groups who stayed one day vs. groups who stayed 10 days doesn't really make sense. Rather, it makes more sense to compare the number of fish caught *per day*, thus accounting for the length of stay. Using an offset allows us to interpret the model in terms of the rate of fish caught per day, rather than the raw number of fish caught.
+
+
+## Question 2
+
+### (a)
+
+Let $Y_i$ denote the number of fish caught per group. Then
+
+$P(Y_i = y) = \begin{cases} e^{-\lambda_i}(1 - \alpha_i) + \alpha_i & y = 0 \\ \dfrac{e^{-\lambda_i} \lambda_i^y}{y!}(1 - \alpha_i) & y > 0 \end{cases}$
+
+where
+
+$\log \left( \dfrac{\alpha_i}{1 - \alpha_i} \right) = \gamma_0 + \gamma_1 Camper_i + \gamma_2 Child_i + \gamma_3 Persons_i$
+
+$\log \left( \lambda_i \right) = \beta_0 + \beta_1 Camper_i + \beta_2 Child_i + \beta_3 Persons_i + \log(LOS)$
+
+### (b)
+
+```{r}
+m1 <- zeroinfl(count ~ camper + child + persons | camper + child + persons,
+               offset = log(LOS),
+               data = fish)
+summary(m1)
+```
+
+### (c)
+
+An increase of one in the number of children in the group is associated with an increase in the odds that the group did not fish by a factor of $\exp\{2.08\} = 8$, and a decrease in the number of fish caught *per day*, for groups which *did* fish, by a factor of $\exp\{-0.56\} = 0.57$.
+
+### (d)
+
+```{r}
+2.08 + 1.96*0.35
+2.08 - 1.96*0.35
+
+-0.56 + 1.96*0.09
+-0.56 - 1.96*0.09
+```
+
+In my model above, the relevant coefficients are $\gamma_2$ and $\beta_2$. A 95% confidence interval for $\gamma_2$ is [1.39, 2.77] and a 95% confidence interval for $\beta_2$ is [-0.75, -0.38].
+
+
+## Question 3
+
+### (a)
+
+$P(Y_i \geq 1) = 1 - P(Y_i = 0) = 1 - (e^{-\lambda_i}(1 - \alpha_i) + \alpha_i)$
+
+So we need to calculate $\widehat{\alpha}_i$ and $\widehat{\lambda}_i$. We are told that $Persons = 3$, $Child = 0$, $Camper = 0$, and $LOS = 3$. So,
+
+$\log \left( \dfrac{\widehat{\alpha}_i}{1 - \widehat{\alpha}_i} \right) = 1.81 - 0.98(3) = -1.13$
+
+and thus $\widehat{\alpha}_i = 0.244$. Similarly,
+
+$\log (\widehat{\lambda}_i) = -1.13 + 0.45(3) + log(3) = 1.32$
+
+and so $\widehat{\lambda}_i = 3.74$. The estimated probability of catching at least one fish is therefore $1 - (e^{-3.74}(1 - 0.244) + 0.244) = 0.74$.
+
+### (b)
+
+The estimated number of fish caught *by a group that went fishing* is $\widehat{\lambda}_i$. However, we don't know whether the group went fishing or not, so we have to weight this number of the probability they went fishing ($1 - \alpha_i$). Thus the estimated number of fish caught is $\widehat{\lambda}_i(1 - \widehat{\alpha}_i)$.
+
+Here 
+
+$\log \left( \dfrac{\widehat{\alpha}_i}{1 - \widehat{\alpha}_i} \right) = 1.81 - 1.16 + 2.08(3) - 0.98(5) = 1.99$
+
+so $\widehat{\alpha}_i = 0.88$. Similarly,
+
+$\log (\widehat{\lambda}_i) = -1.13 + 0.018 - 0.56(3) + 0.45(5) + log(7) = 1.4$
+
+so $\widehat{\lambda}_i = 4.1$. Thus, the estimated number of fish caught is $4.1(1 - 0.88) = 0.49$.
+
+## Question 4
+
+### (a)
+
+We are interested in testing the coefficient on $Child$ for the logistic part of the model. Using the model from question 2, our hypotheses are $H_0: \gamma_2 = 0$ vs. $H_A: \gamma_2 > 0$ (remember that the logistic component models the probability the group does *not* go fishing). We use a Wald test; the test statistic is 6.01, and the p-value is
+
+```{r}
+pnorm(6.01, lower.tail=F)
+```
+
+### (b)
+
+We are interested in testing the coefficient on $Child$ in the Poisson part of the ZIP model. Using the model from question 2, our hypotheses are $H_0: \beta_2 = 0$ vs. $H_A: \beta_2 < 0$. We use a Wald test; the test statistic is -6.16, and the p-value is
+
+```{r}
+pnorm(-6.16, lower.tail=T)
+```
+
+
+## Question 5
+
+
+### (a)
+
+```{r}
+# simulate data
+set.seed(3)
+n <- 1000
+x <- rnorm(n)
+gamma0 <- 0
+beta0 <- 1
+beta1 <- 1
+alpha <- exp(gamma0)/(1 + exp(gamma0))
+lambda <- exp(beta0 + beta1*x)
+z <- rbinom(n, 1, prob=alpha)
+y <- 0*z + rpois(n, lambda)*(1 - z)
+
+# fit Poisson and ZIP models
+m_pois <- glm(y ~ x, family = poisson)
+m_zip <- zeroinfl(y ~ x | x)
+
+summary(m_pois)
+summary(m_zip)
+```
+
+For the slope, the Poisson estimate is $\widehat{\beta}_1 = 0.98$ and the ZIP estimate is $\widehat{\beta}_1 = 1.04$, so both are pretty close to $\beta_1 = 1$. However, for the intercept $\widehat{\beta}_0 = 0.26$ for the Poisson model, whereas $\widehat{\beta}_0 = 0.95$ for the ZIP model; the ZIP estimate is much closer to $\beta_0 = 1$.
+
+### (b)
+
+```{r}
+upper_poisson <- summary(m_pois)$coefficients[2,1] + 
+    1.96*summary(m_pois)$coefficients[2,2]
+lower_poisson <- summary(m_pois)$coefficients[2,1] - 
+    1.96*summary(m_pois)$coefficients[2,2]
+
+upper_poisson > 1 & lower_poisson < 1
+```
+
+Yes, the interval contains $\beta_1$ (answer will vary).
+
+### (c)
+
+```{r}
+upper_zip <- summary(m_zip)$coefficients$count[2,1] + 
+    1.96*summary(m_zip)$coefficients$count[2,2]
+lower_zip <- summary(m_zip)$coefficients$count[2,1] - 
+    1.96*summary(m_zip)$coefficients$count[2,2]
+
+upper_zip > 1 & lower_zip < 1
+```
+
+Yes, the interval contains $\beta_1$ (answer will vary).
+
+## Question 6
+
+```{r}
+set.seed(3)
+nsim <- 1000
+n <- 1000
+gamma0 <- 0
+beta0 <- 1
+beta1 <- 1
+
+covers_zip <- rep(NA, nsim)
+covers_poisson <- rep(NA, nsim)
+
+for(i in 1:nsim){
+  x <- rnorm(n)
+  alpha <- exp(gamma0)/(1 + exp(gamma0))
+  lambda <- exp(beta0 + beta1*x)
+  z <- rbinom(n, 1, prob=alpha)
+  y <- 0*z + rpois(n, lambda)*(1 - z)
+  
+  # fit Poisson and ZIP models
+  m_pois <- glm(y ~ x, family = poisson)
+  m_zip <- zeroinfl(y ~ x | x)
+  
+  upper_zip <- summary(m_zip)$coefficients$count[2,1] + 
+      1.96*summary(m_zip)$coefficients$count[2,2]
+  lower_zip <- summary(m_zip)$coefficients$count[2,1] - 
+      1.96*summary(m_zip)$coefficients$count[2,2]
+  
+  covers_zip[i] <- upper_zip > 1 & lower_zip < 1
+  
+  upper_poisson <- summary(m_pois)$coefficients[2,1] + 
+      1.96*summary(m_pois)$coefficients[2,2]
+  lower_poisson <- summary(m_pois)$coefficients[2,1] - 
+      1.96*summary(m_pois)$coefficients[2,2]
+  
+  covers_poisson[i] <- upper_poisson > 1 & lower_poisson < 1
+}
+
+mean(covers_poisson)
+mean(covers_zip)
+```
+
+Coverage is around 40% for the Poisson model, and around 95% for the ZIP model (students' numbers will vary slightly, but there should be a big difference in the coverage here).
+
+## Question 7
+
+### (a)
+
+```{r}
+set.seed(3)
+nsim <- 1000
+n <- 1000
+beta0 <- 1
+beta1 <- 1
+  
+gamma0_values <- seq(-2, 2, 0.5)
+coverage_poisson <- rep(NA, length(gamma0_values))
+coverage_zip <- rep(NA, length(gamma0_values))
+
+for(j in 1:length(gamma0_values)){
+  gamma0 <- gamma0_values[j]
+  
+  covers_zip <- rep(NA, nsim)
+  covers_poisson <- rep(NA, nsim)
+  
+  for(i in 1:nsim){
+    x <- rnorm(n)
+    alpha <- exp(gamma0)/(1 + exp(gamma0))
+    lambda <- exp(beta0 + beta1*x)
+    z <- rbinom(n, 1, prob=alpha)
+    y <- 0*z + rpois(n, lambda)*(1 - z)
+    
+    # fit Poisson and ZIP models
+    m_pois <- glm(y ~ x, family = poisson)
+    m_zip <- zeroinfl(y ~ x | x)
+    
+    upper_zip <- summary(m_zip)$coefficients$count[2,1] + 
+        1.96*summary(m_zip)$coefficients$count[2,2]
+    lower_zip <- summary(m_zip)$coefficients$count[2,1] - 
+        1.96*summary(m_zip)$coefficients$count[2,2]
+    
+    covers_zip[i] <- upper_zip > 1 & lower_zip < 1
+    
+    upper_poisson <- summary(m_pois)$coefficients[2,1] + 
+        1.96*summary(m_pois)$coefficients[2,2]
+    lower_poisson <- summary(m_pois)$coefficients[2,1] - 
+        1.96*summary(m_pois)$coefficients[2,2]
+    
+    covers_poisson[i] <- upper_poisson > 1 & lower_poisson < 1
+  }
+  
+  coverage_poisson[j] <- mean(covers_poisson)
+  coverage_zip[j] <- mean(covers_zip)
+}
+```
+
+```{r}
+data.frame(gamma0 = c(gamma0_values, gamma0_values),
+           coverage = c(coverage_poisson, coverage_zip),
+           model = rep(c("Poisson", "ZIP"), each=length(gamma0_values))) %>%
+  ggplot(aes(x = gamma0, y = coverage, color = model)) +
+  geom_point() +
+  geom_line() +
+  theme_bw()
+```
+
+### (b)
+
+Coverage for the ZIP model is constant around 95%, but coverage for the Poisson model is lower. Coverage for the Poisson model decreases as $\gamma_0$ (i.e., the amount of zero-inflation) increases.
+
