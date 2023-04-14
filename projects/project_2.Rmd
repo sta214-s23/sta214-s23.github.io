@@ -9,7 +9,7 @@ link-citations: yes
 
 **Due:** Monday, April 24, 12:00pm (noon) on Canvas
 
-**Submission:** Submit *both* a pdf containing your report, and a file containing the R code you used in your analysis.
+**Submission:** Submit *both* an HTML containing your report, and a file containing the R code you used in your analysis.
 
 **This project must be completed independently. See "Collaboration" below for more details.**
 
