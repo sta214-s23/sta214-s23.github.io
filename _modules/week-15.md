@@ -3,12 +3,11 @@ title: Parametric bootstrap
 ---
 
 April 17
-: Random slopes
-
-: Textbook 8.7 - 8.8
+: Simulation
+  : [Slides](https://sta214-s23.github.io/slides/lecture_31.pdf), [Class activity](https://sta214-s23.github.io/class_activities/ca_lecture_31.html)
 
 April 19
-: Simulation
+: Simulation and parametric bootstrap
 
 April 21
 : Parametric bootstrap

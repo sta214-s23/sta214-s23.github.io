@@ -1,0 +1,79 @@
+---
+title: "Class Activity, April 17"
+output: 
+  tufte::tufte_html:
+    css: "lab.css"
+    tufte_variant: "envisioned"
+    highlight: pygments
+link-citations: yes
+---
+
+Anxiety can affect musicians before performances, and can negatively affect their ability to play and their emotional state. In a [2010 study](https://journals.sagepub.com/doi/10.1177/1948550610370492), researchers examined anxiety in 37 undergraduate music majors. For each musician, data was collected on anxiety levels before different performances (between 2 and 15 performances were measured for each musician). Each row in the data represents one performance, and variables include
+
+* `id`: a unique identifier for the musician
+* `na`: negative affect score (a measure of anxiety)
+* `large`: whether the musician was performing as part of a large ensemble (large = 1), or as part of a small ensemble or solo (large = 0)
+
+**Question:** Are there systematic differences in anxiety between musicians, or are observed differences due to chance?
+
+To answer this question, we will conduct a simulation, in which we generate new data under the assumption that there are *no* systematic differences in anxiety between musicians.
+
+### Data
+
+The following code imports the data and saves it as a data frame called music:
+
+```{r eval=F}
+music <- read_csv("https://sta214-s23.github.io/slides/musicdata.csv")
+```
+
+# Part I
+
+1. To begin, let's visualize the data. Fill in the following code to create boxplots showing the distribution of anxiety scores (the `na` variable) for each musician in the data:
+
+```{r eval=F}
+music %>%
+  ggplot(aes(x = ...,
+             y = ...)) +
+  geom_...() +
+  theme_bw() +
+  labs(x = "Musician",
+       y = "Anxiety")
+```
+
+2. Next, let's estimate the variability between musicians. Fill in the following code to fit the random intercepts model
+$$Anxiety_{ij} = \beta_0 + u_i + \varepsilon_{ij} \hspace{1cm} u_i \overset{iid}{\sim} N(0, \sigma_u^2), \ \ \varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)$$
+
+```{r eval=F}
+m1 <- lmer(... ~ ..., data = music)
+summary(m1)
+```
+
+3. What is the estimated intra-class correlation?
+
+We want to know whether the observed boxplots and intra-class correlation are evidence that there are systematic differences in anxiety between musicians. To answer this question, we will investigate whether the observed data is *unusual*, if in fact there are no systematic differences between musicians. Our strategy is to:
+
+* Fit a model *without* a random effect
+* Use the fitted model to *simulate* a new dataset
+* Compare the simulated data to the observed data. If the observed data looks different from the simulated data, maybe there are systematic differences in anxiety between musicians
+
+4. Fill in the following code to fit the intercept-only linear model (no random effect)
+$$Anxiety_{ij} = \beta_0 + \varepsilon_{ij} \hspace{1cm} \varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)$$
+
+```{r eval=F}
+m0 <- lm(... ~ ..., data = music)
+summary(m0)
+```
+
+5. What are the estimates $\widehat{\beta}_0$ and $\widehat{\sigma}_\varepsilon^2$ from the model in exercise 4?
+
+6. Now let's generate a new dataset. Fill in the following code to simulate new data, where the simulated anxiety is given by
+$$Anxiety_{ij}^* = \widehat{\beta}_0 + \varepsilon_{ij}^* \hspace{1cm} \varepsilon_{ij}^* \sim N(0, \widehat{\sigma}_\varepsilon^2)$$
+
+```{r eval=F}
+new_na <- ... +
+  rnorm(n=..., mean=0, sd=...)
+
+new_data <- data.frame(id = music$id,
+                       na = new_na)
+```
+
