@@ -1,0 +1,488 @@
+---
+title: Simulation and parametric bootstrap
+output:
+  xaringan::moon_reader:
+    css: "lab-slides.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+editor_options: 
+  chunk_output_type: console
+---
+
+### Recap: Data and Goal
+
+.large[
+```{r include=F}
+library(lme4)
+library(tidyverse)
+library(knitr)
+
+hook_output <- knit_hooks$get("output")
+knit_hooks$set(output = function(x, options) {
+   lines <- options$output.lines
+   if (is.null(lines)) {
+     return(hook_output(x, options))  # pass to default hook
+   }
+   x <- unlist(strsplit(x, "\n"))
+   more <- "..."
+   if (length(lines)==1) {        # first n lines
+     if (length(x) > lines) {
+       # truncate the output, but add ....
+       x <- c(head(x, lines), more)
+     }
+   } else {
+     x <- c(more, x[lines], more)
+   }
+   # paste these lines together
+   x <- paste(c(x, ""), collapse = "\n")
+   hook_output(x, options)
+ })
+
+bryozoan <- read_csv("https://sta112-s22.github.io/homework/bryozoan_data.csv")
+bugula_early <- bryozoan %>%
+  filter(Stage == "early", Species == "bugula")
+```
+
+We have date on 197 early-stage *Bugula neritina*, with information on
+
+* `Run`: which repetition of the experiment the individual was recorded in
+* `Mass`: Mass of the individual (in micrograms)
+* `Metabolic`: Recorded metabolic rate (rate of energy consumption) of the individual (in mJ per hour)
+
+.question[
+**Goal for this class:** Is there systematic variation between different runs (i.e., is there any correlation due to Run)?
+]
+]
+
+---
+
+### Plan (so far)
+
+.large[
+$$Metabolic_{ij} = \beta_0 + \varepsilon_{ij} \hspace{1cm} \varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)$$
+.question[
+How unusual are the observed differences between runs, if there is really no systematic differences between runs (i.e., no random effects)?
+]
+]
+
+.large[
+* Pretend that the intercept-only model is correct
+  * $Metabolic^* = 0.175 + \varepsilon^* \hspace{1cm} \varepsilon^* \sim N(0, 0.0043)$
+* Create a new dataset from the intercept-only model
+```{r, eval=F}
+new_metabolic <- 0.175 +
+  rnorm(n=197, mean=0, sd=sqrt(0.0043))
+```
+* Compare our new dataset to the observed dataset
+
+]
+
+---
+
+### Our simulated data
+
+.large[
+$$Metabolic_{ij}^* = 0.175 + \varepsilon_{ij}^* \hspace{1cm} \varepsilon_{ij}^* \overset{iid}{\sim} N(0, \ 0.0043)$$
+
+```{r}
+new_metabolic <- 0.175 +
+  rnorm(n=197, mean=0, sd=sqrt(0.0043))
+
+new_data <- data.frame(Run = bugula_early$Run,
+                       Metabolic = new_metabolic)
+```
+
+* Create a new metabolic rate for every organism in the data
+* Use the same runs from the observed data
+* Store the simulated dataset as `new_data`
+
+]
+
+---
+
+### Compare new dataset to observed dataset
+
+.large[
+$$Metabolic_{ij} = \beta_0 + u_i + \varepsilon_{ij} \hspace{1cm} u_i \overset{iid}{\sim} N(0, \sigma_u^2), \hspace{0.2cm} \varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)$$
+
+**Fitted random intercepts model (observed data):**
+
+$\widehat{\beta}_0 = 0.175$, $\hspace{0.5cm} \widehat{\sigma}_u^2 = 0.00013$, $\hspace{0.5cm} \widehat{\sigma}_\varepsilon^2 = 0.0042$, $\ \ \widehat{\rho}_{group} = 0.03$
+
+**Fitted random intercepts model (simulated data):**
+
+$\widehat{\beta}_0 = 0.169$, $\hspace{0.5cm} \widehat{\sigma}_u^2 = 0.00015$, $\hspace{0.5cm} \widehat{\sigma}_\varepsilon^2 = 0.0049$, $\ \ \widehat{\rho}_{group} = 0.03$
+
+.question[
+Do you think there is systematic variation between runs, or do you think the observed differences between runs are due to chance?
+]
+]
+
+---
+
+### Summary (so far)
+
+.large[
+.question[
+Are there systematic differences between runs (group effects), or are observed differences simply due to chance?
+]
+
+* Fit a model with no random effects
+* Simulate data from fitted model
+* Compare simulated data to observed data
+  * If simulated data looks very different, maybe there are systematic differences between runs
+  * If simulated data looks similar to observed data, maybe there aren't systematic differences between runs
+]
+
+---
+
+### Class activity
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_31.html](https://sta214-s23.github.io/class_activities/ca_lecture_31.html)
+]
+
+---
+
+### Class activity
+
+```{r include=F}
+music <- read_csv("https://sta279-s22.github.io/labs/music.csv")
+```
+
+.large[
+```{r, output.lines=12:15}
+m1 <- lmer(na ~ (1|id), data = music)
+summary(m1)
+```
+
+.question[
+What is the estimated intra-class correlation?
+]
+]
+
+---
+
+### Class activity
+
+.large[
+```{r output.lines=10:15}
+m0 <- lm(na ~ 1, data = music)
+summary(m0)
+```
+
+.question[
+What are the estimates $\widehat{\beta}_0$ and $\widehat{\sigma}_\varepsilon^2$?
+]
+]
+
+---
+
+### Class activity
+
+.large[
+$$Anxiety_{ij}^* = \widehat{\beta}_0 + \varepsilon_{ij}^* \hspace{1cm} \varepsilon_{ij}^* \sim N(0, \widehat{\sigma}_\varepsilon^2)$$
+
+```{r eval=F}
+new_na <- ... +
+  rnorm(n=..., mean=0, sd=...)
+
+new_data <- data.frame(id = music$id,
+                       na = new_na)
+```
+
+.question[
+How do I fill in the code to simulate a new dataset from the intercept-only model?
+]
+
+]
+
+---
+
+### Class activity
+
+.large[
+$$Anxiety_{ij}^* = \widehat{\beta}_0 + \varepsilon_{ij}^* \hspace{1cm} \varepsilon_{ij}^* \sim N(0, \widehat{\sigma}_\varepsilon^2)$$
+
+$\widehat{\beta}_0 = 16.21$, $\widehat{\sigma}_\varepsilon^2 = 5.237^2 = 27.43$
+
+```{r eval=F}
+new_na <- 16.21 +
+  rnorm(n=497, mean=0, sd=5.237)
+
+new_data <- data.frame(id = music$id,
+                       na = new_na)
+```
+
+]
+
+---
+
+### Compare new dataset to observed dataset
+
+.large[
+
+.pull-left[
+**Original (observed) data:**
+
+```{r echo=F, message=F, warning=F, fig.align='center', fig.width=7, fig.height=4.5}
+music <- read_csv("https://sta279-s22.github.io/labs/music.csv")
+
+music %>%
+  ggplot(aes(x = as.factor(id),
+             y = na)) +
+  geom_boxplot(lwd=1.2) +
+  theme_bw() +
+  labs(x = "Musician",
+       y = "Anxiety")
+```
+
+$\widehat{\rho}_{group} = 0.18$
+]
+
+.pull-right[
+**New (simulated) data:**
+
+```{r echo=F, message=F, warning=F, fig.align='center', fig.width=7, fig.height=4.5}
+new_na <- 16.21 +
+  rnorm(n=497, mean=0, sd=5.237)
+
+new_data <- data.frame(id = music$id,
+                       na = new_na)
+
+new_data %>%
+  ggplot(aes(x = as.factor(id),
+             y = na)) +
+  geom_boxplot(lwd=1.2) +
+  theme_bw() +
+  labs(x = "Musician",
+       y = "Anxiety")
+```
+
+$\widehat{\rho}_{group} = 0$
+
+]
+]
+
+
+---
+
+### Simulating multiple datasets
+
+.large[
+**Plan:** 
+
+* Simulate a dataset
+* Compare it to the observed data (calculate $\widehat{\rho}_{group}$ )
+* Repeat many times (to get a sense of variability)
+]
+
+---
+
+### Simulating multiple datasets
+
+.large[
+**Step 1:** Simulate a dataset
+
+```{r include=F}
+set.seed(4)
+```
+
+```{r}
+new_metabolic <- 0.175 +
+  rnorm(n=197, mean=0, sd=sqrt(0.0043))
+
+new_data <- data.frame(Run = bugula_early$Run,
+                       Metabolic = new_metabolic)
+```
+
+.question[
+Done!
+]
+]
+
+---
+
+### Simulating multiple datasets
+
+.large[
+**Step 2:** Calculate estimated ICC
+]
+
+```{r}
+m_sim <- lmer(Metabolic ~ (1|Run), 
+              data = new_data)
+
+variance_ests <- as.data.frame(summary(m_sim)$varcor)
+icc <- variance_ests[1,4]/(variance_ests[1,4] + variance_ests[2,4])
+
+icc
+```
+
+.large[
+
+* `summary(m_sim)$varcor` extracts variances of the random effect and residuals
+
+]
+
+---
+
+### Simulating multiple datasets
+
+.large[
+**Step 3:** Repeat many times
+
+* First, we need to create a vector to store the results of our simulations
+
+```{r eval=F}
+nsim <- 200  # do 200 repetitions
+iccs <- rep(NA, nsim)  # vector to store the results
+```
+
+* `nsim` will be our number of simulated datasets
+* `iccs` will store the estimated intra-class correlation for each simulated dataset
+
+.question[
+What tool do I use in R to repeat something many times?
+]
+]
+
+---
+
+### Simulating multiple datasets
+
+.large[
+**Step 3:** Repeat many times
+
+* Next, we need to iterate with a **for loop**
+
+```{r eval=F}
+nsim <- 200  # do 200 repetitions
+iccs <- rep(NA, nsim)  # vector to store the results
+
+# repeat simulation multiple times
+for(sim in 1:nsim){
+  
+}
+```
+
+* `for(sim in 1:nsim)` means "repeat what follows `nsim` times"
+
+.question[
+What goes inside my for loop?
+]
+]
+
+---
+
+### Simulating multiple datasets
+
+
+```{r eval=F}
+nsim <- 200  # do 200 repetitions
+iccs <- rep(NA, nsim)  # vector to store the results
+
+# repeat simulation multiple times
+for(sim in 1:nsim){
+  new_metabolic <- 0.175 +
+  rnorm(n=197, mean=0, sd=sqrt(0.0043))
+
+  new_data <- data.frame(Run = bugula_early$Run, 
+                         Metabolic = new_metabolic)
+  
+  m_sim <- lmer(Metabolic ~ (1|Run), data = new_data)
+  
+  variance_ests <- as.data.frame(summary(m_sim)$varcor)
+  iccs[sim] <- variance_ests[1,4]/(variance_ests[1,4] + 
+                                     variance_ests[2,4])
+  
+}
+```
+
+
+---
+
+### Plotting the results
+
+```{r sim_data, include=F, cache=T}
+set.seed(3)
+
+nsim <- 200  # do 200 repetitions
+iccs <- rep(NA, nsim)  # vector to store the results
+
+# repeat simulation multiple times
+for(sim in 1:nsim){
+  new_metabolic <- 0.175 +
+  rnorm(n=197, mean=0, sd=sqrt(0.0043))
+
+  new_data <- data.frame(Run = bugula_early$Run, 
+                         Metabolic = new_metabolic)
+  
+  m_sim <- lmer(Metabolic ~ (1|Run), data = new_data)
+  
+  variance_ests <- as.data.frame(summary(m_sim)$varcor)
+  iccs[sim] <- variance_ests[1,4]/(variance_ests[1,4] + 
+                                     variance_ests[2,4])
+  
+}
+```
+
+.large[
+```{r echo=F, message=F, fig.align='center', fig.width=8, fig.height=3.5}
+data.frame(icc = iccs) %>%
+  ggplot(aes(x = icc)) +
+  geom_histogram(bins = 15) +
+  theme_bw() +
+  theme(text = element_text(size=25)) +
+  labs(x = "Intra-class correlation")
+```
+
+
+.question[
+For the observed data, $\widehat{\rho}_{group} = 0.03$. Is this unusual, compared to the simulated data?
+]
+]
+
+---
+
+### Plotting the results
+
+.large[
+```{r echo=F, message=F, fig.align='center', fig.width=8, fig.height=3.5}
+data.frame(icc = iccs) %>%
+  ggplot(aes(x = icc)) +
+  geom_histogram(bins = 15) +
+  theme_bw() +
+  theme(text = element_text(size=25)) +
+  labs(x = "Intra-class correlation")
+```
+
+
+.question[
+How can I summarize how unusual $\widehat{\rho}_{group} = 0.03$ is?
+]
+]
+
+---
+
+### Summarizing the results
+
+.large[
+```{r echo=F, message=F, fig.align='center', fig.width=8, fig.height=3.5}
+data.frame(icc = iccs) %>%
+  ggplot(aes(x = icc)) +
+  geom_histogram(bins = 15) +
+  theme_bw() +
+  theme(text = element_text(size=25)) +
+  labs(x = "Intra-class correlation")
+```
+
+```{r}
+mean(iccs > 0.03)
+```
+
+* The probability of observing $\widehat{\rho}_{group}$ as or more extreme than the correlation from the original data, if there is no systematic variation between runs, is about 0.15
+]

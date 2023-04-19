@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Simulation and parametric bootstrap</title>
+    <meta charset="utf-8" />
+    <script src="libs/header-attrs-2.16/header-attrs.js"></script>
+    <link rel="stylesheet" href="lab-slides.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# Simulation and parametric bootstrap
+]
+
+---
+
+
+### Recap: Data and Goal
+
+.large[
+
+
+We have date on 197 early-stage *Bugula neritina*, with information on
+
+* `Run`: which repetition of the experiment the individual was recorded in
+* `Mass`: Mass of the individual (in micrograms)
+* `Metabolic`: Recorded metabolic rate (rate of energy consumption) of the individual (in mJ per hour)
+
+.question[
+**Goal for this class:** Is there systematic variation between different runs (i.e., is there any correlation due to Run)?
+]
+]
+
+---
+
+### Plan (so far)
+
+.large[
+`$$Metabolic_{ij} = \beta_0 + \varepsilon_{ij} \hspace{1cm} \varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)$$`
+.question[
+How unusual are the observed differences between runs, if there is really no systematic differences between runs (i.e., no random effects)?
+]
+]
+
+.large[
+* Pretend that the intercept-only model is correct
+  * `\(Metabolic^* = 0.175 + \varepsilon^* \hspace{1cm} \varepsilon^* \sim N(0, 0.0043)\)`
+* Create a new dataset from the intercept-only model
+
+```r
+new_metabolic &lt;- 0.175 +
+  rnorm(n=197, mean=0, sd=sqrt(0.0043))
+```
+* Compare our new dataset to the observed dataset
+
+]
+
+---
+
+### Our simulated data
+
+.large[
+`$$Metabolic_{ij}^* = 0.175 + \varepsilon_{ij}^* \hspace{1cm} \varepsilon_{ij}^* \overset{iid}{\sim} N(0, \ 0.0043)$$`
+
+
+```r
+new_metabolic &lt;- 0.175 +
+  rnorm(n=197, mean=0, sd=sqrt(0.0043))
+
+new_data &lt;- data.frame(Run = bugula_early$Run,
+                       Metabolic = new_metabolic)
+```
+
+* Create a new metabolic rate for every organism in the data
+* Use the same runs from the observed data
+* Store the simulated dataset as `new_data`
+
+]
+
+---
+
+### Compare new dataset to observed dataset
+
+.large[
+`$$Metabolic_{ij} = \beta_0 + u_i + \varepsilon_{ij} \hspace{1cm} u_i \overset{iid}{\sim} N(0, \sigma_u^2), \hspace{0.2cm} \varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)$$`
+
+**Fitted random intercepts model (observed data):**
+
+`\(\widehat{\beta}_0 = 0.175\)`, `\(\hspace{0.5cm} \widehat{\sigma}_u^2 = 0.00013\)`, `\(\hspace{0.5cm} \widehat{\sigma}_\varepsilon^2 = 0.0042\)`, `\(\ \ \widehat{\rho}_{group} = 0.03\)`
+
+**Fitted random intercepts model (simulated data):**
+
+`\(\widehat{\beta}_0 = 0.169\)`, `\(\hspace{0.5cm} \widehat{\sigma}_u^2 = 0.00015\)`, `\(\hspace{0.5cm} \widehat{\sigma}_\varepsilon^2 = 0.0049\)`, `\(\ \ \widehat{\rho}_{group} = 0.03\)`
+
+.question[
+Do you think there is systematic variation between runs, or do you think the observed differences between runs are due to chance?
+]
+]
+
+---
+
+### Summary (so far)
+
+.large[
+.question[
+Are there systematic differences between runs (group effects), or are observed differences simply due to chance?
+]
+
+* Fit a model with no random effects
+* Simulate data from fitted model
+* Compare simulated data to observed data
+  * If simulated data looks very different, maybe there are systematic differences between runs
+  * If simulated data looks similar to observed data, maybe there aren't systematic differences between runs
+]
+
+---
+
+### Class activity
+
+.large[
+[https://sta214-s23.github.io/class_activities/ca_lecture_31.html](https://sta214-s23.github.io/class_activities/ca_lecture_31.html)
+]
+
+---
+
+### Class activity
+
+
+
+.large[
+
+```r
+m1 &lt;- lmer(na ~ (1|id), data = music)
+summary(m1)
+```
+
+```
+...
+##  Groups   Name        Variance Std.Dev.
+##  id       (Intercept)  4.95    2.225   
+##  Residual             22.46    4.739   
+## Number of obs: 497, groups:  id, 37
+...
+```
+
+.question[
+What is the estimated intra-class correlation?
+]
+]
+
+---
+
+### Class activity
+
+.large[
+
+```r
+m0 &lt;- lm(na ~ 1, data = music)
+summary(m0)
+```
+
+```
+...
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  16.2093     0.2349      69   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 5.237 on 496 degrees of freedom
+...
+```
+
+.question[
+What are the estimates `\(\widehat{\beta}_0\)` and `\(\widehat{\sigma}_\varepsilon^2\)`?
+]
+]
+
+---
+
+### Class activity
+
+.large[
+`$$Anxiety_{ij}^* = \widehat{\beta}_0 + \varepsilon_{ij}^* \hspace{1cm} \varepsilon_{ij}^* \sim N(0, \widehat{\sigma}_\varepsilon^2)$$`
+
+
+```r
+new_na &lt;- ... +
+  rnorm(n=..., mean=0, sd=...)
+
+new_data &lt;- data.frame(id = music$id,
+                       na = new_na)
+```
+
+.question[
+How do I fill in the code to simulate a new dataset from the intercept-only model?
+]
+
+]
+
+---
+
+### Class activity
+
+.large[
+`$$Anxiety_{ij}^* = \widehat{\beta}_0 + \varepsilon_{ij}^* \hspace{1cm} \varepsilon_{ij}^* \sim N(0, \widehat{\sigma}_\varepsilon^2)$$`
+
+`\(\widehat{\beta}_0 = 16.21\)`, `\(\widehat{\sigma}_\varepsilon^2 = 5.237^2 = 27.43\)`
+
+
+```r
+new_na &lt;- 16.21 +
+  rnorm(n=497, mean=0, sd=5.237)
+
+new_data &lt;- data.frame(id = music$id,
+                       na = new_na)
+```
+
+]
+
+---
+
+### Compare new dataset to observed dataset
+
+.large[
+
+.pull-left[
+**Original (observed) data:**
+
+&lt;img src="lecture_32_files/figure-html/unnamed-chunk-9-1.png" style="display: block; margin: auto;" /&gt;
+
+`\(\widehat{\rho}_{group} = 0.18\)`
+]
+
+.pull-right[
+**New (simulated) data:**
+
+&lt;img src="lecture_32_files/figure-html/unnamed-chunk-10-1.png" style="display: block; margin: auto;" /&gt;
+
+`\(\widehat{\rho}_{group} = 0\)`
+
+]
+]
+
+
+---
+
+### Simulating multiple datasets
+
+.large[
+**Plan:** 
+
+* Simulate a dataset
+* Compare it to the observed data (calculate `\(\widehat{\rho}_{group}\)` )
+* Repeat many times (to get a sense of variability)
+]
+
+---
+
+### Simulating multiple datasets
+
+.large[
+**Step 1:** Simulate a dataset
+
+
+
+
+```r
+new_metabolic &lt;- 0.175 +
+  rnorm(n=197, mean=0, sd=sqrt(0.0043))
+
+new_data &lt;- data.frame(Run = bugula_early$Run,
+                       Metabolic = new_metabolic)
+```
+
+.question[
+Done!
+]
+]
+
+---
+
+### Simulating multiple datasets
+
+.large[
+**Step 2:** Calculate estimated ICC
+]
+
+
+```r
+m_sim &lt;- lmer(Metabolic ~ (1|Run), 
+              data = new_data)
+
+variance_ests &lt;- as.data.frame(summary(m_sim)$varcor)
+icc &lt;- variance_ests[1,4]/(variance_ests[1,4] + variance_ests[2,4])
+
+icc
+```
+
+```
+## [1] 0.009007824
+```
+
+.large[
+
+* `summary(m_sim)$varcor` extracts variances of the random effect and residuals
+
+]
+
+---
+
+### Simulating multiple datasets
+
+.large[
+**Step 3:** Repeat many times
+
+* First, we need to create a vector to store the results of our simulations
+
+
+```r
+nsim &lt;- 200  # do 200 repetitions
+iccs &lt;- rep(NA, nsim)  # vector to store the results
+```
+
+* `nsim` will be our number of simulated datasets
+* `iccs` will store the estimated intra-class correlation for each simulated dataset
+
+.question[
+What tool do I use in R to repeat something many times?
+]
+]
+
+---
+
+### Simulating multiple datasets
+
+.large[
+**Step 3:** Repeat many times
+
+* Next, we need to iterate with a **for loop**
+
+
+```r
+nsim &lt;- 200  # do 200 repetitions
+iccs &lt;- rep(NA, nsim)  # vector to store the results
+
+# repeat simulation multiple times
+for(sim in 1:nsim){
+  
+}
+```
+
+* `for(sim in 1:nsim)` means "repeat what follows `nsim` times"
+
+.question[
+What goes inside my for loop?
+]
+]
+
+---
+
+### Simulating multiple datasets
+
+
+
+```r
+nsim &lt;- 200  # do 200 repetitions
+iccs &lt;- rep(NA, nsim)  # vector to store the results
+
+# repeat simulation multiple times
+for(sim in 1:nsim){
+  new_metabolic &lt;- 0.175 +
+  rnorm(n=197, mean=0, sd=sqrt(0.0043))
+
+  new_data &lt;- data.frame(Run = bugula_early$Run, 
+                         Metabolic = new_metabolic)
+  
+  m_sim &lt;- lmer(Metabolic ~ (1|Run), data = new_data)
+  
+  variance_ests &lt;- as.data.frame(summary(m_sim)$varcor)
+  iccs[sim] &lt;- variance_ests[1,4]/(variance_ests[1,4] + 
+                                     variance_ests[2,4])
+  
+}
+```
+
+
+---
+
+### Plotting the results
+
+
+
+.large[
+&lt;img src="lecture_32_files/figure-html/unnamed-chunk-17-1.png" style="display: block; margin: auto;" /&gt;
+
+
+.question[
+For the observed data, `\(\widehat{\rho}_{group} = 0.03\)`. Is this unusual, compared to the simulated data?
+]
+]
+
+---
+
+### Plotting the results
+
+.large[
+&lt;img src="lecture_32_files/figure-html/unnamed-chunk-18-1.png" style="display: block; margin: auto;" /&gt;
+
+
+.question[
+How can I summarize how unusual `\(\widehat{\rho}_{group} = 0.03\)` is?
+]
+]
+
+---
+
+### Summarizing the results
+
+.large[
+&lt;img src="lecture_32_files/figure-html/unnamed-chunk-19-1.png" style="display: block; margin: auto;" /&gt;
+
+
+```r
+mean(iccs &gt; 0.03)
+```
+
+```
+## [1] 0.15
+```
+
+* The probability of observing `\(\widehat{\rho}_{group}\)` as or more extreme than the correlation from the original data, if there is no systematic variation between runs, is about 0.15
+]
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
