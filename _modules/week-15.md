@@ -14,6 +14,7 @@ April 19
   : [Review activity](https://sta214-s23.github.io/class_activities/final_exam_review.pdf)
 
 April 21
-: Parametric bootstrap
+: Project work day
 
 : **HW 10 released**{: .label .label-yellow }
+  : [HW 10](https://sta214-s23.github.io/homework/HW10.html)

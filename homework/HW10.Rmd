@@ -1,0 +1,210 @@
+---
+title: "Homework 10"
+output: 
+  rmdformats::robobook:
+    css: "homework.css"
+    highlight: pygments
+link-citations: yes
+---
+
+**Due:** Wednesday, April 26, 12:00pm (noon) on Canvas
+
+When you are done with the assignment, submit your knitted HTML file to Canvas.
+
+# Data
+
+Anxiety can affect musicians before performances, and can negatively affect their ability to play and their emotional state. In a [2010 study](https://journals.sagepub.com/doi/10.1177/1948550610370492), researchers examined anxiety in 37 undergraduate music majors. For each musician, data was collected on anxiety levels before different performances (between 2 and 15 performances were measured for each musician). Each row in the data represents one performance; in this lab, we will work with the following variables:
+
+* `id`: a unique identifier for the musician
+* `na`: negative affect score (a measure of anxiety)
+* `large`: whether the musician was performing as part of a large ensemble (large = 1), or as part of a small ensemble or solo (large = 0)
+* `audience`: who attended (Instructor, Public, Students, or Juried)
+
+
+### Downloading the data
+
+The following code imports the data and saves it as a data frame called `music`:
+
+```r
+music <- read_csv("https://sta214-s23.github.io/slides/musicdata.csv")
+```
+
+# Parametric bootstrapping
+
+Parametric bootstrapping can be used to test hypotheses, without having to know the distribution of the test statistic. For example, to test hypotheses about fixed effects in a linear mixed model, we use a nested F test. But the F distribution is really only an approximation, and we can avoid that approximation by simulating. In this lab, you will perform a hypothesis test with the F statistic, but you will compare the test statistic to a parametric bootstrap distribution instead of the F distribution.
+
+Recall the main steps in the parametric bootstrap (presented here for nested tests, i.e. testing whether some subset of parameters are equal to 0):
+
+* **Step 0:** Specify hypotheses, and the full and reduced models
+* **Step 1:** Fit the full and reduced models on the *observed* data, and calculate a test statistic (for example, an F statistic or drop in deviance)
+* **Step 2:** Simulate data from the *reduced* model (i.e., pretend $H_0$ is true)
+* **Step 3:** Fit the full and reduced models on the *simulated* data, and calculate the test statistic again
+* **Step 4:** Repeat steps 2 and 3 many times, and store the resulting test statistics
+* **Step 5:** Compare the test statistic for the *observed* data to the test statistics for the *simulated* data, and calculate a p-value
+
+In this lab, you will test whether there is a difference in anxiety between large and small ensemble performances, after accounting for audience type, and allowing for variation in anxiety between musicians. You tested this hypothesis in Question 10 of Lab 7, using nested F-tests with the Satterthwaite and Kenward-Roger methods. In this lab we will use the parametric bootstrap.
+
+## Step 0: Specify hypotheses
+
+Our full model is
+
+$$Anxiety_{ij} = \beta_0 + \beta_1 \ JuriedPerformance_{ij} + \beta_2 \ PublicPerformance_{ij} \\ \hspace{1cm} + \ \beta_3 \ StudentPerformance_{ij}  + \beta_4 \ LargeEnsemble_{ij} + u_i + \varepsilon_{ij}$$
+$u_i \overset{iid}{\sim} N(0, \sigma_u^2)$, $\varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)$. This model includes the effects of both audience type and ensemble size, as well as allowing variation in anxiety levels between musicians (with $u_i$ ). 
+
+Using this model, the researchers want to test whether there is a difference in anxiety between large and small ensemble performances, after accounting for audience type.
+
+:::{.question}
+#### Question 1
+
+Write down the null and alternative hypotheses, in terms of one or more model parameters, that allow the researchers to test this question. Also give the reduced model, which corresponds to the null hypothesis. (The full model is written above).
+:::
+
+## Step 1: Calculate a test statistic (for the observed data)
+
+To calculate a test statistic, we first fit the full and reduced models.
+
+:::{.question}
+#### Question 2
+
+Fit the full and reduced models on the *observed* data (the `music` data), and store the fitted models (for example, as `m1` and `m0`).
+
+We will use the reduced model to simulate data, so report the variance estimates $\widehat{\sigma}_u^2$ and $\widehat{\sigma}_\varepsilon^2$ for the reduced model.
+:::
+
+:::{.question}
+#### Question 3
+
+Calculate a test statistic on the *observed* data. For this test, we will use the test statistic (but not the p-value!) from a likelihood ratio test. If you saved your full and reduced models from Question 2 as `m1` and `m0`, respectively, then you can calculate the test statistic by
+```{r eval=F}
+as.numeric(2*(summary(m1)$logLik - summary(m0)$logLik))
+```
+:::
+
+## Step 2: Simulate data from the reduced model
+
+Why do we simulate data from the *reduced* model, instead of the full model? Remember that the p-value is the probability of "our data or more extreme", *under the null hypothesis*. The reduced model corresponds to the null hypothesis, so we simulate data from the reduced model to calculate a bootstrap p-value.
+
+How do we simulate data from the reduced model? Remember that we combine predictions from the reduced model with new, simulated random effects and noise. For this data, a new anxiety score is given by
+
+$$Anxiety_{ij}^* = \widehat{\beta}_0 + \widehat{\beta}_1 \ JuriedPerformance_{ij} + \widehat{\beta}_2 \ PublicPerformance_{ij} \\ \hspace{1cm} + \ \widehat{\beta}_3 \ StudentPerformance_{ij} + u_i^* + \varepsilon_{ij}^*$$,
+
+where $u_i^* \sim N(0, \widehat{\sigma}_u^2)$ and $\varepsilon_{ij}^* \sim N(0, \widehat{\sigma}_\varepsilon^2)$.
+
+There are then three things we need to do:
+
+* Generate $u_i^* \sim N(0, \widehat{\sigma}_u^2)$
+* Generate $\varepsilon_{ij}^* \sim N(0, \widehat{\sigma}_\varepsilon^2)$
+* Calculate 
+
+$$\widehat{\beta}_0 + \widehat{\beta}_1 \ JuriedPerformance_{ij} + \widehat{\beta}_2 \ PublicPerformance_{ij} + \\ \ \widehat{\beta}_3 \ StudentPerformance_{ij}$$
+
+### Generating new random effects
+
+:::{.question}
+#### Question 4
+
+Fill in the code below to generate a new random effect for every musician in the data:
+
+```{r eval=F}
+re_new <- rnorm(n = ..., mean = ..., sd = ...)
+```
+:::
+
+### Generating new noise 
+
+:::{.question}
+#### Question 5
+
+Fill in the code below to generate a new $\varepsilon_{ij}^*$ for every performance in the data:
+
+```{r eval=F}
+noise_new <- rnorm(n = ..., mean = ..., sd = ...)
+```
+:::
+
+### Fitted values
+
+Now we need the fitted values. But we need the fitted values *without* the estimated random effects, since we're simulating new random effects. To calculate
+
+$$\widehat{\beta}_0 + \widehat{\beta}_1 \ JuriedPerformance_{ij} + \widehat{\beta}_2 \ PublicPerformance_{ij} + \\ \ \widehat{\beta}_3 \ StudentPerformance_{ij}$$
+
+for every performance in the dataset, run the following (`re.form=NA` means "don't include random effects in the fitted values"):
+
+```{r eval=F}
+# replace m0 with the name of your reduced model
+fitted_values <- predict(m0, re.form=NA)
+```
+
+### Combining everything
+
+Finally, we need to combine the random effects, the noise term, and the predictions to get simulated anxiety scores for each performance. Unfortunately, this is where the code gets a little complicated, because we have to match up the random effects with the musicians in the data. How do we do that? Here is one approach:
+
+```{r eval=F}
+re_data <- data.frame(id = unique(music$id),
+                      re = re_new) %>%
+  right_join(dplyr::select(music, id), by = "id")
+```
+
+Now we just have to combine everything:
+
+```{r eval=F}
+new_data <- data.frame(id = music$id,
+                       audience = music$audience,
+                       large = music$large,
+                       na = fitted_values + re_data$re + noise_new)
+```
+
+## Step 3: Calculate a test statistic (for the simulated data)
+
+:::{.question}
+#### Question 6
+
+Fit the full and reduced models on the *simulated* data (the `new_data` above), and store the fitted models (for example, as `m1_sim` and `m0_sim`).
+:::
+
+:::{.question}
+#### Question 7
+
+Calculate the test statistic on the *simulated* data. We will use the same statistic as in Question 3.
+:::
+
+## Step 4: Repeat!
+
+:::{.question}
+#### Question 8
+
+Using a for loop, repeat steps 2 -- 3 500 times, and store the results in a vector called `null_stats`. Here is some code to get you started:
+
+```{r eval=F}
+nsim <- ...
+null_stats <- rep(NA, ...)
+
+for(sim in ...){
+  # code from steps 2 and 3 goes here!
+  
+  # remember to save the results in null_stats
+}
+```
+:::
+
+## Step 5: Calculate a p-value
+
+Our bootstrap p-value is simply the fraction of simulated data for which the simulated test statistic was more extreme than the observed test statistic.
+
+:::{.question}
+#### Question 9
+
+Fill in the code to calculate the bootstrap p-value:
+
+```{r eval=F}
+mean(null_stats > ...)
+```
+
+Use your p-value to draw a conclusion about the research question -- is there evidence for a difference in anxiety levels between large and small ensemble performances, after accounting for audience type?
+:::
+
+:::{.question}
+#### Question 10
+
+What values can the bootstrap p-value take, and how do these values relate to the number of simulations you used?
+:::
