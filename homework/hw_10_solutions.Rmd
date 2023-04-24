@@ -1,0 +1,126 @@
+---
+title: "HW 10 Solutions"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lme4)
+music <- read_csv("https://sta279-s22.github.io/labs/music.csv")
+```
+
+### Question 1
+
+$H_0: \beta_4 = 0 \hspace{1cm} H_A: \beta_4 \neq 0$
+
+Reduced model:
+
+$$Anxiety_{ij} = \beta_0 + \beta_1 \ JuriedPerformance_{ij} + \beta_2 \ PublicPerformance_{ij} \\ \hspace{1cm} + \ \beta_3 \ StudentPerformance_{ij} + u_i + \varepsilon_{ij}$$
+$u_i \overset{iid}{\sim} N(0, \sigma_u^2)$, $\varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)$
+
+### Question 2
+
+```{r}
+m1 <- lmer(na ~ audience + large + (1|id), data = music)
+m0 <- lmer(na ~ audience + (1|id), data = music)
+
+summary(m0)
+```
+
+For the reduced model, $\widehat{\sigma}_u^2 = 5.60$, $\widehat{\sigma}_\varepsilon^2 = 20.85$
+
+### Question 3
+
+```{r}
+as.numeric(2*(summary(m1)$logLik - summary(m0)$logLik))
+```
+
+Our test statistic on the observed data is $12.46$
+
+### Question 4
+
+```{r}
+re_new <- rnorm(n = 37, mean = 0, sd = sqrt(5.60))
+```
+
+
+### Question 5
+
+```{r}
+noise_new <- rnorm(n = 497, mean = 0, sd = sqrt(20.85))
+```
+
+
+### Question 6
+
+```{r}
+fitted_values <- predict(m0, re.form=NA)
+
+re_data <- data.frame(id = unique(music$id),
+                      re = re_new) %>%
+  right_join(dplyr::select(music, id), by = "id")
+
+new_data <- data.frame(id = music$id,
+                       audience = music$audience,
+                       large = music$large,
+                       na = fitted_values + re_data$re + noise_new)
+
+m1_sim <- lmer(na ~ audience + large + (1|id), data = new_data)
+m0_sim <- lmer(na ~ audience + (1|id), data = new_data)
+```
+
+
+### Question 7
+
+```{r}
+as.numeric(2*(summary(m1_sim)$logLik - summary(m0_sim)$logLik))
+```
+
+
+### Question 8
+
+```{r}
+nsim <- 500
+null_stats <- rep(NA, nsim)
+
+for(sim in 1:nsim){
+  re_new <- rnorm(n = 37, mean = 0, sd = sqrt(5.60))
+  noise_new <- rnorm(n = 497, mean = 0, sd = sqrt(20.85))
+  
+  fitted_values <- predict(m0, re.form=NA)
+
+  re_data <- data.frame(id = unique(music$id),
+                        re = re_new) %>%
+    right_join(dplyr::select(music, id), by = "id")
+  
+  new_data <- data.frame(id = music$id,
+                         audience = music$audience,
+                         large = music$large,
+                         na = fitted_values + re_data$re + noise_new)
+  
+  m1_sim <- lmer(na ~ audience + large + (1|id), data = new_data)
+  m0_sim <- lmer(na ~ audience + (1|id), data = new_data)
+  
+  null_stats[sim] <- as.numeric(2*(summary(m1_sim)$logLik - summary(m0_sim)$logLik))
+  
+}
+```
+
+### Question 9
+
+```{r}
+mean(null_stats > 12.46)
+```
+
+There is strong evidence for a difference in anxiety levels between large and small ensemble performances, after accounting for audience type.
+
+### Question 10
+
+The bootstrap p-value is the proportion of simulations with a test statistic greater than what we observed in the data. This means that with 500 repetitions, our bootstrap p-value can take values 0, 0.002, 0.004, ..., 0.998, 1. We can get more detailed p-values if we use a larger number of bootstrap samples.
+
+
+
+
+
+

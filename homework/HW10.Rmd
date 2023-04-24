@@ -13,7 +13,7 @@ When you are done with the assignment, submit your knitted HTML file to Canvas.
 
 # Data
 
-Anxiety can affect musicians before performances, and can negatively affect their ability to play and their emotional state. In a [2010 study](https://journals.sagepub.com/doi/10.1177/1948550610370492), researchers examined anxiety in 37 undergraduate music majors. For each musician, data was collected on anxiety levels before different performances (between 2 and 15 performances were measured for each musician). Each row in the data represents one performance; in this lab, we will work with the following variables:
+Anxiety can affect musicians before performances, and can negatively affect their ability to play and their emotional state. In a [2010 study](https://journals.sagepub.com/doi/10.1177/1948550610370492), researchers examined anxiety in 37 undergraduate music majors. For each musician, data was collected on anxiety levels before different performances (between 2 and 15 performances were measured for each musician). Each row in the data represents one performance; in this assignment, we will work with the following variables:
 
 * `id`: a unique identifier for the musician
 * `na`: negative affect score (a measure of anxiety)
@@ -31,7 +31,7 @@ music <- read_csv("https://sta214-s23.github.io/slides/musicdata.csv")
 
 # Parametric bootstrapping
 
-Parametric bootstrapping can be used to test hypotheses, without having to know the distribution of the test statistic. For example, to test hypotheses about fixed effects in a linear mixed model, we use a nested F test. But the F distribution is really only an approximation, and we can avoid that approximation by simulating. In this lab, you will perform a hypothesis test with the F statistic, but you will compare the test statistic to a parametric bootstrap distribution instead of the F distribution.
+Parametric bootstrapping can be used to test hypotheses, without having to know the distribution of the test statistic. In this assignment, you will perform a hypothesis test with the likelihood ratio statistic, but you will compare the test statistic to a parametric bootstrap distribution instead of the $\chi^2$ distribution.
 
 Recall the main steps in the parametric bootstrap (presented here for nested tests, i.e. testing whether some subset of parameters are equal to 0):
 
@@ -42,7 +42,7 @@ Recall the main steps in the parametric bootstrap (presented here for nested tes
 * **Step 4:** Repeat steps 2 and 3 many times, and store the resulting test statistics
 * **Step 5:** Compare the test statistic for the *observed* data to the test statistics for the *simulated* data, and calculate a p-value
 
-In this lab, you will test whether there is a difference in anxiety between large and small ensemble performances, after accounting for audience type, and allowing for variation in anxiety between musicians. You tested this hypothesis in Question 10 of Lab 7, using nested F-tests with the Satterthwaite and Kenward-Roger methods. In this lab we will use the parametric bootstrap.
+In this assignment, you will test whether there is a difference in anxiety between large and small ensemble performances, after accounting for audience type, and allowing for variation in anxiety between musicians.
 
 ## Step 0: Specify hypotheses
 

@@ -1,0 +1,234 @@
+---
+title: Simulation and parametric bootstrap
+output:
+  xaringan::moon_reader:
+    css: "lab-slides.css"
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+editor_options: 
+  chunk_output_type: console
+---
+
+### Data and goal
+
+.large[
+Data on 497 performances by 37 undergraduate music majors (between 2 and 15 performances were measured for each musician). Each row in the data represents one performance:
+
+* `id`: a unique identifier for the musician
+* `na`: negative affect score (a measure of anxiety)
+* `large`: whether the musician was performing as part of a large ensemble (large = 1), or as part of a small ensemble or solo (large = 0)
+* `audience`: who attended (Instructor, Public, Students, or Juried)
+
+**Research question:** Is there a difference in anxiety between large and small ensemble performances, after accounting for audience type, and accounting for systematic variation between musicians?
+]
+
+---
+
+### Models
+
+.large[
+**Full model:**
+]
+
+$$Anxiety_{ij} = \beta_0 + \beta_1 \ JuriedPerformance_{ij} + \beta_2 \ PublicPerformance_{ij} \\ \hspace{1cm} + \ \beta_3 \ StudentPerformance_{ij}  + \beta_4 \ LargeEnsemble_{ij} + u_i + \varepsilon_{ij}$$
+$u_i \overset{iid}{\sim} N(0, \sigma_u^2)$, $\varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)$.
+
+.large[
+.question[
+We want to test whether there is a difference between large and small ensemble performances. What is the reduced model?
+]
+]
+
+---
+
+### Models
+
+.large[
+**Full model:**
+]
+
+$$Anxiety_{ij} = \beta_0 + \beta_1 \ JuriedPerformance_{ij} + \beta_2 \ PublicPerformance_{ij} \\ \hspace{1cm} + \ \beta_3 \ StudentPerformance_{ij}  + \beta_4 \ LargeEnsemble_{ij} + u_i + \varepsilon_{ij}$$
+$u_i \overset{iid}{\sim} N(0, \sigma_u^2)$, $\varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)$.
+
+.large[
+**Reduced model:**
+]
+
+$$Anxiety_{ij} = \beta_0 + \beta_1 \ JuriedPerformance_{ij} + \beta_2 \ PublicPerformance_{ij} \\ \hspace{1cm} + \ \beta_3 \ StudentPerformance_{ij} + u_i + \varepsilon_{ij}$$
+$u_i \overset{iid}{\sim} N(0, \sigma_u^2)$, $\varepsilon_{ij} \overset{iid}{\sim} N(0, \sigma_\varepsilon^2)$
+
+---
+
+### Fitting the models
+
+```{r, include=F}
+library(tidyverse)
+library(lme4)
+library(knitr)
+music <- read_csv("https://sta279-s22.github.io/labs/music.csv")
+
+hook_output <- knit_hooks$get("output")
+knit_hooks$set(output = function(x, options) {
+   lines <- options$output.lines
+   if (is.null(lines)) {
+     return(hook_output(x, options))  # pass to default hook
+   }
+   x <- unlist(strsplit(x, "\n"))
+   more <- "..."
+   if (length(lines)==1) {        # first n lines
+     if (length(x) > lines) {
+       # truncate the output, but add ....
+       x <- c(head(x, lines), more)
+     }
+   } else {
+     x <- c(more, x[lines], more)
+   }
+   # paste these lines together
+   x <- paste(c(x, ""), collapse = "\n")
+   hook_output(x, options)
+ })
+```
+
+.large[
+```{r}
+m1 <- lmer(na ~ audience + large + (1|id), 
+           data = music)
+m0 <- lmer(na ~ audience + (1|id), data = music)
+```
+
+.question[
+What test statistic should I calculate to compare the models?
+]
+]
+
+---
+
+### LRT
+
+.large[
+```{r, eval=F}
+m1 <- lmer(na ~ audience + large + (1|id), 
+           data = music)
+m0 <- lmer(na ~ audience + (1|id), data = music)
+```
+
+Likelihood ratio test statistic:
+
+```{r}
+as.numeric(2*(summary(m1)$logLik - 
+                summary(m0)$logLik))
+```
+]
+
+---
+
+### Parametric bootstrapping
+
+.large[
+Observed test statistic: 12.46
+
+.question[
+How would I use parametric bootstrapping to calculate a p-value for this test statistic?
+]
+]
+
+---
+
+### Simulating from the reduced model
+
+```{r, output.lines = 10:22}
+summary(m0)
+```
+
+---
+
+### Simulating from the reduced model
+
+.large[
+```{r}
+re_new <- rnorm(n = 37, mean = 0, 
+                sd = sqrt(5.60))
+noise_new <- rnorm(n = 497, mean = 0, 
+                   sd = sqrt(20.85))
+fitted_values <- predict(m0, re.form=NA)
+
+re_data <- data.frame(id = unique(music$id),
+                      re = re_new) %>%
+  right_join(dplyr::select(music, id), by = "id")
+
+new_data <- data.frame(id = music$id,
+                       audience = music$audience,
+                       large = music$large,
+                       na = fitted_values + 
+                         re_data$re + 
+                         noise_new)
+```
+]
+
+---
+
+### Calculate a test statistic with simulated data
+
+.large[
+.question[
+How do I calculate a test statistic using the simulated data?
+]
+]
+
+---
+
+### Calculate a test statistic with simulated data
+
+.large[
+.question[
+How do I calculate a test statistic using the simulated data?
+]
+
+```{r}
+m1_sim <- lmer(na ~ audience + large + (1|id), 
+               data = new_data)
+m0_sim <- lmer(na ~ audience + (1|id), 
+               data = new_data)
+
+as.numeric(2*(summary(m1_sim)$logLik - 
+                summary(m0_sim)$logLik))
+```
+]
+
+---
+
+### Repeat many times!
+
+```{r, include=F}
+nsim <- 500
+null_stats <- rep(NA, nsim)
+
+for(sim in 1:nsim){
+  re_new <- rnorm(n = 37, mean = 0, sd = sqrt(5.60))
+  noise_new <- rnorm(n = 497, mean = 0, sd = sqrt(20.85))
+  
+  fitted_values <- predict(m0, re.form=NA)
+
+  re_data <- data.frame(id = unique(music$id),
+                        re = re_new) %>%
+    right_join(dplyr::select(music, id), by = "id")
+  
+  new_data <- data.frame(id = music$id,
+                         audience = music$audience,
+                         large = music$large,
+                         na = fitted_values + re_data$re + noise_new)
+  
+  m1_sim <- lmer(na ~ audience + large + (1|id), data = new_data)
+  m0_sim <- lmer(na ~ audience + (1|id), data = new_data)
+  
+  null_stats[sim] <- as.numeric(2*(summary(m1_sim)$logLik - summary(m0_sim)$logLik))
+  
+}
+```
+
+```{r, echo=F, message=F, warning=F, fig.align='center', fig.width=7, fig.height=5}
+hist(null_stats, xlab = "Simulated test statistics", main="")
+```
