@@ -8,3 +8,4 @@ April 24
 
 April 26
 : Final exam review
+  : [Solutions](https://sta214-s23.github.io/slides/final-exam-review-solutions.pdf)
